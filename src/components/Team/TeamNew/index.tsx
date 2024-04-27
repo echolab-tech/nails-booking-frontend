@@ -1,5 +1,20 @@
-import React from 'react';
-const Team = () => {
+"use client"
+import React, { useState } from 'react';
+import Select from "react-tailwindcss-select";
+import './style.scss';
+
+const options = [
+    { value: "fox", label: "🦊 Fox" },
+    { value: "Butterfly", label: "🦋 Butterfly" },
+    { value: "Honeybee", label: "🐝 Honeybee" }
+];
+const TeamNew = () => {
+    const [animal, setAnimal] = useState(null);
+
+    const handleChange = (value: any) => {
+        console.log("value:", value);
+        setAnimal(value);
+    };
     return (
         <div className="grid grid-cols-1 gap-12">
             <div className="flex flex-col gap-9">
@@ -59,14 +74,21 @@ const Team = () => {
                                 </div>
                             </div>
                             <div className="mb-4.5">
-                                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                    Service <span className="text-meta-1">*</span>
-                                </label>
-                                <select multiple className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary">
-                                    <option value="service1">Service 1</option>
-                                    <option value="service2">Service 2</option>
-                                    <option value="service3">Service 3</option>
-                                </select>
+                                <div className="w-full xl:w-1/2">
+                                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                        Service <span className="text-meta-1">*</span>
+                                    </label>
+                                    <Select
+                                        value={animal}
+                                        onChange={handleChange}
+                                        options={options} primaryColor={''} 
+                                        isMultiple={true}
+                                        isSearchable={true}
+                                    />
+                                </div>
+                            </div>
+                            <div className="mb-4.5 flex justify-center">
+                                <a className="inline-flex items-center justify-center rounded-md bg-black px-10 py-4 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10" href="#">Created</a>
                             </div>
                         </div>
                     </form>
@@ -75,4 +97,4 @@ const Team = () => {
         </div>
     )
 }
-export default Team; 
+export default TeamNew; 
