@@ -125,7 +125,18 @@ const ServiceComboNew = () => {
                   </div>
                 </div>
               ))}
-
+              <div className="mb-4.5 flex justify-center">
+                <div className="w-full xl:w-1/2">
+                  <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                    Price
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="$0.00"
+                    className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-1.5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                  />
+                </div>
+              </div>
               <div className="mb-4.5 flex justify-center">
                 <a
                   className="inline-flex items-center justify-center rounded-md bg-black px-10 py-4 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"

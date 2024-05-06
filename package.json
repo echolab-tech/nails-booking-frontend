@@ -42,11 +42,7 @@
     "postcss": "^8",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.11",
-<<<<<<< HEAD
     "tailwindcss": "^3.4.1",
-=======
-    "tailwindcss": "^3.4.3",
->>>>>>> b915d77 (update UI admin)
     "typescript": "^5"
   }
 }
