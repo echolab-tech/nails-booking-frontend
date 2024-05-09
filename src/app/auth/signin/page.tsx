@@ -334,6 +334,9 @@ const SignIn: React.FC = () => {
                 message="Login fail"
                 type="success"
                 isShow={toastContext.isOpen}
+                onClose={() => {
+                  toastContext.toggleTheme(false);
+                }}
               />
             </div>
           </div>
