@@ -9,8 +9,8 @@ import * as Yup from "yup";
 import { login } from "@/services/login.service";
 import { useRouter } from "next/navigation";
 import { LoginType } from "@/types/login";
-import Toast from "@/components/Toast/Toast";
-import { ToastContext } from "@/providers/ToastProvider";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const SigninSchema = Yup.object().shape({
   email: Yup.string().min(2).max(50).required(),
@@ -18,7 +18,6 @@ const SigninSchema = Yup.object().shape({
 });
 
 const SignIn: React.FC = () => {
-  const toastContext = useContext(ToastContext);
   const router = useRouter();
   return (
     <NoneSideBarLayout>
@@ -187,10 +186,11 @@ const SignIn: React.FC = () => {
                         "accessToken",
                         data?.data?.user?.token,
                       );
+                      toast.success("You are successfully logged in.");
                       router.push("/");
                     })
                     .catch((error) => {
-                      toastContext.toggleTheme(true);
+                      toast.error("Username or password incorrect.");
                     });
                 }}
               >
@@ -330,14 +330,7 @@ const SignIn: React.FC = () => {
                   </Form>
                 )}
               </Formik>
-              <Toast
-                message="Login fail"
-                type="success"
-                isShow={toastContext.isOpen}
-                onClose={() => {
-                  toastContext.toggleTheme(false);
-                }}
-              />
+              <ToastContainer />
             </div>
           </div>
         </div>
