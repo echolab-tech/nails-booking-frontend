@@ -97,4 +97,4 @@ const TeamNew = () => {
         </div>
     )
 }
-export default TeamNew; 
+export default TeamNew;

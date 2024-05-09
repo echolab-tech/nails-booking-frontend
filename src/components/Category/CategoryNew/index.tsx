@@ -34,4 +34,4 @@ const CategoryNew = () => {
         </div>
     )
 }
-export default CategoryNew; 
+export default CategoryNew;
