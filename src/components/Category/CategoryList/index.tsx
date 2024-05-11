@@ -70,7 +70,7 @@ const CategoryList = () => {
             updateCategoryList();
             toast.success('Delete Success !!!');
         } catch (error) {
-            console.error('Error fetching category details:', error);
+            toast.warning('you cannot delete !!!');
         }
     }
 
