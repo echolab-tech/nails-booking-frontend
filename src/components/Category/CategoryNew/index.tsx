@@ -59,12 +59,14 @@ const CategoryNew = () => {
                                       </span>
                                     ) : null}
                                 </div>
-                                <div className="mb-4.5 flex justify-center">
-                                  <input
-                                    type="submit"
-                                    value="Created"
-                                    className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
-                                  />
+                                <div className="mb-4.5 flex flex-col gap-6 xl:flex-row justify-center">
+                                  <div className="w-full xl:w-1/2">
+                                    <input
+                                      type="submit"
+                                      value="Created"
+                                      className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
+                                    />
+                                  </div>
                                 </div>
                             </div>
                         </Form>
