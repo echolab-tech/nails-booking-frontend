@@ -1,12 +1,14 @@
 import type { Config } from "tailwindcss";
 import defaultTheme from "tailwindcss/defaultTheme";
+import flowbite from "flowbite-react/tailwind";
 
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./node_modules/react-tailwindcss-select/dist/index.esm.js"
+    "./node_modules/react-tailwindcss-select/dist/index.esm.js",
+    flowbite.content(),
   ],
   darkMode: "class",
   theme: {
@@ -58,6 +60,7 @@ const config: Config = {
         success: "#219653",
         danger: "#D34053",
         warning: "#FFA70B",
+        "bg-gray-900": "#4b5563",
       },
       fontSize: {
         "title-xxl": ["44px", "55px"],
@@ -331,6 +334,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [flowbite.plugin()],
 };
 export default config;
