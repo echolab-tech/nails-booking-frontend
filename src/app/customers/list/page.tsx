@@ -50,7 +50,7 @@ const CustomerList = () => {
               strokeWidth={1.5}
               stroke="currentColor"
               className="h-6 w-6"
-              onClick={() => handleButtonDelete(customer.id)}
+              onClick={() => handleButtonClick(customer.id)}
             >
               <path
                 strokeLinecap="round"

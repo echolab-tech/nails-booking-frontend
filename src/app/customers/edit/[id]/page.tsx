@@ -95,6 +95,7 @@ const CustomeEditForm = () => {
    const handleBirthdayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
      setSelectedBirthday(e.target.value);
    };
+   console.log(customer);
   return (
     <DefaultLayout>
       <Breadcrumb pageName="Add a new customer" />
@@ -117,6 +118,7 @@ const CustomeEditForm = () => {
               country: customer?.country,
               avatar: null,
               address: customer?.address,
+              status: customer?.status,
             }}
             validationSchema={CustomerNewSchema}
             onSubmit={(values: CustomerEditForm) => {
@@ -212,6 +214,29 @@ const CustomeEditForm = () => {
                             className="form-control"
                           /> */}
                         </div>
+                      </div>
+                      <div className="w-full xl:w-1/2">
+                        <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                          Status
+                        </label>
+                        <Field
+                          as="select"
+                          name="status"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values?.status}
+                          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                        >
+                          <option value={0} className="text-black">
+                            Black
+                          </option>
+                          <option value={1} className="text-yellow-500">
+                            Yellow
+                          </option>
+                          <option value={2} className="text-blue-500">
+                            Blue
+                          </option>
+                        </Field>
                       </div>
                     </div>
                     <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">

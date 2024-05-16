@@ -101,6 +101,7 @@ const CustomeNewForm = () => {
               avatar: null,
               address: "",
               common: "",
+              status: null,
             }}
             validationSchema={CustomerNewSchema}
             onSubmit={(values: CustomerForm, { resetForm }) => {
@@ -160,7 +161,7 @@ const CustomeNewForm = () => {
                       </div>
                     </div>
                     <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                      <div className="w-full xl:w-1/3">
+                      <div className="w-full xl:w-1/2">
                         <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                           Avatar <span className="text-meta-1">*</span>
                         </label>
@@ -187,6 +188,26 @@ const CustomeNewForm = () => {
                             className="form-control"
                           /> */}
                         </div>
+                      </div>
+                      <div className="w-full xl:w-1/2">
+                        <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                          Status
+                        </label>
+                        <Field
+                          as="select"
+                          name="status"
+                          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                        >
+                          <option value={0} className="text-black">
+                            Black
+                          </option>
+                          <option value={1} className="text-yellow-500">
+                            Yellow
+                          </option>
+                          <option value={2} className="text-blue-500">
+                            Blue
+                          </option>
+                        </Field>
                       </div>
                     </div>
                     <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
