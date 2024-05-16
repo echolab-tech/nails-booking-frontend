@@ -12,6 +12,10 @@ export const getCustomerShow = async (id: number): Promise<any> => {
     return await http.get<any>(`/customers/${id}`);
 };
 
+export const getSearchCustomer = async (page: number, search: any | null): Promise<any> => {
+    return await http.get<any>(`/customers?search=${search ? search: ""}&page=${page}`);
+};
+
 export const getCustomerUpdate = async (values: CustomerEditForm, id: number): Promise<any> => {
     return await http.put<any>(`/customers/${id}`,values);
 };
