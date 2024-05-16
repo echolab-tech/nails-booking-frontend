@@ -11,4 +11,5 @@ export type CustomerForm = {
   country: number | null; 
   avatar: any | null;
   address: string; 
+  status: number | null;
 };

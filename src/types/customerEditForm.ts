@@ -13,4 +13,5 @@ export type CustomerEditForm = {
   avatar: any | null;
   // password: string;
   address: string;
+  status: number | null;
 };
