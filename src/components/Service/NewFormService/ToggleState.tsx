@@ -11,6 +11,7 @@ const toggleState = () => {
         >
         <input
           type="checkbox"
+          name="is_booking_online"
           onChange={() => {
             if (typeof setColorMode === "function") {
               setColorMode(colorMode === "off" ? "on" : "off");

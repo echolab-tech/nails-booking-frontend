@@ -1,17 +1,16 @@
-export type serviceType = {
+export type serviceTypeNew = {
     name: string;
-    category: string | null;
+    service_category_id: string | null;
+    is_booking_online: number
     assistantServices: Array<assistantServiceType>
     serviceOptions: Array<serviceOptionType>
 };
 
 type assistantServiceType = {
     id: number;
-    name: string
 };
 
 type serviceOptionType = {
-    id: number;
     name: string;
     time: string;
     price: number;
@@ -19,7 +18,6 @@ type serviceOptionType = {
 };
 
 type serviceOptionAssistantType = {
-    id: number;
     name: string;
     time: string;
     price: number;
