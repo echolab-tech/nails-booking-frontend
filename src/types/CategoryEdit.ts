@@ -1,4 +1,4 @@
 export type CATEGORYESHOW = {
-    id: BigInt;
-    name: string
+  id: number;
+  name: string;
 };

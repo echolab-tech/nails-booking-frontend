@@ -1,4 +1,5 @@
-export type CustomerForm = {
+export type CustomerEditForm = {
+  id: number;
   name: string;
   email: string;
   phone: number | null;
@@ -8,8 +9,9 @@ export type CustomerForm = {
   language: number | null;
   source: number | null;
   occupation: string;
-  country: number | null; 
+  country: number | null;
   avatar: any | null;
-  address: string; 
+  // password: string;
+  address: string;
   status: number | null;
 };

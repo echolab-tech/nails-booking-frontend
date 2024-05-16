@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { FaEdit } from "react-icons/fa";
-import { deleteCustomer, getCustomerDetail, getSearchCustomer } from "@/services/customers.service";
+import { deleteCustomer, getSearchCustomer, getCustomerShow } from "@/services/customer.service";
 import Search from "@/app/customers/search/page";
 import { toast } from "react-toastify";
 
@@ -34,9 +34,9 @@ const TableFive = () => {
     });
   }
 
-  const handleButtonDetail = async (customerId: BigInt) => {
+  const handleButtonDetail = async (customerId: number) => {
     try {
-        const response = await getCustomerDetail(customerId);
+        const response = await getCustomerShow(customerId);
         console.log(response);
         setSelectedCustomer(response.data.data);
     } catch (error) {
@@ -44,7 +44,7 @@ const TableFive = () => {
     }
 };
 
-  const handleButtonDelete = async (customerId: BigInt) => {
+  const handleButtonDelete = async (customerId: number) => {
     try {
         await deleteCustomer(customerId);
         toast.success('Delete Success !!!');
