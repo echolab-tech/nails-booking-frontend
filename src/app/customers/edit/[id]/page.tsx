@@ -9,11 +9,15 @@ import { CustomerForm } from "@/types/customerForm";
 import flatpickr from "flatpickr";
 import * as Yup from "yup";
 import { useEffect, useState } from "react";
-import { customers, getCountry } from "@/services/customer.service";
+import { customers, getCountry, getCustomerShow, getCustomerUpdate } from "@/services/customer.service";
 import { FileInput, Label } from "flowbite-react";
 import { format, parseISO } from "date-fns";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { CustomerEditForm } from "@/types/customerEditForm";
+import { useRouter } from 'next/router';
+import { useParams } from "next/navigation";
+ 
 
 // export const metadata: Metadata = {
 //   title: "Next.js Form Layout | TailAdmin - Next.js Dashboard Template",
@@ -24,7 +28,7 @@ import "react-toastify/dist/ReactToastify.css";
 const CustomerNewSchema = Yup.object().shape({
   name: Yup.string()
     .min(2, "Too Short!")
-    .max(100, "Too Long!")
+    .max(50, "Too Long!")
     .required("Required"),
   phone: Yup.string()
     .min(10, "Too Short!")
@@ -33,14 +37,18 @@ const CustomerNewSchema = Yup.object().shape({
   email: Yup.string().email("Invalid email").required("Required"),
 });
 
-const CustomeNewForm = () => {
-  const [cities, setCities] = useState<{ id: number; name: string }[]>([]);
+const CustomeEditForm = () => {
+  const params = useParams<{ id: string }>();
+  const [customer, setCustomer] = useState<any | null>(null);
+  const customerId = parseInt(params.id);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedBirthday, setSelectedBirthday] = useState<string | null>(null);
-
+  const [cities, setCities] = useState<{ id: number; name: string }[]>([]);
 
 
   useEffect(() => {
     // Init flatpickr
+    fetchCustomer(customerId);
     // flatpickr(".form-datepicker", {
     //   mode: "single",
     //   static: true,
@@ -50,15 +58,25 @@ const CustomeNewForm = () => {
     //     '<svg className="fill-current" width="7" height="11" viewBox="0 0 7 11"><path d="M5.4 10.8l1.4-1.4-4-4 4-4L5.4 0 0 5.4z" /></svg>',
     //   nextArrow:
     //     '<svg className="fill-current" width="7" height="11" viewBox="0 0 7 11"><path d="M1.4 10.8L0 9.4l4-4-4-4L1.4 0l5.4 5.4z" /></svg>',
-      
     // });
     fetchDataCountry();
   }, []);
+  
+  const fetchCustomer = (customerId: number) => {
+    try {
+      getCustomerShow(customerId).then(data => {
+        setCustomer(data?.data?.data);
+        setSelectedBirthday(data?.data?.data?.birthday);
+      });
+      
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
   const fetchDataCountry = async () => {
     const country = await getCountry();
     setCities(country.data.dataCountry);
   };
-
   const [avatarImage, setAvatar] = useState("");
 
   const handleAvatarChange = (event: any) => {
@@ -71,14 +89,12 @@ const CustomeNewForm = () => {
     reader.readAsDataURL(file);
   };
 
-
   const formatDate = (dateString: string) => {
     return parseISO(dateString);
   };
-
-  const handleBirthdayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedBirthday(e.target.value);
-  };
+   const handleBirthdayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+     setSelectedBirthday(e.target.value);
+   };
   return (
     <DefaultLayout>
       <Breadcrumb pageName="Add a new customer" />
@@ -88,31 +104,31 @@ const CustomeNewForm = () => {
           <Formik
             enableReinitialize={true}
             initialValues={{
-              name: "",
-              email: "",
-              phone: null,
-              birthday: null,
-              gender: null,
+              id: customer?.id,
+              name: customer?.name,
+              email: customer?.email,
+              phone: customer?.phone,
+              birthday: customer?.birthday,
+              gender: customer?.gender,
               // pronouns: null,
-              language: null,
-              source: null,
-              occupation: "",
-              country: null,
+              language: customer?.language,
+              source: customer?.source,
+              occupation: customer?.occupation,
+              country: customer?.country,
               avatar: null,
-              address: "",
-              common: "",
+              address: customer?.address,
             }}
             validationSchema={CustomerNewSchema}
-            onSubmit={(values: CustomerForm, { resetForm }) => {
+            onSubmit={(values: CustomerEditForm) => {
               values.avatar = avatarImage;
               values.birthday = selectedBirthday;
-              customers(values)
+              console.log(values);
+              getCustomerUpdate(values, customerId)
                 .then((data) => {
-                  toast.success("Customer created successfully.");
-                  resetForm();
+                  toast.success("Customer update successfully.");
                 })
                 .catch((error) => {
-                  toast.error("Failed to create customer.");
+                  toast.error("Failed to update customer.");
                 });
             }}
           >
@@ -122,6 +138,9 @@ const CustomeNewForm = () => {
               validateField,
               validateForm,
               setFieldValue,
+              values,
+              handleChange,
+              handleBlur,
             }) => (
               <Form>
                 {/* <!-- Profile Form --> */}
@@ -140,13 +159,17 @@ const CustomeNewForm = () => {
                         <Field
                           type="text"
                           name="name"
-                          placeholder="eg.Swich"
+                          placeholder="eg.Join"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values?.name}
                           className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                         />
-                        {errors.name && touched.name && (
+                        {errors.name && touched.name ? (
                           <div className="text-rose-500">{errors.name}</div>
-                        )}
+                        ) : null}
                       </div>
+
                       <div className="w-full xl:w-1/2">
                         <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                           Adress <span className="text-meta-1">*</span>
@@ -160,7 +183,7 @@ const CustomeNewForm = () => {
                       </div>
                     </div>
                     <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                      <div className="w-full xl:w-1/3">
+                      <div className="w-full xl:w-1/2">
                         <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                           Avatar <span className="text-meta-1">*</span>
                         </label>
@@ -170,6 +193,8 @@ const CustomeNewForm = () => {
                             id="file-upload-helper-text"
                             accept="image/*"
                             onChange={handleAvatarChange}
+                            onBlur={handleBlur}
+                            value={values?.avatar}
                             helperText="SVG, PNG, JPG or GIF (MAX. 800x400px)."
                           />
                           {/* <input
@@ -197,6 +222,9 @@ const CustomeNewForm = () => {
                         <Field
                           type="email"
                           name="email"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values?.email}
                           placeholder="example@gmail.com"
                           className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                         />
@@ -212,6 +240,9 @@ const CustomeNewForm = () => {
                         <Field
                           type="text"
                           name="phone"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values?.phone}
                           placeholder="+8412121219"
                           className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                         />
@@ -226,14 +257,24 @@ const CustomeNewForm = () => {
                           Birthday
                         </label>
                         <div className="relative">
-                          <input
+                          {/* <Field
                             name="birthday"
-                            type="date"
+                            onChange={handleBirthdayChange}
+                            onBlur={handleBlur}
+                            value={values?.birthday}
                             className="form-datepicker w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 font-normal outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
                             placeholder="mm/dd/yyyy"
                             data-class="flatpickr-right"
-                            // value={selectedBirthday || ""}
+                          /> */}
+                          <input
+                            name="birthday"
+                            type="date"
+                            className="form-datepicker w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 font-normal outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                            placeholder="mm/dd/yyyy"
+                            data-class="flatpickr-right"
                             onChange={handleBirthdayChange}
+                            onBlur={handleBlur}
+                            value={selectedBirthday ?? ""} // Provide a default empty string if selectedBirthday is null
                           />
 
                           {/* <div className="pointer-events-none absolute inset-0 left-auto right-5 flex items-center">
@@ -260,6 +301,9 @@ const CustomeNewForm = () => {
                         <Field
                           as="select"
                           name="gender"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values?.gender}
                           className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                         >
                           <option value={0}>Female</option>
@@ -286,6 +330,9 @@ const CustomeNewForm = () => {
                         <Field
                           as="select"
                           name="language"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values?.language}
                           className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                         >
                           <option value={0}>English</option>
@@ -301,6 +348,9 @@ const CustomeNewForm = () => {
                         <Field
                           as="select"
                           name="source"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values?.source}
                           className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                         >
                           <option value={0}>Walk-in</option>
@@ -317,6 +367,9 @@ const CustomeNewForm = () => {
                           type="text"
                           name="occupation"
                           placeholder="Enter customer job"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values?.occupation}
                           className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                         />
                       </div>
@@ -328,6 +381,9 @@ const CustomeNewForm = () => {
                         <Field
                           as="select"
                           name="country"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values?.country}
                           className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                         >
                           {cities.map((city, index) => (
@@ -362,4 +418,4 @@ const CustomeNewForm = () => {
   );
 };
 
-export default CustomeNewForm;
+export default CustomeEditForm;
