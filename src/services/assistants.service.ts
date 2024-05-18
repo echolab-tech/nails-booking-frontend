@@ -1,0 +1,25 @@
+import { AssistantAddForm } from "@/types/AssistantAddForm";
+import { http } from "../lib/http";
+import { AssistantEditForm } from "@/types/AssistantEditFrom";
+export const assistants = async (values: AssistantAddForm): Promise<any> => {
+  return await http.post<any>("/assistants", values);
+};
+export const  getListService = async (): Promise<any> => {
+  return await http.get<any>("/services");
+};
+
+export const  getListAssistant = async (page: number): Promise<any> => {
+  return await http.get<any>(`/assistants?page=${page}`);
+};
+
+export const  getAssistantShow = async (id: number): Promise<any> => {
+  return await http.get<any>(`/assistants/${id}`);
+};
+
+export const assistantUpdate = async (values: AssistantEditForm, id: number): Promise<any> => {
+    return await http.put<any>(`/assistants/${id}`,values);
+};
+
+export const assistantDelete = async (id: number): Promise<any> => {
+    return await http.delete<any>(`/assistants/${id}`);
+};
