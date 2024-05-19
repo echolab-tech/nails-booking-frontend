@@ -84,7 +84,6 @@ const TeamEdit = () => {
             onSubmit={(values: AssistantEditForm, { resetForm }) => {
               values.services = animal;
               values.birthday = selectedBirthday;
-              console.log(values);
               assistantUpdate(values, customerId)
                 .then((data) => {
                   toast.success("you update it successfully.");
