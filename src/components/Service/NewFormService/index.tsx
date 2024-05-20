@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import './style.scss';
 import Select from 'react-tailwindcss-select';
 import ToggleState from './ToggleState';
-import { Formik, Field, Form, ErrorMessage, FieldArray, FormikHelpers } from 'formik';
+import { Formik, Field, Form, ErrorMessage, FieldArray } from 'formik';
 import * as Yup from 'yup';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -13,18 +13,18 @@ import { CATEGORYESHOW } from '@/types/CategoryEdit';
 import { getAssistants } from '@/services/assistants.service';
 import { BsFillTrashFill } from 'react-icons/bs';
 import { AiFillPlusCircle } from "react-icons/ai";
-import CustomInput from './CustomInput';
-import { serviceTypeNew } from '@/types/ServiceNew';
-
-import { GrFormClose } from "react-icons/gr";
 
 const ServiceSingleNew = () => {
     const [selectedOption, setSelectedOption] = useState(null);
     const [categoryData, setCategoryData] = useState<CATEGORYESHOW[]>([]);
     const [assistantData, setAssistantData] = useState([]);
+    const [selectedOptionPriceType, setselectedOptionPriceType] = useState(null);
 
     const handleChange = (selectedOption: any) => {
         setSelectedOption(selectedOption);
+    };
+    const handleChangeOptionPriceType = (selectedOptionPriceType: any) => {
+        setselectedOptionPriceType(selectedOptionPriceType);
     };
     const handleChangAssistant = (assistantData: any) => {
         setCategoryData(assistantData);
@@ -37,8 +37,9 @@ const ServiceSingleNew = () => {
     };
 
     const [selectedAssistants, setSelectedAssistants] = useState([]);
+
     const ChangeSelectedAssistant = (selectedAssistants: any) => {
-    setSelectedAssistants(selectedAssistants);
+        setSelectedAssistants(selectedAssistants);
     };
 
     useEffect(() => {
@@ -46,10 +47,10 @@ const ServiceSingleNew = () => {
         fetchAssistant(1);
     }, []);
 
-    const options = [
-        { value: '1', label: ' min' },
-        { value: '30', label: ' min' },
-        { value: '2h', label: '2h' },
+    const optionPriceType = [
+        { value: '1', label: 'Fixed' },
+        { value: '2', label: 'Type 1' },
+        { value: '3', label: 'Type 2' },
     ];
     const optionTime = [
         { value: '15', label: '15 min' },
@@ -77,7 +78,7 @@ const ServiceSingleNew = () => {
     const fetchAssistant = async (page: number) => {
         try {
             const response = await getAssistants(page);
-            setAssistantData(response.data.data);
+            setAssistantData(response.data.assistants);
         } catch (error) {
             console.error('Error fetching assistant:', error);
         }
@@ -92,33 +93,33 @@ const ServiceSingleNew = () => {
         }
     };
 
-
-    const CreatedService = Yup.object().shape({
-        // name: Yup.string().min(2).max(50).required(),
-    });
-
     const [showDialog, setShowDialog] = useState(false);
 
     const toggleDialog = () => {
         setShowDialog(!showDialog);
     };
 
-    const removeFromList = (i, values, setValues) => {
-        const serviceOption = [...values.serviceOption];
-        serviceOption.splice(i, 1);
-        setValues({ ...values, serviceOption });       
+    const removeFromList = (index, values, setValues) => {
+        const updatedServiceOptions = values.serviceOptions.filter((_, i) => i !== index);
+        setValues({ ...values, serviceOptions: updatedServiceOptions });
     };
 
     const updateForm = (values, setValues) => {
-
-        const serviceOption = [...values.serviceOption];
-        serviceOption.push({
-            id: '',
-            name: '',
-            time: '',
-            price: ''
-        });
-        setValues({ ...values, serviceOption });
+        const newServiceOptions = {
+            name: null,
+            time: null,
+            price: null,
+            serviceOptionAssistants: [
+                {
+                    name: null,
+                    time: null,
+                    price: null,
+                    assistant_id: null,
+                    service_option_id: null
+                }
+            ]
+        };
+        setValues({ ...values, serviceOptions: [...values.serviceOptions, newServiceOptions] });
     };
 
     const [selectedOptionTime, setSelectedOptionTime] = useState(null);
@@ -126,11 +127,24 @@ const ServiceSingleNew = () => {
         setSelectedOptionTime(selectedOptionTime);
     };
 
+    const CreatedService = Yup.object().shape({
+        name: Yup.string().min(2).max(50).required(),
+        description: Yup.string().min(2).max(50).required(),
+    });
+
     const handleSubmit = (values, { resetForm }) => {
         values.service_category_id = selectedOptionCategory?.id || '';
-        values.serviceOption.forEach((option, index) => {
-            values.serviceOption[index]['time'] = selectedOptionTime?.value || '';
-        });
+
+       if (Array.isArray(values.serviceOptions) && values.serviceOptions.length > 0) {
+            values.serviceOptions.forEach((option, index) => {
+                values.serviceOptions[index]['time'] = selectedOptionTime?.value || '';
+                values.serviceOptions[index]['price_type'] = selectedOptionPriceType?.value || '';
+
+                if (values.serviceOptions[index].serviceOptionAssistants[0]["name"] == null) {
+                    values.serviceOptions[index].serviceOptionAssistants = []
+                }
+            });
+         }
 
         service(values)
             .then((data) => {
@@ -141,6 +155,7 @@ const ServiceSingleNew = () => {
             toast.error("You failed to create a new one.");
         });
     };
+
     return (
         <div className="grid grid-cols-1 gap-12">
             <div className="flex flex-col gap-9">
@@ -150,30 +165,33 @@ const ServiceSingleNew = () => {
                     </div>
                     <Formik
                         initialValues={{
-                            name: '',
-                            description: '',
-                            service_category_id: '',
+                            name: null,
+                            description: null,
+                            service_category_id: null,
                             is_booking_online: 0,
                             assistantServices: [],
-                            serviceOption: [
+                            serviceOptions: [
                                 {
-                                    id: '',
-                                    name: '',
-                                    time: '',
-                                    price: '',
+                                    name: null,
+                                    time: null,
+                                    price: null,
+                                    price_type: null,
                                     serviceOptionAssistants: [
                                         {
-                                            id: '',
-                                            name: '',
-                                            time: '',
-                                            price: '',
-                                            assistant_id: '',
-                                            service_option_id: ''
+                                            name: null,
+                                            time: null,
+                                            price: null,
+                                            assistant_id: null,
+                                            service_option_id: null,
+                                            price_type: null
+
                                         }
                                     ]
                                 }
                             ],
-                        }}
+                        }}           
+                        validationSchema={CreatedService}
+
 
                         onSubmit={handleSubmit}
                     >
@@ -269,218 +287,180 @@ const ServiceSingleNew = () => {
                                         </FieldArray>
                                     </div>
                                 </div>
-                                <div className="p-6.5 boder-assistant">
+                                <div className="p-6.5 border-assistant">
                                     <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                                         <div className='flex flex-col'>
                                             <b>Pricing and Time</b>
                                             <span>Add the pricing options and Time of the service.</span>
                                         </div>
                                     </label>
-                                    <FieldArray name="serviceOption">
+                                    <FieldArray name="serviceOptions">
                                         {() =>
-                                            values.serviceOption.map((item, i) => {
-                                                return (
-                                                    <div key={i} className='boder-option'>
-                                                        {values.serviceOption.length > 1 && (
-                                                            <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                                                                <div className="w-full xl:w-1/2">
-                                                                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                                                        <b>Pricing option {i + 1}</b>
-                                                                    </label>
-                                                                </div>
-                                                                <div className="w-full xl:w-1/2 flex justify-end items-center">
-                                                                    <div className="ml-auto">
-                                                                        <button
-                                                                            onClick={() => removeFromList(i, values, setValues)}>
-                                                                            <span><BsFillTrashFill /></span>
-                                                                        </button>
-                                                                    </div>
+                                            values.serviceOptions.map((item, i) => (
+                                                <div key={i} className='border-option p-6.5 border-basic-info'>
+                                                    <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                                                        <div className="w-full xl:w-1/2">
+                                                            <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                                                <b>Pricing option {i + 1}</b>
+                                                            </label>
+                                                        </div>
+                                                        {values.serviceOptions.length > 1 && (
+                                                            <div className="w-full xl:w-1/2 flex justify-end items-center">
+                                                                <div className="ml-auto">
+                                                                    <button onClick={()=> removeFromList(i, values, setValues)}>
+                                                                        <span>
+                                                                            <BsFillTrashFill />
+                                                                        </span>
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                         )}
-                                                        <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                                                            <div className="w-full xl:w-1/3">
-                                                                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                                                    Time <span className="text-meta-1">*</span>
-                                                                </label>
-                                                                <Select
-                                                                    value={selectedOptionTime}
-                                                                    onChange={ChangeSelectedTime}
-                                                                    options={optionTime}
-                                                                    isSearchable={true}
-                                                                    name={`serviceOption.${i}.time`}                                                                name={`serviceOption.${i}.time`}
-                                                                    placeholder="Search..." primaryColor={''} />
-                                                            </div>
-                                                            <div className="w-full xl:w-1/3">
-                                                                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                                                    Price type <span className="text-meta-1">*</span>
-                                                                </label>
-                                                                <Select
-                                                                    value={selectedOption}
-                                                                    onChange={handleChange}
-                                                                    options={categoryData.map((item) => ({
-                                                                        value: item.name,
-                                                                        label: item.name,
-                                                                    }))}
-                                                                    isSearchable={true}
-                                                                    placeholder="Search..." primaryColor={''} />
-                                                            </div>
-                                                             <div className="w-full xl:w-1/3">
-                                                                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                                                    Price <span className="text-meta-1">*</span>
-                                                                </label>
-                                                                <CustomInput
-                                                                    name={`serviceOption.${i}.price`}
-                                                                    type="text"
-                                                                    placeholder="$0.00"
-                                                                    className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-1.5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                                                                />
-                                                            </div>
+                                                    </div>
+                                                    <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                                                        <div className="w-full xl:w-1/3">
+                                                            <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                                                Time <span className="text-meta-1">*</span>
+                                                            </label>
+                                                            <Select value={selectedOptionTime} onChange={ChangeSelectedTime} options={optionTime}
+                                                                isSearchable={true} name={`serviceOptions.${i}.time`} placeholder="Search..."
+                                                                primaryColor={''} />
                                                         </div>
-                                                        <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                                                            <div className="w-full">
-                                                                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                                                    Pricing name (Optional)
-                                                                </label>
-                                                                <CustomInput
-                                                                    name={`serviceOption.${i}.name`}
-                                                                    type="text"
-                                                                    placeholder="Eg: Long hair"
-                                                                    className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-1.5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                                                                />
-                                                            </div>
+                                                        <div className="w-full xl:w-1/3">
+                                                            <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                                                Price type <span className="text-meta-1">*</span>
+                                                            </label>
+                                                               <Select value={selectedOptionPriceType} onChange={handleChangeOptionPriceType} options={optionPriceType}
+                                                                    isSearchable={true} name={`serviceOptions.${i}.price_type`} placeholder="Search..."
+                                                                    primaryColor={''} />
                                                         </div>
-                                                        <div className="flex flex-col gap-6 xl:flex-row">
-                                                            <div className="w-full xl:w-1/2">
-                                                                <label className="block text-sm font-medium text-blue-500 dark:text-blue-500" onClick={toggleDialog}>
-                                                                    Advanced pricing options
-                                                                </label>
-                                                            </div>
+                                                        <div className="w-full xl:w-1/3">
+                                                            <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                                                Price <span className="text-meta-1">*</span>
+                                                            </label>
+                                                            <Field name={`serviceOptions.${i}.price`} type="text" placeholder="$0.00"
+                                                                className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-1.5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary" />
                                                         </div>
                                                     </div>
-                                                );
-                                            })
-                                        }
-                                        
-                                    </FieldArray>
-                                    <button
-                                        className="flex items-center block text-sm font-medium text-blue-500 dark:text-blue-500"
-                                        type="button"
-                                        onClick={(e) => updateForm(values, setValues)}
-                                    >
-                                        Add pricing option
-                                        <AiFillPlusCircle/>
-                                    </button>
-                                    {showDialog && (
-                                        <FieldArray name="serviceOptionAssistants">
-                                            {({ push, remove }) => (
-                                                <div>
-                                                    {values.assistantServices.map((assistant, index) => {
-                                                        return (
-                                                            <div key={index} className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" >
-                                                                <div className="bg-white rounded-lg shadow-lg w-10/12 md:w-9/12 lg:w-8/12 xl:w-7/12 mx-auto">
-                                                                    <div className="mb-4.5 mt-4.5 flex flex-col gap-1 xl:flex-row px-5">
-                                                                        <div className="w-full xl:w-1/3">
-                                                                            <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                                                                Time <span className="text-meta-1">*</span>
-                                                                            </label>
-                                                                            <Select
-                                                                                value={selectedOption}
-                                                                                onChange={handleChange}
-                                                                                options={options}
-                                                                                isSearchable={true}
-                                                                                placeholder="Search..." primaryColor={''} />
-                                                                        </div>
-                                                                        <div className="w-full xl:w-1/3">
-                                                                            <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                                                                Price type <span className="text-meta-1">*</span>
-                                                                            </label>
-                                                                            <Select
-                                                                                value={selectedOption}
-                                                                                onChange={handleChange}
-                                                                                options={options}
-                                                                                isSearchable={true}
-                                                                                placeholder="Search..." primaryColor={''} />
-                                                                        </div>
-                                                                        <div className="w-full xl:w-1/3">
-                                                                            <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                                                                Price <span className="text-meta-1">*</span>
-                                                                            </label>
-                                                                            <Field
-                                                                                type="text"
-                                                                                placeholder="$0.00"
-                                                                                name="price"
-                                                                                className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-1.5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="mb-4.5 flex flex-col gap-6 xl:flex-row px-5">
-                                                                        <div className="w-full">
-                                                                            <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                                                                Pricing name (Optional)
-                                                                            </label>
-                                                                            <input
-                                                                                type="text"
-                                                                                placeholder="Eg: Long hair"
-                                                                                className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-1.5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="flex flex-col gap-6 px-5 w-full" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                                                                        <div className="flex flex-col gap-6 xl:flex-row">
-                                                                            <div className="w-full xl:w-1/4 flex mt-5 flex items-center">
-                                                                                <img src="https://didongviet.vn/dchannel/wp-content/uploads/2023/08/hinh-nen-3d-hinh-nen-iphone-dep-3d-didongviet@2x-576x1024.jpg" alt="" className="rounded-full w-16 h-16 mr-3"/>
-                                                                                <label className="block text-sm font-medium text-black dark:text-white">
-                                                                                    {assistant.name}
-                                                                                </label>
+                                                    <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                                                        <div className="w-full">
+                                                            <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                                                Pricing name (Optional)
+                                                            </label>
+                                                            <Field name={`serviceOptions.${i}.name`} type="text" placeholder="Eg: Long hair"
+                                                                className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-1.5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col gap-6 xl:flex-row">
+                                                        <div className="w-full xl:w-1/2">
+                                                            <button className="block text-sm font-medium text-blue-500 dark:text-blue-500"
+                                                                onClick={toggleDialog} type="button">
+                                                                Advanced pricing options
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+
+
+                                                    {showDialog && (
+                                                    <FieldArray name={`serviceOptions.${i}.serviceOptionAssistants`}>
+                                                        {({ push, remove }) => (
+                                                            <div>
+                                                                {item.serviceOptionAssistants.map((assistant, index) => (
+                                                                    <div key={index}
+                                                                        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                                                                        <div className="bg-white py-6 px-6 rounded-lg shadow-lg w-10/12 md:w-9/12 lg:w-8/12 xl:w-7/12 mx-auto">
+                                                                           <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                                                                                <div className="w-full xl:w-1/3">
+                                                                                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                                                                        Time <span className="text-meta-1">*</span>
+                                                                                    </label>
+                                                                                    <Select value={selectedOptionTime} onChange={ChangeSelectedTime} options={optionTime}
+                                                                                        isSearchable={true} name={`serviceOptions.${i}.time`} placeholder="Search..."
+                                                                                        primaryColor={''} />
+                                                                                </div>
+                                                                                <div className="w-full xl:w-1/3">
+                                                                                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                                                                        Price type <span className="text-meta-1">*</span>
+                                                                                    </label>
+                                                                                    <Select value={selectedOptionPriceType} onChange={handleChangeOptionPriceType} options={optionTime}
+                                                                                        isSearchable={true}
+                                                                                        name={`serviceOptions.${i}.price_type`}
+                                                                                        placeholder="Search..." primaryColor={''} />
+                                                                                </div>
+                                                                                <div className="w-full xl:w-1/3">
+                                                                                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                                                                        Price <span className="text-meta-1">*</span>
+                                                                                    </label>
+                                                                                    <Field name={`serviceOptions.${i}.price`} type="text" placeholder="$0.00"
+                                                                                        className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-1.5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary" />
+                                                                                </div>
                                                                             </div>
-                                                                            <div className="w-full xl:w-1/4">
-                                                                                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                                                                    Time <span className="text-meta-1">*</span>
-                                                                                </label>
-                                                                                <Select
-                                                                                    value={selectedOption}
-                                                                                    onChange={handleChange}
-                                                                                    options={options}
-                                                                                    isSearchable={true}
-                                                                                    placeholder="Search..." primaryColor={''} />
+                                                                            <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                                                                                <div className="w-full">
+                                                                                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                                                                        Pricing name (Optional)
+                                                                                    </label>
+                                                                                    <Field name={`serviceOption.${i}.name`} type="text" placeholder="Eg: Long hair"
+                                                                                        className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-1.5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary" />
+                                                                                </div>
                                                                             </div>
-                                                                            <div className="w-full xl:w-1/4">
-                                                                                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                                                                    Price type <span className="text-meta-1">*</span>
-                                                                                </label>
-                                                                                <Select
-                                                                                    value={selectedOption}
-                                                                                    onChange={handleChange}
-                                                                                    options={options}
-                                                                                    isSearchable={true}
-                                                                                    placeholder="Search..." primaryColor={''} />
+                                                                            
+                                                                            <div className="flex flex-col gap-6 px-5 w-full" style={{ maxHeight: '300px' ,
+                                                                                overflowY: 'auto' }}>
+                                                                                <div className="flex flex-col gap-6 xl:flex-row">
+                                                                                    <div className="w-full xl:w-1/4 flex mt-5 items-center">
+                                                                                        <img src="https://didongviet.vn/dchannel/wp-content/uploads/2023/08/hinh-nen-3d-hinh-nen-iphone-dep-3d-didongviet@2x-576x1024.jpg"
+                                                                                            alt="" className="rounded-full w-16 h-16 mr-3" />
+                                                                                        <label className="block text-sm font-medium text-black dark:text-white">
+                                                                                            {assistant.name}
+                                                                                        </label>
+                                                                                    </div>
+                                                                                    <div className="w-full xl:w-1/4">
+                                                                                        <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                                                                            Time <span className="text-meta-1">*</span>
+                                                                                        </label>
+                                                                                        <Select value={selectedOption} onChange={handleChange} options={optionTime}
+                                                                                            isSearchable={true} placeholder="Search..." primaryColor={''} />
+                                                                                    </div>
+                                                                                    <div className="w-full xl:w-1/4">
+                                                                                        <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                                                                            Price type <span className="text-meta-1">*</span>
+                                                                                        </label>
+                                                                                        <Select value={selectedOptionPriceType} onChange={handleChangeOptionPriceType} options={optionPriceType}
+                                                                                            isSearchable={true} placeholder="Search..." primaryColor={''} />
+                                                                                    </div>
+                                                                                    <div className="w-full xl:w-1/4">
+                                                                                        <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                                                                            Price <span className="text-meta-1">*</span>
+                                                                                        </label>
+                                                                                        <Field type="text" placeholder="$0.00"
+                                                                                            className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-1.5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary" />
+                                                                                    </div>
+                                                                                </div>
                                                                             </div>
-                                                                            <div className="w-full xl:w-1/4">
-                                                                                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                                                                    Price <span className="text-meta-1">*</span>
-                                                                                </label>
-                                                                                <input
-                                                                                    type="text"
-                                                                                    placeholder="$0.00"
-                                                                                    className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-1.5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                                                                                />
+                                                                            <div className="mb-4.5 flex flex-col gap-6 xl:flex-row justify-end px-5">
+                                                                                <button className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                                                                    onClick={toggleDialog}>
+                                                                                    Close
+                                                                                </button>
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                    <div className="mb-4.5 flex flex-col gap-6 xl:flex-row justify-end px-5">
-                                                                        <button className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" onClick={toggleDialog}>
-                                                                            Close
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
+                                                                ))}
                                                             </div>
-                                                        );
-                                                    })}
+                                                        )}
+                                                    </FieldArray>
+                                                    )}
                                                 </div>
-                                            )}
-                                        </FieldArray>
-                                    )}
+                                            ))
+                                        }
+                                    </FieldArray>
+                                    <button className="flex items-center text-sm font-medium text-blue-500 dark:text-blue-500" type="button"
+                                        onClick={()=> updateForm(values, setValues)}
+                                        >
+                                        Add pricing option
+                                        <AiFillPlusCircle />
+                                    </button>
                                 </div>
                                 <div className="mb-4.5 flex justify-center">
                                     <button type="submit" className="inline-flex items-center justify-center rounded-md bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10">

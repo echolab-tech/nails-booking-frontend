@@ -10,6 +10,5 @@ export const getListService = async (page: number, search: any | null): Promise<
 };
 
 export const service = async (values: serviceType): Promise<any> => {
-    debugger
-    return await http.post<any>("/services", values);
+  return await http.post<any>("/services", values);
 };
