@@ -95,7 +95,6 @@ const CustomeEditForm = () => {
    const handleBirthdayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
      setSelectedBirthday(e.target.value);
    };
-   console.log(customer);
   return (
     <DefaultLayout>
       <Breadcrumb pageName="Add a new customer" />
@@ -124,7 +123,6 @@ const CustomeEditForm = () => {
             onSubmit={(values: CustomerEditForm) => {
               values.avatar = avatarImage;
               values.birthday = selectedBirthday;
-              console.log(values);
               getCustomerUpdate(values, customerId)
                 .then((data) => {
                   toast.success("Customer update successfully.");

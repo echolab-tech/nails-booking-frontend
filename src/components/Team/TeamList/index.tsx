@@ -14,6 +14,13 @@ interface PaginationData {
   total_items: number;
   per_page: number;
 }
+
+interface SearchValues {
+  name: string;
+  email: string;
+  phone: number | null;
+  address: string;
+}
 const TeamList = () => {
     const router = useRouter();
     const [assistantData, setAssistantData] = useState<AssistantEditForm[]>([]);
@@ -23,13 +30,20 @@ const TeamList = () => {
       total_items: 0,
       per_page: 10,
     });
+    const [searchValues, setSearchValues] = useState<SearchValues>({
+      name: "",
+      email: "",
+      phone: null,
+      address: "",
+    });
+
     useEffect(() => {
       fetchAssistant(1);
     }, []);
 
     const fetchAssistant = async (page: number) => {
       try {
-        const response = await getListAssistant(page);
+        const response = await getListAssistant(searchValues, page);
         setAssistantData(response.data.assistants);
         setPaginationData(response.data.paginationData);
       } catch (error) {
@@ -49,7 +63,7 @@ const TeamList = () => {
 
     const updateCategoryList = async () => {
     try {
-      const dataUpdate = await getListAssistant(paginationData.current_page);
+      const dataUpdate = await getListAssistant(searchValues, paginationData.current_page);
       setAssistantData(dataUpdate.data.assistants);
       setPaginationData(dataUpdate.data.paginationData);
     } catch (error) {
@@ -65,9 +79,85 @@ const TeamList = () => {
         toast.warning("Delete Fail !!!");
       }
     };
-    console.log(assistantData);
+
+     const handleSearch = async () => {
+       fetchAssistant(1);
+     };
+
+      const handleChangeSearchValues = (
+        e: React.ChangeEvent<HTMLInputElement>,
+      ) => {
+        setSearchValues({ ...searchValues, [e.target.name]: e.target.value });
+      };
     return (
       <div className="rounded-sm border border-stroke bg-white px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+        <div className="p-6.5">
+          <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+            <div className="w-full xl:w-1/2">
+              <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                Name <span className="text-meta-1">*</span>
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={searchValues.name}
+                onChange={handleChangeSearchValues}
+                placeholder="Enter your name"
+                className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+              />
+            </div>
+            <div className="w-full xl:w-1/2">
+              <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                email <span className="text-meta-1">*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={searchValues.email}
+                onChange={handleChangeSearchValues}
+                placeholder="Enter your email"
+                className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+              />
+            </div>
+          </div>
+          <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+            <div className="w-full xl:w-1/2">
+              <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                Phone <span className="text-meta-1">*</span>
+              </label>
+              <input
+                name="phone"
+                value={searchValues.phone !== null ? searchValues.phone : ""}
+                onChange={handleChangeSearchValues}
+                placeholder="Enter your phone"
+                className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+              />
+            </div>
+            <div className="w-full xl:w-1/2">
+              <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                Address <span className="text-meta-1">*</span>
+              </label>
+              <input
+                type="text"
+                name="address"
+                value={searchValues.address}
+                onChange={handleChangeSearchValues}
+                placeholder="Enter your address"
+                className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+              />
+            </div>
+          </div>
+          <div className="mb-4.5 flex flex-col">
+            <div className="w-full flex justify-center">
+              <button
+                className="mt-4 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+                onClick={handleSearch}
+              >
+                Search
+              </button>
+            </div>
+          </div>
+        </div>
         <div className="max-w-full overflow-x-auto">
           <table className="w-full table-auto">
             <thead>
