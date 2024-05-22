@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
-import CategoryNew from "@/components/Category/CategoryNew";
 import ApointmentAdd from "@/components/Apointments/ApointmentsAdd";
 
 export const metadata: Metadata = {
