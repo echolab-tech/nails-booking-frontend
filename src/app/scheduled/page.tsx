@@ -112,7 +112,7 @@ const ScheduledPage = () => {
       <div className="h-[500px] rounded-2xl border-2 border-stroke  pb-2.5 pt-6  dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
         <div className="flex flex-col">
           <div
-            className={`grid grid-cols-3 rounded-sm  sm:grid-cols-${HEADERSTABLE.length} pl-5 pr-5`}
+            className={`grid grid-cols-3 rounded-sm  pl-5 pr-5 sm:grid-cols-7`}
           >
             {HEADERSTABLE.map((header) => (
               <div key={header} className="pl-2.5">
@@ -123,7 +123,7 @@ const ScheduledPage = () => {
           {SCHEDULEDSHIFTS.map((item, index) => (
             <div
               key={index}
-              className={`grid grid-cols-3 rounded-sm p-5 sm:grid-cols-${HEADERSTABLE.length}`}
+              className={`grid grid-cols-3 rounded-sm p-5 sm:grid-cols-7`}
             >
               <div className="flex items-center gap-4">
                 <Image
