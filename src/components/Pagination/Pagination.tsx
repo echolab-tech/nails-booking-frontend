@@ -12,7 +12,7 @@ export function PaginationCustom(props: PaginationProps) {
     const { currentPage, totalPages, onPageChange } = props;
 
   return (
-    <div className="flex overflow-x-auto sm:justify-center">
+    <div className="flex overflow-x-auto sm:justify-center justify-center">
       <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
     </div>
   );
