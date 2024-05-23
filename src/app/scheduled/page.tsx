@@ -3,6 +3,7 @@ import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import { Metadata } from "next";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Image from "next/image";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Next.js Tables | TailAdmin - Next.js Dashboard Template",
@@ -110,7 +111,7 @@ const ScheduledPage = () => {
       <Breadcrumb pageName="Scheduled shifts" />
 
       <div className="h-[500px] w-full rounded-2xl border-2  border-stroke pb-2.5  pt-6 dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
-        <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+        <div className="relative overflow-x-auto sm:rounded-lg">
           <table className="text-gray-500 dark:text-gray-400 w-full text-left text-sm rtl:text-right">
             <thead>
               <tr>
@@ -136,7 +137,7 @@ const ScheduledPage = () => {
                         alt={item.userName}
                         width={40}
                         height={40}
-                        className="w-[40px' h-[40px]"
+                        className="w-[40px]' h-[40px]"
                       />
 
                       <div className="">
@@ -147,12 +148,14 @@ const ScheduledPage = () => {
                           {item.totalHours}
                         </p>
                       </div>
-                      <Image
-                        src="/images/scheduled/edit.svg"
-                        width={50}
-                        height={50}
-                        alt="edit"
-                      />
+                      <Link href={`edit/${item.userName.replace(" ", "-")}`}>
+                        <Image
+                          src="/images/scheduled/edit.svg"
+                          width={50}
+                          height={50}
+                          alt="edit"
+                        />
+                      </Link>
                     </div>
                   </td>
 
