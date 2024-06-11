@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { getListService } from "@/services/service.service";
 import { formatPrice } from "@/components/common/format_currency";
-import { useSearchParams, usePathname, useRouter } from 'next/navigation';
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import Search from "../Search";
 
 const ITEMS_PER_PAGE = 2;
@@ -38,8 +38,11 @@ const ServiceList = () => {
 
   return (
     <>
-     <Search placeholder="search" handleSearch={(value) => handleSearch(value)}/>
-      <div className="rounded-sm border border-stroke bg-white px-5  mt-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+      <Search
+        placeholder="search"
+        handleSearch={(value) => handleSearch(value)}
+      />
+      <div className="mt-5 rounded-sm border border-stroke bg-white  px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
         <div className="max-w-full overflow-x-auto">
           <table className="w-full table-auto">
             <thead>
@@ -73,15 +76,20 @@ const ServiceList = () => {
                     </h5>
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                    <p >
+                    <p>
                       {serviceItem?.serviceOptions.map((option, index) => (
-                        <span className="font-medium text-black dark:text-white" key={index}>{formatPrice(option.price)}</span>
+                        <span
+                          className="font-medium text-black dark:text-white"
+                          key={index}
+                        >
+                          {formatPrice(option.price)}
+                        </span>
                       ))}
                     </p>
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                     <ul>
-                      {serviceItem?.assistantServices.map((assistant) => (
+                      {serviceItem?.assistantServices?.map((assistant) => (
                         <li key={assistant.id}>
                           <p>{assistant.name}</p>
                         </li>

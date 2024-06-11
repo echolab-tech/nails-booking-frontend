@@ -5,30 +5,21 @@ import Select from "react-tailwindcss-select";
 import ToggleState from "./ToggleState";
 import AssistantList from "./AssistantCheckboxes";
 import ServiceOptions from "./ServiceOptions";
-import {
-  FormikProvider,
-  Field,
-  Form,
-  ErrorMessage,
-  FieldArray,
-  useFormik,
-} from "formik";
+import { FormikProvider, Field, Form, ErrorMessage, useFormik } from "formik";
 import * as Yup from "yup";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { service } from "@/services/service.service";
 import { getCategories } from "@/services/categories.service";
 import { CATEGORYESHOW } from "@/types/CategoryEdit";
 import { getAssistants } from "@/services/assistants.service";
 import { AiFillPlusCircle } from "react-icons/ai";
 import useColorMode from "@/hooks/useColorMode";
+import { Assistant } from "@/types/assistant";
 
 const ServiceSingleNew = () => {
-  const [selectedOption, setSelectedOption] = useState(null);
   const [categoryData, setCategoryData] = useState<CATEGORYESHOW[]>([]);
   const [assistantData, setAssistantData] = useState([]);
   const [selectedOptionTime, setSelectedOptionTime] = useState(null);
-  const [selectedAssistants, setSelectedAssistants] = useState([]);
   const [selectedOptionCategory, setSelectedOptionCategory] = useState(null);
   const [colorMode, setColorMode] = useColorMode();
 
@@ -50,19 +41,11 @@ const ServiceSingleNew = () => {
   //     setSelectedOption(selectedOption);
   // };
 
-  const handleChangAssistant = (assistantData: any) => {
-    setCategoryData(assistantData);
-  };
-
-  const ChangeSelectedCategory = (selectedOptionCategory: any) => {
+  const changeSelectedCategory = (selectedOptionCategory: any) => {
     setSelectedOptionCategory(selectedOptionCategory);
   };
 
-  const ChangeSelectedAssistant = (selectedAssistants: any) => {
-    setSelectedAssistants(selectedAssistants);
-  };
-
-  const ChangeSelectedTime = (selectedOptionTime: any) => {
+  const changeSelectedTime = (selectedOptionTime: any) => {
     setSelectedOptionTime(selectedOptionTime);
   };
 
@@ -101,13 +84,12 @@ const ServiceSingleNew = () => {
 
   const fetchAssistant = async (page: number) => {
     try {
-      const response = await getAssistants(page);
-      setAssistantData(response.data.assistants);
+      const response = await getAssistants();
+      setAssistantData(response?.data?.assistants);
     } catch (error) {
       console.error("Error fetching assistant:", error);
     }
   };
-
   const fetchCategories = async (page: number) => {
     try {
       const response = await getCategories(page);
@@ -117,14 +99,14 @@ const ServiceSingleNew = () => {
     }
   };
 
-  const removeFromList = (index, values, setValues) => {
+  const removeFromList = (index: number, values: any, setValues: any) => {
     const updatedServiceOptions = values.serviceOptions.filter(
       (_, i) => i !== index,
     );
     setValues({ ...values, serviceOptions: updatedServiceOptions });
   };
 
-  const updateForm = (values, setValues) => {
+  const updateForm = (values: any, setValues: any) => {
     const newServiceOptions = {
       name: null,
       time: null,
@@ -142,30 +124,30 @@ const ServiceSingleNew = () => {
     description: Yup.string().min(2).max(50).required(),
   });
 
-  const handleSubmit = (values, { resetForm }) => {
-    formik.values.service_category_id = selectedOptionCategory?.id || "";
+  // const handleSubmit = (values, { resetForm }) => {
+  //   formik.values.service_category_id = selectedOptionCategory?.id || "";
 
-    if (
-      Array.isArray(formik.values.serviceOptions) &&
-      formik.values.serviceOptions.length > 0
-    ) {
-      formik.values.serviceOptions.forEach((option, index) => {
-        formik.values.serviceOptions[index]["time"] =
-          selectedOptionTime?.value || "";
-        formik.values.serviceOptions[index]["price_type"] =
-          selectedOptionPriceType?.value || "";
-      });
-    }
+  //   if (
+  //     Array.isArray(formik.values.serviceOptions) &&
+  //     formik.values.serviceOptions.length > 0
+  //   ) {
+  //     formik.values.serviceOptions.forEach((option, index) => {
+  //       formik.values.serviceOptions[index]["time"] =
+  //         selectedOptionTime?.value || "";
+  //       formik.values.serviceOptions[index]["price_type"] =
+  //         selectedOptionPriceType?.value || "";
+  //     });
+  //   }
 
-    service(values)
-      .then((data) => {
-        toast.success("You created it successfully.");
-        resetForm();
-      })
-      .catch((error) => {
-        toast.error("You failed to create a new one.");
-      });
-  };
+  //   service(values)
+  //     .then((data) => {
+  //       toast.success("You created it successfully.");
+  //       resetForm();
+  //     })
+  //     .catch((error) => {
+  //       toast.error("You failed to create a new one.");
+  //     });
+  // };
 
   const formik = useFormik({
     initialValues: {
@@ -173,22 +155,30 @@ const ServiceSingleNew = () => {
       description: null,
       service_category_id: null,
       is_booking_online: colorMode === "on",
-      assistantServices: [],
+      assistantServices:
+        assistantData?.map((assistant: Assistant) => assistant?.id) || [],
       serviceOptions: [
         {
           name: null,
           time: null,
           price: null,
           price_type: null,
-          assistant_id: null,
-          parent_id: null,
           type: null,
+          overwrite: assistantData?.map((assistant: Assistant) => ({
+            assistantId: assistant?.id || "",
+            duration: "",
+            priceType: "",
+            price: "",
+          })),
         },
       ],
     },
     onSubmit: (values) => {
-      alert(JSON.stringify(values, null, 2));
+      console.log(values);
+
+      // alert(JSON.stringify(values, null, 2));
     },
+    enableReinitialize: true,
   });
 
   return (
@@ -229,7 +219,7 @@ const ServiceSingleNew = () => {
                     </label>
                     <Select
                       value={selectedOptionCategory}
-                      onChange={ChangeSelectedCategory}
+                      onChange={changeSelectedCategory}
                       options={categoryData.map((item) => ({
                         id: item.id,
                         value: item.name,
@@ -293,6 +283,7 @@ const ServiceSingleNew = () => {
                   </div>
                 </label>
                 <ServiceOptions
+                  assistants={assistantData}
                   formik={formik}
                   selectedOptionTime={selectedOptionTime}
                   selectedOptionPriceType={selectedOptionPriceType}
@@ -300,7 +291,7 @@ const ServiceSingleNew = () => {
                   optionTime={optionTime}
                   optionPriceType={optionPriceType}
                   removeFromList={removeFromList}
-                  ChangeSelectedTime={ChangeSelectedTime}
+                  changeSelectedTime={changeSelectedTime}
                   listAssistants={formik.values.assistantServices}
                 />
                 <button
