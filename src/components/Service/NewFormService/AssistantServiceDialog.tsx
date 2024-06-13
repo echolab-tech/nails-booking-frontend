@@ -44,7 +44,7 @@ const AdvancedPricingDialog: React.FC<AdvancedPricingDialogProps> = ({
                   <Field
                     type="text"
                     value={assistant?.id}
-                    name={`serviceOptions.${optionId}.overwrite[${index}].assistantId`}
+                    name={`serviceOptions.${optionId}.overwrite[${index}].assistant_id`}
                     className="hidden"
                   />
                   <div className="w-full xl:w-1/4">
@@ -53,7 +53,7 @@ const AdvancedPricingDialog: React.FC<AdvancedPricingDialogProps> = ({
                     </label>
                     <Field
                       as="select"
-                      name={`serviceOptions.${optionId}.overwrite[${index}].duration`}
+                      name={`serviceOptions.${optionId}.overwrite[${index}].time`}
                     >
                       {optionTime?.map((option: any, index: number) => (
                         <option key={index} value={option?.value}>
@@ -68,7 +68,7 @@ const AdvancedPricingDialog: React.FC<AdvancedPricingDialogProps> = ({
                     </label>
                     <Field
                       as="select"
-                      name={`serviceOptions[${optionId}].overwrite[${index}].priceType`}
+                      name={`serviceOptions[${optionId}].overwrite[${index}].price_type`}
                     >
                       {optionPriceType?.map((option: any, index: number) => (
                         <option key={index} value={option.value}>

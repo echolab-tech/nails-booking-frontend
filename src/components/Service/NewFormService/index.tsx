@@ -15,6 +15,7 @@ import { getAssistants } from "@/services/assistants.service";
 import { AiFillPlusCircle } from "react-icons/ai";
 import useColorMode from "@/hooks/useColorMode";
 import { Assistant } from "@/types/assistant";
+import { service } from "@/services/service.service";
 
 const ServiceSingleNew = () => {
   const [categoryData, setCategoryData] = useState<CATEGORYESHOW[]>([]);
@@ -37,11 +38,11 @@ const ServiceSingleNew = () => {
     setFieldValue("serviceOptions", newOptions);
   };
 
-  // const handleChange = (selectedOption: any) => {
-  //     setSelectedOption(selectedOption);
-  // };
-
-  const changeSelectedCategory = (selectedOptionCategory: any) => {
+  const ChangeSelectedCategory = (selectedOptionCategory: any) => {
+    formik.setFieldValue(
+      "service_category_id",
+      selectedOptionCategory ? selectedOptionCategory.id : null,
+    );
     setSelectedOptionCategory(selectedOptionCategory);
   };
 
@@ -124,31 +125,6 @@ const ServiceSingleNew = () => {
     description: Yup.string().min(2).max(50).required(),
   });
 
-  // const handleSubmit = (values, { resetForm }) => {
-  //   formik.values.service_category_id = selectedOptionCategory?.id || "";
-
-  //   if (
-  //     Array.isArray(formik.values.serviceOptions) &&
-  //     formik.values.serviceOptions.length > 0
-  //   ) {
-  //     formik.values.serviceOptions.forEach((option, index) => {
-  //       formik.values.serviceOptions[index]["time"] =
-  //         selectedOptionTime?.value || "";
-  //       formik.values.serviceOptions[index]["price_type"] =
-  //         selectedOptionPriceType?.value || "";
-  //     });
-  //   }
-
-  //   service(values)
-  //     .then((data) => {
-  //       toast.success("You created it successfully.");
-  //       resetForm();
-  //     })
-  //     .catch((error) => {
-  //       toast.error("You failed to create a new one.");
-  //     });
-  // };
-
   const formik = useFormik({
     initialValues: {
       name: null,
@@ -163,20 +139,28 @@ const ServiceSingleNew = () => {
           time: null,
           price: null,
           price_type: null,
-          type: null,
           overwrite: assistantData?.map((assistant: Assistant) => ({
-            assistantId: assistant?.id || "",
-            duration: "",
-            priceType: "",
+            assistant_id: assistant?.id || "",
+            time: "",
+            price_type: "",
             price: "",
           })),
         },
       ],
     },
-    onSubmit: (values) => {
-      console.log(values);
+    onSubmit: async (values) => {
+      try {
+        const response = await service(values);
+        if (!response.statusText) {
+          throw new Error("Network response was not ok");
+        }
+        toast.success("Form submitted successfully!");
 
-      // alert(JSON.stringify(values, null, 2));
+        formik.resetForm();
+      } catch (error) {
+        console.error("Error submitting form:", error);
+        toast.error("Error submitting form: " + error.data.message);
+      }
     },
     enableReinitialize: true,
   });
@@ -219,7 +203,7 @@ const ServiceSingleNew = () => {
                     </label>
                     <Select
                       value={selectedOptionCategory}
-                      onChange={changeSelectedCategory}
+                      onChange={ChangeSelectedCategory}
                       options={categoryData.map((item) => ({
                         id: item.id,
                         value: item.name,

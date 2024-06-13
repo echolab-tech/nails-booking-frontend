@@ -1,25 +1,21 @@
 export type serviceTypeNew = {
-    name: string;
-    service_category_id: string | null;
-    is_booking_online: number
-    assistantServices: [] | null
-    serviceOptions: Array<serviceOptionType> | null;
-};
-
-
-type serviceOptionType = {
-    name: string;
-    time: string;
-    price: number;
-    price_type: string,
-    serviceOptionAssistants: Array<serviceOptionAssistantType> 
-};
-
-type serviceOptionAssistantType = {
-    name: string;
-    time: string;
-    price: number;
-    assistant_id: number;
-    price_type: string,
-    service_option_id: number
+  name: string | null;
+  description: string | null;
+  service_category_id: number | null;
+  is_booking_online: boolean;
+  assistantServices: number[];
+  serviceOptions: {
+    name: string | null;
+    time: string | null;
+    price: number | null;
+    price_type: string | null;
+    type: string | null;
+    overwrite: {
+      assistant_id: number | null;
+      time: string | null;
+      price_type: string | null;
+      price: number | null;
+    }[];
+  }[];
+  category: string | null;  // Add this line
 };
