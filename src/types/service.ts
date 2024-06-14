@@ -1,7 +1,6 @@
-export type ServiceType = {
-    id: number;
+export type serviceType = {
     name: string;
-    category: string;
+    category: string | null;
     assistantServices: Array<assistantServiceType>
     serviceOptions: Array<serviceOptionType>
 };
