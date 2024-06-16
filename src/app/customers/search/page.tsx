@@ -1,18 +1,15 @@
-'use client';
+// Search.tsx
 
 import flatpickr from "flatpickr";
 import { Field, Form, Formik } from "formik";
 import { useEffect } from "react";
- 
-// import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
- 
+
 interface SearchType {
   handleSearch: (value: any) => void;
 }
 
-export default function Search({handleSearch}: SearchType) {
+export default function Search({ handleSearch }: SearchType) {
   useEffect(() => {
-    // Init flatpickr
     flatpickr(".form-datepicker", {
       mode: "single",
       static: true,
@@ -24,12 +21,13 @@ export default function Search({handleSearch}: SearchType) {
         '<svg className="fill-current" width="7" height="11" viewBox="0 0 7 11"><path d="M1.4 10.8L0 9.4l4-4-4-4L1.4 0l5.4 5.4z" /></svg>',
     });
   }, []);
+
   return (
     <div className="relative flex flex-1 flex-shrink-0">
       <Formik
         initialValues={{
+          searchText: "",
           birthday: "",
-          values: "",
         }}
         onSubmit={(values, { setSubmitting }) => {
           handleSearch(values);
@@ -42,25 +40,24 @@ export default function Search({handleSearch}: SearchType) {
               <div className="w-full xl:w-1/2">
                 <Field
                   type="text"
-                  name="values"
+                  name="searchText"
                   placeholder="Search by name, email or mobile number"
                   className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                  value={values.values}
+                  value={values.searchText}
                   onChange={handleChange}
                 />
               </div>
 
               <div className="w-full xl:w-1/3">
                 <div className="relative">
-                  <input
+                  <Field
+                    type="text"
                     name="birthday"
                     className="form-datepicker w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 font-normal outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
                     placeholder="mm/dd/yyyy"
-                    data-class="flatpickr-right"
                     value={values.birthday}
                     onChange={handleChange}
                   />
-
                   <div className="pointer-events-none absolute inset-0 left-auto right-5 flex items-center">
                     <svg
                       width="18"
@@ -78,7 +75,10 @@ export default function Search({handleSearch}: SearchType) {
                 </div>
               </div>
               <div className="w-full xl:w-1/6">
-                <button className="justify-center rounded bg-green-600 p-3 font-medium text-gray hover:bg-opacity-90" >
+                <button
+                  type="submit"
+                  className="justify-center rounded bg-green-600 p-3 font-medium text-white hover:bg-opacity-90"
+                >
                   Search
                 </button>
               </div>
@@ -86,8 +86,6 @@ export default function Search({handleSearch}: SearchType) {
           </Form>
         )}
       </Formik>
-
-      {/* <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-[20px] w-[20px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" /> */}
     </div>
   );
 }
