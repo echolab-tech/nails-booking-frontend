@@ -1,34 +1,74 @@
 "use client";
+import { getAssistantShow } from "@/services/assistants.service";
 import { ScheduledOfUser } from "@/types/Schedule";
+import { log } from "console";
 import Image from "next/image";
-import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 export default function EditSchduled() {
-  const DATASCHDULEDOFUSER = [
-    {
-      days: "Monday",
-      time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
-    },
-    {
-      days: "Tuesday",
-      time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
-    },
-    {
-      days: "Wednesday",
-      time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
-    },
-    {
-      days: "Thursday",
-      time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
-    },
-    {
-      days: "Friday",
-      time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
-    },
-  ];
+  const searchParams = useSearchParams();
+  const userID = searchParams.get("userID");
+  const [dataAssistant, setDataAssistant] = useState<any>();
 
-  const [inputs, setInputs] = useState<ScheduledOfUser[]>(DATASCHDULEDOFUSER);
+
+  const fetchDataAssistant = useCallback(async (userID: number) => {
+    const schedules = await getAssistantShow(userID);
+
+    setDataAssistant(schedules.data);
+  }, []);
+
+  useEffect(() => {
+    if (userID) {
+      fetchDataAssistant(Number(userID));
+    }
+  }, [fetchDataAssistant, userID]);
+
+  // const DATASCHDULEDOFUSER = [
+  //   {
+  //     days: "Monday",
+  //     time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
+  //   },
+  //   {
+  //     days: "Tuesday",
+  //     time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
+  //   },
+  //   {
+  //     days: "Wednesday",
+  //     time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
+  //   },
+  //   {
+  //     days: "Thursday",
+  //     time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
+  //   },
+  //   {
+  //     days: "Friday",
+  //     time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
+  //   },
+  // ];
+
+  const DATASCHDULEDOFUSER = useMemo(() => {
+    const scheduleOfUser: any[] = [];
+    if (dataAssistant) {
+      dataAssistant.data.schedule.map((data: any) => {
+        scheduleOfUser.push({
+          days: data.weekdays,
+          time: [{ id: uuidv4(), from: data.start_time, to: data.end_time }],
+        });
+      });
+      return scheduleOfUser;
+    }
+  }, [dataAssistant]);
+
+  const [inputs, setInputs] = useState<ScheduledOfUser[]>([]);
+
+  useEffect(() => {
+    if (!inputs.length && DATASCHDULEDOFUSER) {
+      setInputs(DATASCHDULEDOFUSER);
+    }
+  }, [DATASCHDULEDOFUSER, inputs]);
+
 
   const addHandler = (day: string) => {
     // const _inputs = DATASCHDULEDOFUSER.find((data) => data.days === day);
@@ -197,7 +237,7 @@ export default function EditSchduled() {
                 ))}
               </div>
               <span
-                className="text-blue2 cursor-pointer font-semibold"
+                className="cursor-pointer font-semibold text-blue2"
                 onClick={() => addHandler(data.days)}
               >
                 Add a shifts

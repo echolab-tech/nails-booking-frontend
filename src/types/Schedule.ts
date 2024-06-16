@@ -8,3 +8,8 @@ export type ScheduledOfUser = {
     to: string;
   }[];
 };
+
+export type Schedule = {
+  start_time: string
+  end_time: string
+}
