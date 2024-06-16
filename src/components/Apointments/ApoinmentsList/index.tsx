@@ -88,9 +88,11 @@ const ApointmentList = () => {
                   </h5>
                 </td>
                 <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  <h5 className="font-medium text-black dark:text-white">
-                    Nguyễn Văn B
-                  </h5>
+                  <a href="#">
+                    <h5 className="font-medium text-blue-500 dark:text-white">
+                      Nguyễn Văn B
+                    </h5>
+                  </a>
                 </td>
                 <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                   <h5 className="font-medium text-black dark:text-white">
