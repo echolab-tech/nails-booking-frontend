@@ -120,9 +120,16 @@ const ServiceSingleNew = () => {
     });
   };
 
-  const CreatedService = Yup.object().shape({
+  const CreatedServiceSchema = Yup.object().shape({
     name: Yup.string().min(2).max(50).required(),
-    description: Yup.string().min(2).max(50).required(),
+    description: Yup.string().max(255),
+    service_category_id: Yup.string().required("Category is required"),
+    serviceOptions: Yup.array().of(
+      Yup.object().shape({
+        price: Yup.number().required("Price is required"),
+        name: Yup.string().required("Name is required"),
+      }),
+    ),
   });
 
   const formik = useFormik({
@@ -136,18 +143,19 @@ const ServiceSingleNew = () => {
       serviceOptions: [
         {
           name: null,
-          time: null,
+          time: "60",
           price: null,
-          price_type: null,
+          price_type: optionPriceType[0].value,
           overwrite: assistantData?.map((assistant: Assistant) => ({
             assistant_id: assistant?.id || "",
-            time: "",
-            price_type: "",
-            price: "",
+            time: "60",
+            price_type: "1",
+            price: null,
           })),
         },
       ],
     },
+    validationSchema: CreatedServiceSchema,
     onSubmit: async (values) => {
       try {
         const response = await service(values);
@@ -194,14 +202,22 @@ const ServiceSingleNew = () => {
                     <ErrorMessage
                       name="name"
                       component="div"
-                      className="text-red-500"
+                      className="text-red"
                     />
                   </div>
                   <div className="w-full xl:w-1/2">
                     <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                       Category <span className="text-meta-1">*</span>
                     </label>
-                    <Select
+                    <Field as="select" name="service_category_id">
+                      <option></option>
+                      {categoryData.map((item, index) => (
+                        <option key={index} value={item?.id}>
+                          {item?.name}
+                        </option>
+                      ))}
+                    </Field>
+                    {/* <Select
                       value={selectedOptionCategory}
                       onChange={ChangeSelectedCategory}
                       options={categoryData.map((item) => ({
@@ -212,6 +228,11 @@ const ServiceSingleNew = () => {
                       isSearchable={true}
                       placeholder="Search..."
                       primaryColor=""
+                    /> */}
+                    <ErrorMessage
+                      name="service_category_id"
+                      component="div"
+                      className="text-red"
                     />
                   </div>
                 </div>
