@@ -2,14 +2,16 @@
 
 import { useModal } from "@/hooks/useModal";
 import { getListAssistant } from "@/services/assistants.service";
-import { scheduleEdit, scheduleList } from "@/services/schedules.service";
-import { Schedule } from "@/types/Schedule";
+import { scheduleDelete, scheduleEdit, scheduleList } from "@/services/schedules.service";
+import { Schedule, ScheduledOfUser } from "@/types/Schedule";
+import { time } from "console";
 import { Form, Formik } from "formik";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import * as Yup from "yup";
+import PaginationCustom from "../Pagination/Pagination";
 
 
 interface SearchValues {
@@ -19,15 +21,32 @@ interface SearchValues {
   address: string;
 }
 
+interface PaginationData {
+  current_page: number;
+  total_pages: number;
+  total_items: number;
+  per_page: number;
+}
+
 export default function Schduled() {
   const { visibleId, toggle } = useModal();
   const [startTime, setStarTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [id, setId] = useState(0);
   const [visibleModalId, setVisibleModalId] = useState<string>("");
+  const [assistantLists, setAssistantList] = useState<any[]>([]);
   const [scheduleLists, setScheduleList] = useState<any[]>([]);
   const [isEditSuccess, setIsEditSuccess] = useState(false);
-  
+  const [paginationData, setPaginationData] = useState<PaginationData>({
+    current_page: 1,
+    total_pages: 1,
+    total_items: 0,
+    per_page: 10,
+  });
+  const [assistantData, setAssistantData] = useState<ScheduledOfUser[]>([]);
+  const onPageChange = (page: number) => {
+    fetchDataAssistantList(page);
+  };
 
   const [searchValues, setSearchValues] = useState<SearchValues>({
     name: "",
@@ -35,26 +54,36 @@ export default function Schduled() {
     phone: null,
     address: "",
   });
+  const handleButtonDelete = async (scheduleID: number) => {
+    try {
+      await scheduleDelete(scheduleID);
+      fetchDataAssistantList(paginationData.current_page); // Load updated schedule list
+    } catch (error) {
+      toast.warning("Delete Fail !!!");
+    }
+  };
 
-  const fetchDataSheduleList = useCallback(async (page:number) => {
-    const schedules = await getListAssistant(searchValues, page);
+  const fetchDataAssistantList = useCallback(async (page:number) => {
+    const assistants = await getListAssistant(searchValues, page);
+    setAssistantData(assistants.data.assistants);
+    setPaginationData(assistants.data.paginationData);
 
     
-    setScheduleList(schedules.data.assistants);
+    setAssistantList(assistants.data.assistants);
   },[searchValues]);
 
   useEffect(() => {
-    fetchDataSheduleList(1);
-  }, [fetchDataSheduleList]);
+    fetchDataAssistantList(1);
+  }, [fetchDataAssistantList]);
 
   useEffect(() => {
     if (isEditSuccess) {
-      fetchDataSheduleList(1);
+      fetchDataAssistantList(1);
       setIsEditSuccess(false);
     }
-  }, [fetchDataSheduleList, isEditSuccess]);
+  }, [fetchDataAssistantList, isEditSuccess]);
 
- 
+
 
   const HEADERSTABLE = [
     "",
@@ -70,7 +99,7 @@ export default function Schduled() {
 
   const checkScheduleOfDays = (day: string, name:string) => {
     const scheduleOfDay: any = [];
-    scheduleLists.map((item) => {
+    assistantLists.map((item) => {
       scheduleOfDay.push(
         ...item.schedule.filter((shift: any) => shift.weekdays === day && item.name === name),
       );
@@ -102,7 +131,7 @@ export default function Schduled() {
             </tr>
           </thead>
           <tbody>
-            {scheduleLists.map((item, index) => (
+            {assistantLists.map((item, index) => (
               <tr
                 key={index}
                 className=" even:bg-gray-50 even:dark:bg-gray-800"
@@ -132,8 +161,8 @@ export default function Schduled() {
                     >
                       <Image
                         src="/images/scheduled/edit.svg"
-                        width={50}
-                        height={50}
+                        width={30}
+                        height={30}
                         alt="edit"
                       />
                     </Link>
@@ -176,8 +205,10 @@ export default function Schduled() {
                           Add time off
                         </p>
 
-                        <p className="w-max text-sm text-red">
-                          Delete thius shifts
+                        {/* <p className="w-max text-sm text-red"> */}
+                        <p className="w-max cursor-pointer text-sm text-black dark:text-white"
+                            onClick={() => handleButtonDelete(scheduled.id)} >    {/* đang lỗi id, lấy nhầm id của assisstant */}
+                        Delete this shifts
                         </p>
                       </div>
                     )}
@@ -364,6 +395,12 @@ export default function Schduled() {
           </tbody>
         </table>
       </div>
+      <ToastContainer />
+      <PaginationCustom
+          currentPage={paginationData.current_page}
+          totalPages={paginationData.total_pages}
+          onPageChange={onPageChange}
+        />
     </div>
   );
 }
