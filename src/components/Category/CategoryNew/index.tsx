@@ -49,7 +49,7 @@ const CategoryNew = () => {
                         type="text"
                         placeholder="Category Name"
                         name="name"
-                        className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                        className="w-full rounded border-[1.5px] border-stroke bg-transparent text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                       />
                       {errors.name && touched.name ? (
                         <div className="w-full text-rose-500">
@@ -63,7 +63,7 @@ const CategoryNew = () => {
                       <input
                         type="submit"
                         value="Created"
-                        className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
+                        className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-2 text-white transition hover:bg-opacity-90"
                       />
                     </div>
                   </div>

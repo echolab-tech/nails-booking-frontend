@@ -24,3 +24,7 @@ export const assistantUpdate = async (values: AssistantEditForm, id: number): Pr
 export const assistantDelete = async (id: number): Promise<any> => {
     return await http.delete<any>(`/assistants/${id}`);
 };
+
+export const getAssistants = async (): Promise<any> => {
+  return await http.get<any>("/assistants");
+};
