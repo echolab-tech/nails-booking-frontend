@@ -38,6 +38,7 @@ const config: Config = {
         secondary: "#80CAEE",
         stroke: "#E2E8F0",
         gray: "#EFF4FB",
+        "gray-900": "#000000",
         graydark: "#333A48",
         "gray-2": "#F7F9FC",
         "gray-3": "#FAFAFA",
@@ -61,7 +62,6 @@ const config: Config = {
         success: "#219653",
         danger: "#D34053",
         warning: "#FFA70B",
-        "bg-gray-900": "#4b5563",
       },
       fontSize: {
         "title-xxl": ["44px", "55px"],
