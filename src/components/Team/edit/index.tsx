@@ -1,16 +1,16 @@
-"use client"
-import React, { useEffect, useState } from 'react';
+"use client";
+import React, { useEffect, useState } from "react";
 import Select from "react-tailwindcss-select";
-import './style.scss';
-import { Field, Form, Formik } from 'formik';
-import { number } from 'yup';
-import { AssistantAddForm } from '@/types/AssistantAddForm';
-import { assistants, getListService } from "@/services/assistants.service";
+import "./style.scss";
+import { Field, Form, Formik } from "formik";
+import { assistantUpdate, assistants, getAssistantShow, getListService } from "@/services/assistants.service";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import * as Yup from "yup";
+import { AssistantEditForm } from "@/types/AssistantEditFrom";
+import { useParams } from "next/navigation";
 
-const AssistantNewSchema = Yup.object().shape({
+const AssistantEditSchema = Yup.object().shape({
   name: Yup.string()
     .min(2, "Too Short!")
     .max(100, "Too Long!")
@@ -20,24 +20,42 @@ const AssistantNewSchema = Yup.object().shape({
     .max(15, "Too Long!")
     .required("Required"),
   email: Yup.string().email("Invalid email").required("Required"),
-  password: Yup.string()
-    .min(6, "Too Short!")
-    .max(100, "Too Long!")
-    .required("Required"),
 });
-const TeamNew = () => {
+const TeamEdit = () => {
   const [animal, setAnimal] = useState(null);
   const [services, setServices] = useState<{ id: number; name: string }[]>([]);
   const [selectedBirthday, setSelectedBirthday] = useState<string | null>(null);
+  const params = useParams<{ id: string }>();
+  const [assistant, setAssistant] = useState<any | null>(null);
+  const customerId = parseInt(params.id);
   useEffect(() => {
+    fetchAssistant(customerId);
     fetchDataServices();
   }, []);
+
+  const fetchAssistant = (customerId: number) => {
+    try {
+        getAssistantShow(customerId).then((data) => {
+        setAssistant(data?.data?.data);
+        setSelectedBirthday(data?.data?.data?.birthday);
+        const servicesData = data?.data?.data?.services;
+        const formattedServices = servicesData.map((service: any) => ({
+          value: String(service.id),
+          label: service.name,
+        }));
+         setAnimal(formattedServices);
+      });
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+  
   const fetchDataServices = async () => {
     const services = await getListService();
-    setServices( services.data.data);
+    setServices(services.data.data);
   };
 
-  const handleChange = (value: any) => {
+  const handleChangeServices = (value: any) => {
     setAnimal(value);
   };
    const handleBirthdayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,26 +71,26 @@ const TeamNew = () => {
           <Formik
             enableReinitialize={true}
             initialValues={{
-              name: "",
-              email: "",
-              password: "",
-              phone: null,
-              address: "",
+              id: assistant?.id,
+              name: assistant?.name,
+              email: assistant?.email,
+              phone: assistant?.phone,
+              address: assistant?.address,
               avatar: null,
-              birthday: null,
-              services: null,
+              birthday: assistant?.birthday,
+              services: assistant?.services,
             }}
-            validationSchema={AssistantNewSchema}
-            onSubmit={(values: AssistantAddForm, { resetForm }) => {
+            validationSchema={AssistantEditSchema}
+            onSubmit={(values: AssistantEditForm, { resetForm }) => {
               values.services = animal;
               values.birthday = selectedBirthday;
-              assistants(values)
+              assistantUpdate(values, customerId)
                 .then((data) => {
-                  toast.success("you created it successfully.");
+                  toast.success("you update it successfully.");
                   resetForm();
                 })
                 .catch((error) => {
-                  toast.error("you failed to create a new one.");
+                  toast.error("you failed to update it.");
                 });
             }}
           >
@@ -82,6 +100,9 @@ const TeamNew = () => {
               validateField,
               validateForm,
               setFieldValue,
+              values,
+              handleChange,
+              handleBlur,
             }) => (
               <Form action="#">
                 <div className="p-6.5">
@@ -93,6 +114,9 @@ const TeamNew = () => {
                       <Field
                         type="text"
                         name="name"
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        value={values?.name}
                         placeholder="Enter your first name"
                         className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                       />
@@ -108,6 +132,9 @@ const TeamNew = () => {
                       <Field
                         type="email"
                         name="email"
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        value={values?.email}
                         placeholder="Enter your email address"
                         className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                       />
@@ -126,25 +153,13 @@ const TeamNew = () => {
                         type="text"
                         name="phone"
                         placeholder="Enter your phone"
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        value={values?.phone}
                         className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                       />
                       {errors.phone && touched.phone && (
                         <div className="text-rose-500">{errors.phone}</div>
-                      )}
-                    </div>
-
-                    <div className="w-full xl:w-1/2">
-                      <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                        Password <span className="text-meta-1">*</span>
-                      </label>
-                      <Field
-                        type="password"
-                        name="password"
-                        placeholder="Enter your email address"
-                        className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                      />
-                      {errors.password && touched.password && (
-                        <div className="text-rose-500">{errors.password}</div>
                       )}
                     </div>
                   </div>
@@ -157,6 +172,8 @@ const TeamNew = () => {
                         type="date"
                         name="birthday"
                         placeholder="Enter your email address"
+                        onBlur={handleBlur}
+                        value={selectedBirthday ?? ""}
                         onChange={handleBirthdayChange}
                         className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                       />
@@ -169,6 +186,9 @@ const TeamNew = () => {
                         type="text"
                         name="address"
                         placeholder="Enter your address"
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        value={values?.address}
                         className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                       />
                     </div>
@@ -181,7 +201,7 @@ const TeamNew = () => {
                       {services.length > 0 && (
                         <Select
                           value={animal}
-                          onChange={handleChange}
+                          onChange={handleChangeServices}
                           options={services.map((service) => ({
                             value: String(service.id),
                             label: service.name,
@@ -195,8 +215,11 @@ const TeamNew = () => {
                   </div>
                   <div className="mb-4.5 flex justify-center">
                     <div className="flex w-full justify-end xl:w-1/2">
-                      <button className="justify-center rounded bg-green-600 p-3 font-medium text-gray hover:bg-opacity-90">
-                        Add
+                      <button
+                        type="submit"
+                        className="justify-center rounded bg-green-600 p-3 font-medium text-gray hover:bg-opacity-90"
+                      >
+                        UPDATE
                       </button>
                     </div>
                   </div>
@@ -209,5 +232,5 @@ const TeamNew = () => {
       </div>
     </div>
   );
-}
-export default TeamNew;
+};
+export default TeamEdit;
