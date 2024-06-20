@@ -1,14 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import "./style.scss";
-import Select from "react-tailwindcss-select";
-import ToggleState from "./ToggleState";
+import ToggleSwitch from "./ToggleSwitch";
 import AssistantList from "./AssistantCheckboxes";
 import ServiceOptions from "./ServiceOptions";
 import { FormikProvider, Field, Form, ErrorMessage, useFormik } from "formik";
 import * as Yup from "yup";
 import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { getCategories } from "@/services/categories.service";
 import { CATEGORYESHOW } from "@/types/CategoryEdit";
 import { getAssistants } from "@/services/assistants.service";
@@ -16,39 +14,12 @@ import { AiFillPlusCircle } from "react-icons/ai";
 import useColorMode from "@/hooks/useColorMode";
 import { Assistant } from "@/types/assistant";
 import { service } from "@/services/service.service";
+import "react-toastify/dist/ReactToastify.css";
 
 const ServiceSingleNew = () => {
   const [categoryData, setCategoryData] = useState<CATEGORYESHOW[]>([]);
   const [assistantData, setAssistantData] = useState([]);
-  const [selectedOptionTime, setSelectedOptionTime] = useState(null);
-  const [selectedOptionCategory, setSelectedOptionCategory] = useState(null);
   const [colorMode, setColorMode] = useColorMode();
-
-  const [selectedOptionPriceType, setSelectedOptionPriceType] = useState([]);
-
-  const handleChangeOptionPriceType = (selectedOption: any, index: any) => {
-    // Update selected option state
-    const newSelectedOptions = [...selectedOptionPriceType];
-    newSelectedOptions[index] = selectedOption;
-    setSelectedOptionPriceType(newSelectedOptions);
-
-    // Update the corresponding value in the formik values
-    const newOptions = [...values.serviceOptions];
-    newOptions[index].price_type = selectedOption ? selectedOption.value : null; // Ensure it's not null
-    setFieldValue("serviceOptions", newOptions);
-  };
-
-  const ChangeSelectedCategory = (selectedOptionCategory: any) => {
-    formik.setFieldValue(
-      "service_category_id",
-      selectedOptionCategory ? selectedOptionCategory.id : null,
-    );
-    setSelectedOptionCategory(selectedOptionCategory);
-  };
-
-  const changeSelectedTime = (selectedOptionTime: any) => {
-    setSelectedOptionTime(selectedOptionTime);
-  };
 
   const optionPriceType = [
     { value: "1", label: "Fixed" },
@@ -120,6 +91,10 @@ const ServiceSingleNew = () => {
     });
   };
 
+  const handleToogleSwitch = () => {
+    formik.setFieldValue("is_booking_online", !formik.values.is_booking_online);
+  };
+
   const CreatedServiceSchema = Yup.object().shape({
     name: Yup.string().min(2).max(50).required(),
     description: Yup.string().max(255),
@@ -137,7 +112,7 @@ const ServiceSingleNew = () => {
       name: null,
       description: null,
       service_category_id: null,
-      is_booking_online: colorMode === "on",
+      is_booking_online: true,
       assistantServices:
         assistantData?.map((assistant: Assistant) => assistant?.id) || [],
       serviceOptions: [
@@ -167,7 +142,7 @@ const ServiceSingleNew = () => {
         formik.resetForm();
       } catch (error) {
         console.error("Error submitting form:", error);
-        toast.error("Error submitting form: " + error.data.message);
+        toast.error("Error submitting form: " + error);
       }
     },
     enableReinitialize: true,
@@ -209,7 +184,11 @@ const ServiceSingleNew = () => {
                     <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                       Category <span className="text-meta-1">*</span>
                     </label>
-                    <Field as="select" name="service_category_id">
+                    <Field
+                      as="select"
+                      className="rounded border-[1.5px] border-stroke border-stroke"
+                      name="service_category_id"
+                    >
                       <option></option>
                       {categoryData.map((item, index) => (
                         <option key={index} value={item?.id}>
@@ -217,18 +196,6 @@ const ServiceSingleNew = () => {
                         </option>
                       ))}
                     </Field>
-                    {/* <Select
-                      value={selectedOptionCategory}
-                      onChange={ChangeSelectedCategory}
-                      options={categoryData.map((item) => ({
-                        id: item.id,
-                        value: item.name,
-                        label: item.name,
-                      }))}
-                      isSearchable={true}
-                      placeholder="Search..."
-                      primaryColor=""
-                    /> */}
                     <ErrorMessage
                       name="service_category_id"
                       component="div"
@@ -250,33 +217,22 @@ const ServiceSingleNew = () => {
               <div className="border-toggle p-6.5">
                 <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                   <b>Online Booking</b>
+                  <p>
+                    Enable online bookings, choose who the service is available
+                    for and add a short description.
+                  </p>
                 </label>
-                <ToggleState
+                <ToggleSwitch
+                  name="is_booking_online"
                   value={formik.values.is_booking_online}
-                  onChange={() => {
-                    setValues(
-                      "is_booking_online",
-                      !formik.values.is_booking_online,
-                    );
-                    setColorMode(
-                      !formik.values.is_booking_online ? "on" : "off",
-                    );
-                  }}
+                  handleChange={handleToogleSwitch}
                 />
               </div>
-              <div
-                className="border-assistant p-6.5"
-                style={{ maxHeight: "300px", overflowY: "auto" }}
-              >
+              <div className="border-assistant p-6.5">
                 <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                   <b>Assistant</b>
                 </label>
-                <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                  <AssistantList
-                    assistantData={assistantData}
-                    values={formik.values}
-                  />
-                </div>
+                <AssistantList assistantData={assistantData} />
               </div>
               <div className="border-assistant p-6.5">
                 <label className="mb-3 block text-sm font-medium text-black dark:text-white">
@@ -290,13 +246,9 @@ const ServiceSingleNew = () => {
                 <ServiceOptions
                   assistants={assistantData}
                   formik={formik}
-                  selectedOptionTime={selectedOptionTime}
-                  selectedOptionPriceType={selectedOptionPriceType}
-                  handleChangeOptionPriceType={handleChangeOptionPriceType}
                   optionTime={optionTime}
                   optionPriceType={optionPriceType}
                   removeFromList={removeFromList}
-                  changeSelectedTime={changeSelectedTime}
                   listAssistants={formik.values.assistantServices}
                 />
                 <button

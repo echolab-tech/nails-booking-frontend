@@ -20,11 +20,11 @@ const AssistantCheckboxes: FC<AssistantCheckboxesProps> = ({
         form: FormikValues;
       }) => (
         <>
-          <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+          <div className="mb-4.5 flex flex-wrap	gap-6 xl:flex-row">
             {assistantData.map((assistant: any, index: number) => {
               const isChecked = values.assistantServices.includes(assistant.id);
               return (
-                <div key={index} className="rounded-box w-full xl:w-1/3">
+                <div key={index} className="rounded-box w-1/3 xl:w-1/3">
                   <label className="checkbox-container">
                     {assistant.name}
                     <Field

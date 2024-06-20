@@ -1,4 +1,5 @@
 import { Assistant } from "@/types/assistant";
+import { Modal } from "flowbite-react";
 import { Field, FieldArray } from "formik";
 import { useEffect } from "react";
 import Select from "react-select";
@@ -11,6 +12,7 @@ interface AdvancedPricingDialogProps {
   assistants: Array<Assistant>;
   handleClose: () => void;
   handleSave: () => void;
+  open: boolean;
 }
 
 const AdvancedPricingDialog: React.FC<AdvancedPricingDialogProps> = ({
@@ -20,16 +22,22 @@ const AdvancedPricingDialog: React.FC<AdvancedPricingDialogProps> = ({
   handleSave,
   assistants,
   handleClose,
+  open,
 }) => {
-  useEffect(() => {
-    console.log(optionTime);
-  }, []);
+  useEffect(() => {}, []);
 
   return (
-    <FieldArray name={`serviceOptions`}>
-      {({ push, remove }) => (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-5">
-          <div className="mx-auto w-10/12 rounded-lg bg-white px-6 py-6 shadow-lg md:w-9/12 lg:w-8/12 xl:w-7/12">
+    <Modal
+      show={open}
+      size="6xl"
+      onClose={() => handleClose()}
+      popup
+      className=""
+    >
+      <Modal.Header>Advanced pricing options</Modal.Header>
+      <Modal.Body>
+        <FieldArray name={`serviceOptions`}>
+          {({ push, remove }) => (
             <div
               className="flex w-full flex-col gap-6 px-5"
               style={{ maxHeight: "500px", overflowY: "auto" }}
@@ -53,6 +61,7 @@ const AdvancedPricingDialog: React.FC<AdvancedPricingDialogProps> = ({
                     </label>
                     <Field
                       as="select"
+                      className="rounded border-[1.5px] border-stroke border-stroke"
                       name={`serviceOptions.${optionId}.overwrite[${index}].time`}
                     >
                       {optionTime?.map((option: any, index: number) => (
@@ -68,6 +77,7 @@ const AdvancedPricingDialog: React.FC<AdvancedPricingDialogProps> = ({
                     </label>
                     <Field
                       as="select"
+                      className="rounded border-[1.5px] border-stroke border-stroke"
                       name={`serviceOptions[${optionId}].overwrite[${index}].price_type`}
                     >
                       {optionPriceType?.map((option: any, index: number) => (
@@ -91,24 +101,24 @@ const AdvancedPricingDialog: React.FC<AdvancedPricingDialogProps> = ({
                 </div>
               ))}
             </div>
-            <div className="mb-4.5 flex flex-col justify-end gap-6 px-5 xl:flex-row">
-              <button
-                className="mt-4 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-                onClick={handleClose}
-              >
-                Close
-              </button>
-              <button
-                className="mt-4 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-                onClick={handleSave}
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </FieldArray>
+          )}
+        </FieldArray>
+      </Modal.Body>
+      <Modal.Footer className="justify-between">
+        <button
+          className="mt-4 rounded bg-black px-4 py-2 text-white hover:bg-blue-600"
+          onClick={handleClose}
+        >
+          Close
+        </button>
+        <button
+          className="mt-4 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+          onClick={handleSave}
+        >
+          Save
+        </button>
+      </Modal.Footer>
+    </Modal>
   );
 };
 

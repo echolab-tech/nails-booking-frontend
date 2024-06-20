@@ -70,7 +70,11 @@ const ServiceOptions = ({
                   <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                     Time <span className="text-meta-1">*</span>
                   </label>
-                  <Field as="select" name={`serviceOptions.${opindex}.time`}>
+                  <Field
+                    as="select"
+                    name={`serviceOptions.${opindex}.time`}
+                    className="rounded border-[1.5px] border-stroke border-stroke"
+                  >
                     {optionTime?.map((option: any, index: number) => (
                       <option key={index} value={option.value}>
                         {option.label}
@@ -84,6 +88,7 @@ const ServiceOptions = ({
                   </label>
                   <Field
                     as="select"
+                    className="rounded border-[1.5px] border-stroke border-stroke"
                     name={`serviceOptions.${opindex}.price_type`}
                   >
                     {optionPriceType?.map((option: any, index: number) => (
@@ -145,6 +150,7 @@ const ServiceOptions = ({
       </FieldArray>
       {showAdvanced && (
         <AssistantServiceDialog
+          open={showAdvanced}
           formik={formik}
           optionId={optionId}
           optionTime={optionTime}
