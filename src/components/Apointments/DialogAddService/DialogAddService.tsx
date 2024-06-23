@@ -104,9 +104,9 @@ const DialogAddService: React.FC<DialogAddServiceProps> = (props) => {
                       </label>
                       <div className="flex items-center">
                         <span>{serviceOption.time}min</span>
-                        <span className="ml-5">
+                        {/* <span className="ml-5">
                           {serviceOption.assistant.name}
-                        </span>
+                        </span> */}
                       </div>
                     </div>
                     <div className="w-full xl:w-1/4">
