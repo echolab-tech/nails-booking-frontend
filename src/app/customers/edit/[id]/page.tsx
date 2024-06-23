@@ -9,7 +9,7 @@ import { CustomerForm } from "@/types/customerForm";
 import flatpickr from "flatpickr";
 import * as Yup from "yup";
 import { useEffect, useState } from "react";
-import { customers, getCountry, getCustomerShow, getCustomerUpdate } from "@/services/customer.service";
+import { customers, getCountry, getCustomerShow, getCustomerUpdate, getStatus } from "@/services/customer.service";
 import { FileInput, Label } from "flowbite-react";
 import { format, parseISO } from "date-fns";
 import { ToastContainer, toast } from "react-toastify";
@@ -17,7 +17,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { CustomerEditForm } from "@/types/customerEditForm";
 import { useRouter } from 'next/router';
 import { useParams } from "next/navigation";
- 
+import { FaCircle } from "react-icons/fa";
+import { formatDate } from "@fullcalendar/core";
 
 // export const metadata: Metadata = {
 //   title: "Next.js Form Layout | TailAdmin - Next.js Dashboard Template",
@@ -44,7 +45,8 @@ const CustomeEditForm = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedBirthday, setSelectedBirthday] = useState<string | null>(null);
   const [cities, setCities] = useState<{ id: number; name: string }[]>([]);
-
+  const [status, setStatus] = useState<{ id: number; name_status: string; color_code: string }[]>([]);
+  const [avatarImage, setAvatar] = useState("");
 
   useEffect(() => {
     // Init flatpickr
@@ -60,24 +62,24 @@ const CustomeEditForm = () => {
     //     '<svg className="fill-current" width="7" height="11" viewBox="0 0 7 11"><path d="M1.4 10.8L0 9.4l4-4-4-4L1.4 0l5.4 5.4z" /></svg>',
     // });
     fetchDataCountry();
+    fetchDataStatus();
   }, [customerId]);
   
   const fetchCustomer = (customerId: number) => {
     try {
       getCustomerShow(customerId).then(data => {
         setCustomer(data?.data?.data);
-        setSelectedBirthday(data?.data?.data?.birthday);
+        setSelectedBirthday(formatDate(data?.data?.data?.birthday));
       });
-      
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
   };
+
   const fetchDataCountry = async () => {
     const country = await getCountry();
     setCities(country.data.dataCountry);
   };
-  const [avatarImage, setAvatar] = useState("");
 
   const handleAvatarChange = (event: any) => {
     const file = event.target.files[0];
@@ -88,36 +90,38 @@ const CustomeEditForm = () => {
     };
     reader.readAsDataURL(file);
   };
-
-  const formatDate = (dateString: string) => {
-    return parseISO(dateString);
-  };
+  
    const handleBirthdayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-     setSelectedBirthday(e.target.value);
-   };
+    setSelectedBirthday(e.target.value);
+  };
+  
+  const fetchDataStatus = async () => {
+    const status = await getStatus();
+    setStatus(status.data.dataStatus);
+  };
   return (
     <DefaultLayout>
-      <Breadcrumb pageName="Add a new customer" />
+      <Breadcrumb pageName="Edit a customer" />
 
       <div className="grid grid-cols-1 gap-9 sm:grid-cols-1">
         <div className="flex flex-col gap-9">
           <Formik
             enableReinitialize={true}
             initialValues={{
-              id: customer?.id,
-              name: customer?.name,
-              email: customer?.email,
-              phone: customer?.phone,
-              birthday: customer?.birthday,
-              gender: customer?.gender,
+              id: customer?.customer?.id,
+              name: customer?.customer?.name,
+              email: customer?.customer?.email,
+              phone: customer?.customer?.phone,
+              birthday: customer?.customer?.birthday,
+              gender: customer?.customer?.gender,
               // pronouns: null,
-              language: customer?.language,
-              source: customer?.source,
-              occupation: customer?.occupation,
-              country: customer?.country,
+              language: customer?.customer?.language,
+              source: customer?.customer?.source,
+              occupation: customer?.customer?.occupation,
+              country: customer?.customer?.country,
               avatar: null,
-              address: customer?.address,
-              status: customer?.status,
+              address: customer?.customer?.address,
+              status: customer?.customer?.status,
             }}
             validationSchema={CustomerNewSchema}
             onSubmit={(values: CustomerEditForm) => {
@@ -225,15 +229,12 @@ const CustomeEditForm = () => {
                           value={values?.status}
                           className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                         >
-                          <option value={0} className="text-black">
-                            Black
-                          </option>
-                          <option value={1} className="text-yellow-500">
-                            Yellow
-                          </option>
-                          <option value={2} className="text-blue-500">
-                            Blue
-                          </option>
+                          {status.map((stt, index) => (
+                            <option key={index} value={stt.id} className="status-option">
+                              <FaCircle style={{ color: stt.color_code, marginRight: '8px' }} />
+                              {stt.name_status}
+                            </option>
+                          ))}
                         </Field>
                       </div>
                     </div>
@@ -280,26 +281,17 @@ const CustomeEditForm = () => {
                           Birthday
                         </label>
                         <div className="relative">
-                          {/* <Field
-                            name="birthday"
-                            onChange={handleBirthdayChange}
-                            onBlur={handleBlur}
-                            value={values?.birthday}
-                            className="form-datepicker w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 font-normal outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                            placeholder="mm/dd/yyyy"
-                            data-class="flatpickr-right"
-                          /> */}
-                          <input
-                            name="birthday"
+                          <Field
                             type="date"
-                            className="form-datepicker w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 font-normal outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                            placeholder="mm/dd/yyyy"
-                            data-class="flatpickr-right"
+                            name="birthday"
+                            placeholder="dd/mm/yyyy"
                             onChange={handleBirthdayChange}
-                            onBlur={handleBlur}
-                            value={selectedBirthday ?? ""} // Provide a default empty string if selectedBirthday is null
+                            value={values?.birthday}
+                            className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                           />
-
+                          {errors.birthday && touched.birthday && (
+                            <div className="text-rose-500">{errors.birthday}</div>
+                          )}
                           {/* <div className="pointer-events-none absolute inset-0 left-auto right-5 flex items-center">
                             <svg
                               width="18"

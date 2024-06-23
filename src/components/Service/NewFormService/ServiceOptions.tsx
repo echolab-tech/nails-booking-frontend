@@ -1,6 +1,6 @@
 import { ErrorMessage, Field, FieldArray } from "formik";
 import { useEffect, useState } from "react";
-import { BsFillTrashFill } from "react-icons/bs";
+import { BsTrash } from "react-icons/bs";
 import Select from "react-select";
 import AssistantServiceDialog from "./AssistantServiceDialog";
 import { number } from "yup";
@@ -58,7 +58,7 @@ const ServiceOptions = ({
                         }
                       >
                         <span>
-                          <BsFillTrashFill />
+                          <BsTrash size={25} className="text-red" />
                         </span>
                       </button>
                     </div>
@@ -70,7 +70,11 @@ const ServiceOptions = ({
                   <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                     Time <span className="text-meta-1">*</span>
                   </label>
-                  <Field as="select" name={`serviceOptions.${opindex}.time`}>
+                  <Field
+                    as="select"
+                    name={`serviceOptions.${opindex}.time`}
+                    className="rounded border-[1.5px] border-stroke border-stroke"
+                  >
                     {optionTime?.map((option: any, index: number) => (
                       <option key={index} value={option.value}>
                         {option.label}
@@ -84,6 +88,7 @@ const ServiceOptions = ({
                   </label>
                   <Field
                     as="select"
+                    className="rounded border-[1.5px] border-stroke border-stroke"
                     name={`serviceOptions.${opindex}.price_type`}
                   >
                     {optionPriceType?.map((option: any, index: number) => (
@@ -121,11 +126,6 @@ const ServiceOptions = ({
                     placeholder="Eg: Long hair"
                     className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-1.5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                   />
-                  <ErrorMessage
-                    name={`serviceOptions.${opindex}.name`}
-                    component="div"
-                    className="text-red"
-                  />
                 </div>
               </div>
               <div className="flex flex-col gap-6 xl:flex-row">
@@ -145,6 +145,7 @@ const ServiceOptions = ({
       </FieldArray>
       {showAdvanced && (
         <AssistantServiceDialog
+          open={showAdvanced}
           formik={formik}
           optionId={optionId}
           optionTime={optionTime}

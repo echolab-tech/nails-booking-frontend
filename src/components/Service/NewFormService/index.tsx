@@ -1,54 +1,34 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import "./style.scss";
-import Select from "react-tailwindcss-select";
-import ToggleState from "./ToggleState";
+import ToggleSwitch from "./ToggleSwitch";
 import AssistantList from "./AssistantCheckboxes";
 import ServiceOptions from "./ServiceOptions";
 import { FormikProvider, Field, Form, ErrorMessage, useFormik } from "formik";
 import * as Yup from "yup";
 import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { getCategories } from "@/services/categories.service";
 import { CATEGORYESHOW } from "@/types/CategoryEdit";
 import { getAssistants } from "@/services/assistants.service";
 import { AiFillPlusCircle } from "react-icons/ai";
 import useColorMode from "@/hooks/useColorMode";
 import { Assistant } from "@/types/assistant";
-import { service } from "@/services/service.service";
+import { useParams, useRouter } from "next/navigation";
+import {
+  getService,
+  addService,
+  updateService,
+} from "@/services/service.service";
+import "react-toastify/dist/ReactToastify.css";
+import { serviceType } from "@/types/service";
 
 const ServiceSingleNew = () => {
   const [categoryData, setCategoryData] = useState<CATEGORYESHOW[]>([]);
   const [assistantData, setAssistantData] = useState([]);
-  const [selectedOptionTime, setSelectedOptionTime] = useState(null);
-  const [selectedOptionCategory, setSelectedOptionCategory] = useState(null);
+  const router = useRouter();
+  const [service, setService] = useState<serviceType>();
+  const { id } = useParams<{ id: string }>();
   const [colorMode, setColorMode] = useColorMode();
-
-  const [selectedOptionPriceType, setSelectedOptionPriceType] = useState([]);
-
-  const handleChangeOptionPriceType = (selectedOption: any, index: any) => {
-    // Update selected option state
-    const newSelectedOptions = [...selectedOptionPriceType];
-    newSelectedOptions[index] = selectedOption;
-    setSelectedOptionPriceType(newSelectedOptions);
-
-    // Update the corresponding value in the formik values
-    const newOptions = [...values.serviceOptions];
-    newOptions[index].price_type = selectedOption ? selectedOption.value : null; // Ensure it's not null
-    setFieldValue("serviceOptions", newOptions);
-  };
-
-  const ChangeSelectedCategory = (selectedOptionCategory: any) => {
-    formik.setFieldValue(
-      "service_category_id",
-      selectedOptionCategory ? selectedOptionCategory.id : null,
-    );
-    setSelectedOptionCategory(selectedOptionCategory);
-  };
-
-  const changeSelectedTime = (selectedOptionTime: any) => {
-    setSelectedOptionTime(selectedOptionTime);
-  };
 
   const optionPriceType = [
     { value: "1", label: "Fixed" },
@@ -81,6 +61,11 @@ const ServiceSingleNew = () => {
   useEffect(() => {
     fetchCategories(1);
     fetchAssistant(1);
+    if (id) {
+      getService(id).then((result) => {
+        setService(result?.data?.data);
+      });
+    }
   }, []);
 
   const fetchAssistant = async (page: number) => {
@@ -107,12 +92,18 @@ const ServiceSingleNew = () => {
     setValues({ ...values, serviceOptions: updatedServiceOptions });
   };
 
-  const updateForm = (values: any, setValues: any) => {
+  const handleAddOption = (values: any, setValues: any) => {
     const newServiceOptions = {
       name: null,
-      time: null,
+      time: "60",
       price: null,
-      assistant_id: null,
+      price_type: "1",
+      serviceOptionAssistants: assistantData?.map((assistant: Assistant) => ({
+        assistant_id: assistant?.id || "",
+        time: "60",
+        price_type: "1",
+        price: null,
+      })),
     };
     setValues({
       ...values,
@@ -120,54 +111,68 @@ const ServiceSingleNew = () => {
     });
   };
 
+  const handleToogleSwitch = () => {
+    formik.setFieldValue("is_booking_online", !formik.values.is_booking_online);
+  };
+
   const CreatedServiceSchema = Yup.object().shape({
     name: Yup.string().min(2).max(50).required(),
-    description: Yup.string().max(255),
     service_category_id: Yup.string().required("Category is required"),
     serviceOptions: Yup.array().of(
       Yup.object().shape({
         price: Yup.number().required("Price is required"),
-        name: Yup.string().required("Name is required"),
       }),
     ),
   });
 
   const formik = useFormik({
     initialValues: {
-      name: null,
-      description: null,
-      service_category_id: null,
-      is_booking_online: colorMode === "on",
+      name: service?.name || null,
+      description: service?.discription || null,
+      service_category_id: service?.category?.id || null,
+      is_booking_online: service?.is_booking_online == 1 ? true : false || true,
       assistantServices:
-        assistantData?.map((assistant: Assistant) => assistant?.id) || [],
-      serviceOptions: [
+        service?.assistantServices?.map((assistant: any) => assistant?.id) ||
+        assistantData?.map((assistant: Assistant) => assistant?.id),
+      serviceOptions: service?.serviceOptions.filter(
+        (option) => option.parent_id === null,
+      ) || [
         {
+          id: null,
           name: null,
           time: "60",
           price: null,
           price_type: optionPriceType[0].value,
-          overwrite: assistantData?.map((assistant: Assistant) => ({
-            assistant_id: assistant?.id || "",
-            time: "60",
-            price_type: "1",
-            price: null,
-          })),
+          serviceOptionAssistants: assistantData?.map(
+            (assistant: Assistant) => ({
+              assistant_id: assistant?.id || "",
+              time: "60",
+              price_type: "1",
+              price: null,
+            }),
+          ),
         },
       ],
     },
     validationSchema: CreatedServiceSchema,
     onSubmit: async (values) => {
       try {
-        const response = await service(values);
-        if (!response.statusText) {
-          throw new Error("Network response was not ok");
+        if (id) {
+          const response = await updateService(id, values);
+          if (!response.statusText) {
+            throw new Error("Network response was not ok");
+          }
+        } else {
+          const response = await addService(values);
+          if (!response.statusText) {
+            throw new Error("Network response was not ok");
+          }
         }
         toast.success("Form submitted successfully!");
-
-        formik.resetForm();
+        router.push("/services/list");
       } catch (error) {
         console.error("Error submitting form:", error);
-        toast.error("Error submitting form: " + error.data.message);
+        toast.error("Error submitting form: " + error);
       }
     },
     enableReinitialize: true,
@@ -179,7 +184,7 @@ const ServiceSingleNew = () => {
         <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
           <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
             <h3 className="font-medium text-black dark:text-white">
-              Service single New
+              {id ? "Update service" : "Servic New"}
             </h3>
           </div>
           <FormikProvider value={formik}>
@@ -209,7 +214,11 @@ const ServiceSingleNew = () => {
                     <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                       Category <span className="text-meta-1">*</span>
                     </label>
-                    <Field as="select" name="service_category_id">
+                    <Field
+                      as="select"
+                      className="rounded border-[1.5px] border-stroke border-stroke"
+                      name="service_category_id"
+                    >
                       <option></option>
                       {categoryData.map((item, index) => (
                         <option key={index} value={item?.id}>
@@ -217,18 +226,6 @@ const ServiceSingleNew = () => {
                         </option>
                       ))}
                     </Field>
-                    {/* <Select
-                      value={selectedOptionCategory}
-                      onChange={ChangeSelectedCategory}
-                      options={categoryData.map((item) => ({
-                        id: item.id,
-                        value: item.name,
-                        label: item.name,
-                      }))}
-                      isSearchable={true}
-                      placeholder="Search..."
-                      primaryColor=""
-                    /> */}
                     <ErrorMessage
                       name="service_category_id"
                       component="div"
@@ -250,33 +247,22 @@ const ServiceSingleNew = () => {
               <div className="border-toggle p-6.5">
                 <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                   <b>Online Booking</b>
+                  <p>
+                    Enable online bookings, choose who the service is available
+                    for and add a short description.
+                  </p>
                 </label>
-                <ToggleState
+                <ToggleSwitch
+                  name="is_booking_online"
                   value={formik.values.is_booking_online}
-                  onChange={() => {
-                    setValues(
-                      "is_booking_online",
-                      !formik.values.is_booking_online,
-                    );
-                    setColorMode(
-                      !formik.values.is_booking_online ? "on" : "off",
-                    );
-                  }}
+                  handleChange={handleToogleSwitch}
                 />
               </div>
-              <div
-                className="border-assistant p-6.5"
-                style={{ maxHeight: "300px", overflowY: "auto" }}
-              >
+              <div className="border-assistant p-6.5">
                 <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                   <b>Assistant</b>
                 </label>
-                <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                  <AssistantList
-                    assistantData={assistantData}
-                    values={formik.values}
-                  />
-                </div>
+                <AssistantList assistantData={assistantData} />
               </div>
               <div className="border-assistant p-6.5">
                 <label className="mb-3 block text-sm font-medium text-black dark:text-white">
@@ -290,30 +276,35 @@ const ServiceSingleNew = () => {
                 <ServiceOptions
                   assistants={assistantData}
                   formik={formik}
-                  selectedOptionTime={selectedOptionTime}
-                  selectedOptionPriceType={selectedOptionPriceType}
-                  handleChangeOptionPriceType={handleChangeOptionPriceType}
                   optionTime={optionTime}
                   optionPriceType={optionPriceType}
                   removeFromList={removeFromList}
-                  changeSelectedTime={changeSelectedTime}
                   listAssistants={formik.values.assistantServices}
                 />
                 <button
                   className="flex items-center text-sm font-medium text-blue-500 dark:text-blue-500"
                   type="button"
-                  onClick={() => updateForm(formik.values, formik.setValues)}
+                  onClick={() =>
+                    handleAddOption(formik.values, formik.setValues)
+                  }
                 >
                   Add pricing option
                   <AiFillPlusCircle />
                 </button>
               </div>
-              <div className="mb-4.5 flex justify-center">
+              <div className="flex justify-center p-6.5">
+                <button
+                  type="button"
+                  onClick={router.back}
+                  className="mr-10 inline-flex items-center justify-center rounded-md bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                >
+                  Back
+                </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-md bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                  className="inline-flex items-center justify-center rounded-md bg-primary px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
                 >
-                  Created
+                  {id ? "Update" : "Created"}
                 </button>
               </div>
             </Form>

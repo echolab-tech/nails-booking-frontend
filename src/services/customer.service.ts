@@ -27,3 +27,7 @@ export const deleteCustomer = async (id: number): Promise<any> => {
 export const getCountry = async (): Promise<any> => {
     return await http.get<any>("/country");
 };
+
+export const getStatus = async (): Promise<any> => {
+    return await http.get<any>("/status");
+};
