@@ -76,9 +76,7 @@ const TeamList = () => {
     ) => {
       try {
         const isCheckDeleted = await getIsDeleted(customerId);
-        console.log(isCheckDeleted.data[0].isDeleted);
         if (isCheckDeleted.data[0].isDeleted == 0) {
-          // console.log('ok');
           const userConfirmed = window.confirm(
             `Are you sure you want to delete ${customerName} ?`,
           );
