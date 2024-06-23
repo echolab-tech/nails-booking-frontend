@@ -13,12 +13,21 @@ import { getAssistants } from "@/services/assistants.service";
 import { AiFillPlusCircle } from "react-icons/ai";
 import useColorMode from "@/hooks/useColorMode";
 import { Assistant } from "@/types/assistant";
-import { service } from "@/services/service.service";
+import { useParams, useRouter } from "next/navigation";
+import {
+  getService,
+  addService,
+  updateService,
+} from "@/services/service.service";
 import "react-toastify/dist/ReactToastify.css";
+import { serviceType } from "@/types/service";
 
 const ServiceSingleNew = () => {
   const [categoryData, setCategoryData] = useState<CATEGORYESHOW[]>([]);
   const [assistantData, setAssistantData] = useState([]);
+  const router = useRouter();
+  const [service, setService] = useState<serviceType>();
+  const { id } = useParams<{ id: string }>();
   const [colorMode, setColorMode] = useColorMode();
 
   const optionPriceType = [
@@ -52,6 +61,11 @@ const ServiceSingleNew = () => {
   useEffect(() => {
     fetchCategories(1);
     fetchAssistant(1);
+    if (id) {
+      getService(id).then((result) => {
+        setService(result?.data?.data);
+      });
+    }
   }, []);
 
   const fetchAssistant = async (page: number) => {
@@ -78,12 +92,18 @@ const ServiceSingleNew = () => {
     setValues({ ...values, serviceOptions: updatedServiceOptions });
   };
 
-  const updateForm = (values: any, setValues: any) => {
+  const handleAddOption = (values: any, setValues: any) => {
     const newServiceOptions = {
       name: null,
-      time: null,
+      time: "60",
       price: null,
-      assistant_id: null,
+      price_type: "1",
+      serviceOptionAssistants: assistantData?.map((assistant: Assistant) => ({
+        assistant_id: assistant?.id || "",
+        time: "60",
+        price_type: "1",
+        price: null,
+      })),
     };
     setValues({
       ...values,
@@ -97,26 +117,28 @@ const ServiceSingleNew = () => {
 
   const CreatedServiceSchema = Yup.object().shape({
     name: Yup.string().min(2).max(50).required(),
-    description: Yup.string().max(255),
     service_category_id: Yup.string().required("Category is required"),
     serviceOptions: Yup.array().of(
       Yup.object().shape({
         price: Yup.number().required("Price is required"),
-        name: Yup.string().required("Name is required"),
       }),
     ),
   });
 
   const formik = useFormik({
     initialValues: {
-      name: null,
-      description: null,
-      service_category_id: null,
-      is_booking_online: true,
+      name: service?.name || null,
+      description: service?.discription || null,
+      service_category_id: service?.category?.id || null,
+      is_booking_online: service?.is_booking_online == 1 ? true : false || true,
       assistantServices:
-        assistantData?.map((assistant: Assistant) => assistant?.id) || [],
-      serviceOptions: [
+        service?.assistantServices?.map((assistant: any) => assistant?.id) ||
+        assistantData?.map((assistant: Assistant) => assistant?.id),
+      serviceOptions: service?.serviceOptions.filter(
+        (option) => option.parent_id === null,
+      ) || [
         {
+          id: null,
           name: null,
           time: "60",
           price: null,
@@ -133,13 +155,19 @@ const ServiceSingleNew = () => {
     validationSchema: CreatedServiceSchema,
     onSubmit: async (values) => {
       try {
-        const response = await service(values);
-        if (!response.statusText) {
-          throw new Error("Network response was not ok");
+        if (id) {
+          const response = await updateService(id, values);
+          if (!response.statusText) {
+            throw new Error("Network response was not ok");
+          }
+        } else {
+          const response = await addService(values);
+          if (!response.statusText) {
+            throw new Error("Network response was not ok");
+          }
         }
         toast.success("Form submitted successfully!");
-
-        formik.resetForm();
+        router.push("list");
       } catch (error) {
         console.error("Error submitting form:", error);
         toast.error("Error submitting form: " + error);
@@ -154,7 +182,7 @@ const ServiceSingleNew = () => {
         <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
           <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
             <h3 className="font-medium text-black dark:text-white">
-              Service single New
+              {id ? "Update service" : "Servic New"}
             </h3>
           </div>
           <FormikProvider value={formik}>
@@ -254,18 +282,27 @@ const ServiceSingleNew = () => {
                 <button
                   className="flex items-center text-sm font-medium text-blue-500 dark:text-blue-500"
                   type="button"
-                  onClick={() => updateForm(formik.values, formik.setValues)}
+                  onClick={() =>
+                    handleAddOption(formik.values, formik.setValues)
+                  }
                 >
                   Add pricing option
                   <AiFillPlusCircle />
                 </button>
               </div>
-              <div className="mb-4.5 flex justify-center">
+              <div className="flex justify-center p-6.5">
+                <button
+                  type="button"
+                  onClick={router.back}
+                  className="mr-10 inline-flex items-center justify-center rounded-md bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                >
+                  Back
+                </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-md bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                  className="inline-flex items-center justify-center rounded-md bg-primary px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
                 >
-                  Created
+                  {id ? "Update" : "Created"}
                 </button>
               </div>
             </Form>
