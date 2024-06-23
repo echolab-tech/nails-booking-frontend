@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function EditSchduledPage() {
   return (
     <DefaultLayout>
-      <Breadcrumb pageName="Set Thanh Huynh’s regular shifts" />
+     
       <EditSchduled />
     </DefaultLayout>
   );

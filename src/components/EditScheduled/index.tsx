@@ -6,6 +6,9 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import Breadcrumb from "../Breadcrumbs/Breadcrumb";
+import { useModal } from "@/hooks/useModal";
+// const { visibleId, toggle } = useModal();
 
 export default function EditSchduled() {
   const searchParams = useSearchParams();
@@ -25,43 +28,52 @@ export default function EditSchduled() {
     }
   }, [fetchDataAssistant, userID]);
 
-  // const DATASCHDULEDOFUSER = [
-  //   {
-  //     days: "Monday",
-  //     time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
-  //   },
-  //   {
-  //     days: "Tuesday",
-  //     time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
-  //   },
-  //   {
-  //     days: "Wednesday",
-  //     time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
-  //   },
-  //   {
-  //     days: "Thursday",
-  //     time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
-  //   },
-  //   {
-  //     days: "Friday",
-  //     time: [{ id: uuidv4(), from: "8:00", to: "18:00" }],
-  //   },
-  // ];
-
   const DATASCHDULEDOFUSER = useMemo(() => {
+    const LISTDAY = [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ];
     const scheduleOfUser: any[] = [];
     if (dataAssistant) {
-      dataAssistant.data.schedule.map((data: any) => {
+      LISTDAY.map((day) => {
+        const arrTime:  {
+          id: string;
+          from: string;
+          to: string;
+        }[] = []
+       const time = dataAssistant.data.schedule.map((data: any) => {
+       
+        if(data.weekdays === day){
+          arrTime.push({
+            id: data.id,
+            from: data.start_time,
+            to: data.end_time
+          })
+        }
+       })
+        
         scheduleOfUser.push({
-          days: data.weekdays,
-          time: [{ id: uuidv4(), from: data.start_time, to: data.end_time }],
+          days: day,
+          time: arrTime,
         });
-      });
+   
+      })
+      
       return scheduleOfUser;
     }
   }, [dataAssistant]);
 
+  
+
   const [inputs, setInputs] = useState<ScheduledOfUser[]>([]);
+
+  console.log(dataAssistant);
+
 
   useEffect(() => {
     if (!inputs.length && DATASCHDULEDOFUSER) {
@@ -71,12 +83,6 @@ export default function EditSchduled() {
 
 
   const addHandler = (day: string) => {
-    // const _inputs = DATASCHDULEDOFUSER.find((data) => data.days === day);
-    // const newInput = [...inputs];
-
-    // newInput.push({ id: uuidv4(), from: "", to: "" });
-    // console.log(newInput);
-
     const newInput = inputs.map((item) =>
       item.days === day
         ? {
@@ -129,16 +135,16 @@ export default function EditSchduled() {
 
   return (
     <div className="h-full w-full rounded-2xl border-2  border-stroke pb-2.5  pb-6  pt-6 dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+       <Breadcrumb pageName={`Set ${dataAssistant?.data?.name}'s regular shifts`}/>
       <div className="flex flex-col gap-10 ">
         {inputs.map((data) => (
           <div key={data.days} className="flex w-full items-start">
             <div className="flex w-[30%] items-center gap-8">
               <input
-                id="default-checkbox"
-                type="checkbox"
-                value=""
-                checked
-                className="bg-gray-100 border-gray-300 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 h-9 w-9 rounded text-blue-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+              id="default-checkbox"
+              type="checkbox"
+              defaultChecked 
+              className="bg-gray-100 border-gray-300 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 h-6 w-6 rounded text-blue-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
               />
               <label
                 htmlFor="default-checkbox"
@@ -230,8 +236,8 @@ export default function EditSchduled() {
                       onClick={() => deleteHandler(input.id, data.days)}
                       src="/images/scheduled/trash.svg"
                       alt="delete"
-                      width={40}
-                      height={40}
+                      width={20}
+                      height={20}
                     />
                   </div>
                 ))}
@@ -245,6 +251,23 @@ export default function EditSchduled() {
             </div>
           </div>
         ))}
+      </div>
+      <div className=" flex items-center justify-end rounded-b  p-6">
+            <button
+              className="text-red-500 background-transparent mb-1 mr-1 px-6 py-2 text-sm font-bold uppercase outline-none transition-all duration-150 ease-linear focus:outline-none"
+              type="submit"
+              // onClick={() => toggle("")}
+              >
+              Cancel
+              </button>
+              <button
+              className="mb-1 mr-1 rounded bg-blue-500 px-6 py-3 text-sm font-bold uppercase text-black shadow outline-none transition-all duration-150 ease-linear hover:shadow-lg focus:outline-none active:bg-emerald-600"
+              type="submit"
+
+              // onClick={() => toggle("")}
+              >
+              Save
+              </button>
       </div>
     </div>
   );

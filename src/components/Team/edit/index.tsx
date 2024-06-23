@@ -31,7 +31,7 @@ const TeamEdit = () => {
   useEffect(() => {
     fetchAssistant(customerId);
     fetchDataServices();
-  }, []);
+  }, [customerId]);
 
   const fetchAssistant = (customerId: number) => {
     try {

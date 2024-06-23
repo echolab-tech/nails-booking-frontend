@@ -20,7 +20,7 @@ const ServiceList = () => {
       setServiceData(data.data.data);
       console.log(data.data.data);
     });
-  }, []);
+  }, [currentPage]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

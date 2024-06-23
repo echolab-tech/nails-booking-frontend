@@ -4,7 +4,7 @@ import { useModal } from "@/hooks/useModal";
 import { getListAssistant } from "@/services/assistants.service";
 import { scheduleDelete, scheduleEdit, scheduleList } from "@/services/schedules.service";
 import { Schedule, ScheduledOfUser } from "@/types/Schedule";
-import { time } from "console";
+import { table, time } from "console";
 import { Form, Formik } from "formik";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,14 +28,13 @@ interface PaginationData {
   per_page: number;
 }
 
-export default function Schduled() {
+export default function Scheduled() {
   const { visibleId, toggle } = useModal();
   const [startTime, setStarTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [id, setId] = useState(0);
   const [visibleModalId, setVisibleModalId] = useState<string>("");
   const [assistantLists, setAssistantList] = useState<any[]>([]);
-  const [scheduleLists, setScheduleList] = useState<any[]>([]);
   const [isEditSuccess, setIsEditSuccess] = useState(false);
   const [paginationData, setPaginationData] = useState<PaginationData>({
     current_page: 1,
@@ -96,12 +95,18 @@ export default function Schduled() {
     "Sunday",
   ];
 
+  const totalHours = (schedules: any[]) => {
+    const listTime = schedules.map((item) => Number(item.end_time.split(':')[0]) - Number(item.start_time.split(':')[0]))
+    const total = listTime.reduce((partialSum, a) => partialSum + a,0)
+    return total
+  }
 
-  const checkScheduleOfDays = (day: string, name:string) => {
+
+  const checkScheduleOfDays = (day: string, id:string) => {
     const scheduleOfDay: any = [];
     assistantLists.map((item) => {
       scheduleOfDay.push(
-        ...item.schedule.filter((shift: any) => shift.weekdays === day && item.name === name),
+        ...item.schedule.filter((shift: any) => shift.weekdays === day && item.id === id),
       );
     });
     return scheduleOfDay;
@@ -153,7 +158,7 @@ export default function Schduled() {
                         {item.name}
                       </p>
                       <p className="w-max text-sm text-black dark:text-white ">
-                        {item.totalHours}
+                        {`${totalHours(item.schedule)}h`}
                       </p>
                     </div>
                     <Link
@@ -168,226 +173,287 @@ export default function Schduled() {
                     </Link>
                   </div>
                 </td>
-                {item.schedule && item.schedule.map((scheduled: any, idx: number) => (
-                  <td scope="row" className="relative px-6 py-4" key={idx}>
-                    {checkScheduleOfDays(scheduled.weekdays, item.name).map(
-                      (time: any, id: number) => (
-                        <div
-                          key={time.id}
-                          className=" mt-2 w-max cursor-pointer items-center rounded-2xl bg-gray-4 pb-1.5 pl-1.5 pr-1.5 pt-1.5 lg:pl-5 lg:pr-5"
-                          onClick={() => {
-                            toggle(`${index}-${idx}`);
-                            setVisibleModalId(`${index}-${idx}`);
-                            setStarTime(time.start_time);
-                            setEndTime(time.end_time);
-                            setId(time.id);
-                          }}
-                        >
-                          <p className="w-max text-sm text-black dark:text-white">
-                            {`${time.start_time} - ${time.end_time}`}
+                {HEADERSTABLE.slice(1).map((headerDay, idx) => (
+                  <td scope="row" className="relative px-6 py-4" key={headerDay} >
+                    <td key={headerDay}>
+                      {checkScheduleOfDays(headerDay, item.id).map(
+                        (time: any, id: number) => (
+                          <div
+                            key={time.id}
+                            className=" mt-2 w-max cursor-pointer items-center rounded-2xl bg-gray-4 pb-1.5 pl-1.5 pr-1.5 pt-1.5 lg:pl-5 lg:pr-5"
+                            onClick={() => {
+                              toggle(`${index}-${idx}-${time.id}`);
+                              setVisibleModalId(`${index}-${idx}`);
+                              setStarTime(time.start_time);
+                              setEndTime(time.end_time);
+                              setId(time.id);
+                            }}
+                          >
+                            <p className="w-max text-sm text-black dark:text-white">
+                              {`${time.start_time} - ${time.end_time}`}
+                            </p>
+                          </div>
+                        ),
+                      )}
+                      {visibleId === `${index}-${idx}-${id}` && (
+                        <div className="absolute  -bottom-20 right-0 z-9 w-40 rounded-md border-[1px] border-black bg-white p-2">
+                          <p
+                            className="w-max cursor-pointer text-sm text-black dark:text-white"
+                            onClick={() => toggle("Editthisday")}
+                          >
+                            Edit this day
+                          </p>
+                          <Link
+                          href={`edit/${item.name.replace(" ", "-")}?userID=${item.id}`}>
+                          <p className="w-max cursor-pointer text-sm text-black dark:text-white">
+                          Edit regular shifts
+                          </p>
+                          </Link>
+
+                          <p className="w-max text-sm text-black dark:text-white ">
+                            Add time off
+                          </p>
+
+                          {/* <p className="w-max text-sm text-red"> */}
+                          <p
+                            className="w-max cursor-pointer text-sm text-black dark:text-white"
+                            onClick={() => handleButtonDelete(id)}
+                          >
+                            {" "}
+                            Delete this shifts
                           </p>
                         </div>
-                      ),
-                    )}
-                    {visibleId === `${index}-${idx}` && (
-                      <div className="absolute  -bottom-20 right-0 z-9 w-40 rounded-md border-[1px] border-black bg-white p-2">
-                        <p
-                          className="w-max cursor-pointer text-sm text-black dark:text-white"
-                          onClick={() => toggle("Editthisday")}
-                        >
-                          Edit this day
-                        </p>
-                        <p className="w-max text-sm text-black dark:text-white ">
-                          Edit regular shifts
-                        </p>
-
-                        <p className="w-max text-sm text-black dark:text-white ">
-                          Add time off
-                        </p>
-
-                        {/* <p className="w-max text-sm text-red"> */}
-                        <p className="w-max cursor-pointer text-sm text-black dark:text-white"
-                            onClick={() => handleButtonDelete(scheduled.id)} >    {/* đang lỗi id, lấy nhầm id của assisstant */}
-                        Delete this shifts
-                        </p>
-                      </div>
-                    )}
-                    {visibleId === "Editthisday" && (
-                      <>
-                        <div className="fixed inset-0 z-50 flex  items-center justify-center overflow-y-auto overflow-x-hidden outline-none focus:outline-none">
-                          <div className="relative mx-auto my-6 w-auto max-w-3xl">
-                            {/*content*/}
-                            <div className="relative flex  w-[500px] flex-col rounded-lg border-0 bg-white shadow-lg outline-none focus:outline-none">
-                              {/*header*/}
-                              <div className="border-blueGray-200 flex items-start justify-between rounded-t border-b border-solid p-2">
-                                <button
-                                  className="float-right ml-auto flex border-0"
-                                  onClick={() => toggle("")}
+                      )}
+                      {visibleId === "Editthisday" && (
+                        <>
+                          <div className="fixed inset-0 z-50 flex  items-center justify-center overflow-y-auto overflow-x-hidden outline-none focus:outline-none">
+                            <div className="relative mx-auto my-6 w-auto max-w-3xl">
+                              {/*content*/}
+                              <div className="relative flex  w-[500px] flex-col rounded-lg border-0 bg-white shadow-lg outline-none focus:outline-none">
+                                {/*header*/}
+                                <div className="border-blueGray-200 flex items-start justify-between rounded-t border-b border-solid p-2">
+                                  <button
+                                    className="float-right ml-auto flex border-0"
+                                    onClick={() => toggle("")}
+                                  >
+                                    <span className="flex h-6 w-6 items-center bg-transparent text-3xl text-black  outline-none focus:outline-none">
+                                      ×
+                                    </span>
+                                  </button>
+                                </div>
+                                {/*body*/}
+                                <Formik
+                                  enableReinitialize={true}
+                                  initialValues={{
+                                    start_time: startTime,
+                                    end_time: endTime,
+                                  }}
+                                  validationSchema={ScheduleNewSchema}
+                                  onSubmit={(
+                                    values: Schedule,
+                                    { resetForm },
+                                  ) => {
+                                    values.start_time = startTime;
+                                    values.end_time = endTime;
+                                    scheduleEdit(id, values)
+                                      .then((data) => {
+                                        toggle("")
+                                        setIsEditSuccess(true)
+                                        resetForm();
+                                      })
+                                      .catch((error) => {
+                                        toast.error("Failed to update schdule.");
+                                      });
+                                  }}
                                 >
-                                  <span className="flex h-6 w-6 items-center bg-transparent text-3xl text-black  outline-none focus:outline-none">
-                                    ×
-                                  </span>
-                                </button>
-                              </div>
-                              {/*body*/}
-                              <Formik
-                                enableReinitialize={true}
-                                initialValues={{
-                                  start_time: startTime,
-                                  end_time: endTime,
-                                }}
-                                validationSchema={ScheduleNewSchema}
-                                onSubmit={(
-                                  values: Schedule,
-                                  { resetForm },
-                                ) => {
-                                  values.start_time = startTime;
-                                  values.end_time = endTime;
-                                  scheduleEdit(id, values)
-                                    .then((data) => {
-                                      toggle("")
-                                      setIsEditSuccess(true)
-                                      toast.success(
-                                        "Schedule update successfully.",
-                                      );
-                                      resetForm();
-                                    })
-                                    .catch((error) => {
-                                      toast.error("Failed to update schdule.");
-                                    });
-                                }}
-                              >
-                                {({
-                                  errors,
-                                  touched,
-                                  validateField,
-                                  validateForm,
-                                  setFieldValue,
-                                }) => (
-                                  <Form>
-                                    <div className="w-full  p-5">
-                                      <div className="flex items-center gap-5">
-                                        <div className="w-[50%]">
-                                          <p className="w-max cursor-pointer text-sm font-semibold text-black dark:text-white">
-                                            Start time
+                                  {({
+                                    errors,
+                                    touched,
+                                    validateField,
+                                    validateForm,
+                                    setFieldValue,
+                                  }) => (
+                                    <Form>
+                                      <div className="w-full  p-5">
+                                        <div className="flex items-center gap-5">
+                                          <div className="w-[50%]">
+                                            <p className="w-max cursor-pointer text-sm font-semibold text-black dark:text-white">
+                                              Start time
+                                            </p>
+                                            <select
+                                              className="w-[100%] rounded-xl border"
+                                              name="whatever"
+                                              id="frm-whatever"
+                                              onChange={(text) =>
+                                                setStarTime(text.target.value)
+                                              }
+                                            >
+                                              <option value="">
+                                                {startTime}
+                                              </option>
+                                              <option value="0:00">0:00</option>
+                                              <option value="1:00">1:00</option>
+                                              <option value="2:00">2:00</option>
+                                              <option value="3:00">3:00</option>
+                                              <option value="4:00">4:00</option>
+                                              <option value="5:00">5:00</option>
+                                              <option value="6:00">6:00</option>
+                                              <option value="7:00">7:00</option>
+                                              <option value="8:00">8:00</option>
+                                              <option value="9:00">9:00</option>
+                                              <option value="10:00">
+                                                10:00
+                                              </option>
+                                              <option value="11:00">
+                                                11:00
+                                              </option>
+                                              <option value="12:00">
+                                                12:00
+                                              </option>
+                                              <option value="13:00">
+                                                13:00
+                                              </option>
+                                              <option value="14:00">
+                                                14:00
+                                              </option>
+                                              <option value="15:00">
+                                                15:00
+                                              </option>
+                                              <option value="16:00">
+                                                16:00
+                                              </option>
+                                              <option value="17:00">
+                                                17:00
+                                              </option>
+                                              <option value="18:00">
+                                                18:00
+                                              </option>
+                                              <option value="19:00">
+                                                19:00
+                                              </option>
+                                              <option value="20:00">
+                                                20:00
+                                              </option>
+                                              <option value="21:00">
+                                                21:00
+                                              </option>
+                                              <option value="22:00">
+                                                22:00
+                                              </option>
+                                              <option value="23:00">
+                                                23:00
+                                              </option>
+                                            </select>
+                                          </div>
+                                          <p className="mt-5 w-max cursor-pointer text-xl font-semibold text-black dark:text-white">
+                                            -
                                           </p>
-                                          <select
-                                            className="w-[100%] rounded-xl border"
-                                            name="whatever"
-                                            id="frm-whatever"
-                                            onChange={(text) =>
-                                              setStarTime(text.target.value)
-                                            }
-                                          >
-                                            <option value="">
-                                              {startTime}
-                                            </option>
-                                            <option value="0:00">0:00</option>
-                                            <option value="1:00">1:00</option>
-                                            <option value="2:00">2:00</option>
-                                            <option value="3:00">3:00</option>
-                                            <option value="4:00">4:00</option>
-                                            <option value="5:00">5:00</option>
-                                            <option value="6:00">6:00</option>
-                                            <option value="7:00">7:00</option>
-                                            <option value="8:00">8:00</option>
-                                            <option value="9:00">9:00</option>
-                                            <option value="10:00">10:00</option>
-                                            <option value="11:00">11:00</option>
-                                            <option value="12:00">12:00</option>
-                                            <option value="13:00">13:00</option>
-                                            <option value="14:00">14:00</option>
-                                            <option value="15:00">15:00</option>
-                                            <option value="16:00">16:00</option>
-                                            <option value="17:00">17:00</option>
-                                            <option value="18:00">18:00</option>
-                                            <option value="19:00">19:00</option>
-                                            <option value="20:00">20:00</option>
-                                            <option value="21:00">21:00</option>
-                                            <option value="22:00">22:00</option>
-                                            <option value="23:00">23:00</option>
-                                          </select>
-                                        </div>
-                                        <p className="mt-5 w-max cursor-pointer text-xl font-semibold text-black dark:text-white">
-                                          -
-                                        </p>
-                                        <div className="w-[50%]">
-                                          <p className="w-max cursor-pointer text-sm font-semibold text-black dark:text-white">
-                                            End time
-                                          </p>
-                                          <select
-                                            className="w-[100%] rounded-xl border"
-                                            name="whatever"
-                                            id="frm-whatever"
-                                            onChange={(text) =>
-                                              setEndTime(text.target.value)
-                                            }
-                                          >
-                                            <option value="">{endTime}</option>
-                                            <option value="0:00">0:00</option>
-                                            <option value="1:00">1:00</option>
-                                            <option value="2:00">2:00</option>
-                                            <option value="3:00">3:00</option>
-                                            <option value="4:00">4:00</option>
-                                            <option value="5:00">5:00</option>
-                                            <option value="6:00">6:00</option>
-                                            <option value="7:00">7:00</option>
-                                            <option value="8:00">8:00</option>
-                                            <option value="9:00">9:00</option>
-                                            <option value="10:00">10:00</option>
-                                            <option value="11:00">11:00</option>
-                                            <option value="12:00">12:00</option>
-                                            <option value="13:00">13:00</option>
-                                            <option value="14:00">14:00</option>
-                                            <option value="15:00">15:00</option>
-                                            <option value="16:00">16:00</option>
-                                            <option value="17:00">17:00</option>
-                                            <option value="18:00">18:00</option>
-                                            <option value="19:00">19:00</option>
-                                            <option value="20:00">20:00</option>
-                                            <option value="21:00">21:00</option>
-                                            <option value="22:00">22:00</option>
-                                            <option value="23:00">23:00</option>
-                                          </select>
-                                        </div>
+                                          <div className="w-[50%]">
+                                            <p className="w-max cursor-pointer text-sm font-semibold text-black dark:text-white">
+                                              End time
+                                            </p>
+                                            <select
+                                              className="w-[100%] rounded-xl border"
+                                              name="whatever"
+                                              id="frm-whatever"
+                                              onChange={(text) =>
+                                                setEndTime(text.target.value)
+                                              }
+                                            >
+                                              <option value="">{endTime}</option>
+                                              <option value="0:00">0:00</option>
+                                              <option value="1:00">1:00</option>
+                                              <option value="2:00">2:00</option>
+                                              <option value="3:00">3:00</option>
+                                              <option value="4:00">4:00</option>
+                                              <option value="5:00">5:00</option>
+                                              <option value="6:00">6:00</option>
+                                              <option value="7:00">7:00</option>
+                                              <option value="8:00">8:00</option>
+                                              <option value="9:00">9:00</option>
+                                              <option value="10:00">
+                                                10:00
+                                              </option>
+                                              <option value="11:00">
+                                                11:00
+                                              </option>
+                                              <option value="12:00">
+                                                12:00
+                                              </option>
+                                              <option value="13:00">
+                                                13:00
+                                              </option>
+                                              <option value="14:00">
+                                                14:00
+                                              </option>
+                                              <option value="15:00">
+                                                15:00
+                                              </option>
+                                              <option value="16:00">
+                                                16:00
+                                              </option>
+                                              <option value="17:00">
+                                                17:00
+                                              </option>
+                                              <option value="18:00">
+                                                18:00
+                                              </option>
+                                              <option value="19:00">
+                                                19:00
+                                              </option>
+                                              <option value="20:00">
+                                                20:00
+                                              </option>
+                                              <option value="21:00">
+                                                21:00
+                                              </option>
+                                              <option value="22:00">
+                                                22:00
+                                              </option>
+                                              <option value="23:00">
+                                                23:00
+                                              </option>
+                                            </select>
+                                          </div>
 
-                                        <Image
-                                          className="mt-5 cursor-pointer"
-                                          //   onClick={() => deleteHandler(input.id, data.days)}
-                                          src="/images/scheduled/trash.svg"
-                                          alt="delete"
-                                          width={30}
-                                          height={30}
-                                        />
+                                          <Image
+                                            className="mt-5 cursor-pointer"
+                                            //   onClick={() => deleteHandler(input.id, data.days)}
+                                            src="/images/scheduled/trash.svg"
+                                            alt="delete"
+                                            width={30}
+                                            height={30}
+                                          />
+                                        </div>
                                       </div>
-                                    </div>
-                                    <div className=" flex items-center justify-end rounded-b  p-6">
-                                      <button
-                                        className="text-red-500 background-transparent mb-1 mr-1 px-6 py-2 text-sm font-bold uppercase outline-none transition-all duration-150 ease-linear focus:outline-none"
-                                        type="submit"
-                                        onClick={() => toggle("")}
-                                      >
-                                        Cancel
-                                      </button>
-                                      <button
-                                        className="mb-1 mr-1 rounded bg-emerald-500 px-6 py-3 text-sm font-bold uppercase text-black shadow outline-none transition-all duration-150 ease-linear hover:shadow-lg focus:outline-none active:bg-emerald-600"
-                                        type="submit"
+                                      <div className=" flex items-center justify-end rounded-b  p-6">
+                                        <button
+                                          className="text-red-500 background-transparent mb-1 mr-1 px-6 py-2 text-sm font-bold uppercase outline-none transition-all duration-150 ease-linear focus:outline-none"
+                                          type="submit"
+                                          onClick={() => toggle("")}
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button
+                                          className="mb-1 mr-1 rounded bg-blue-500 px-6 py-3 text-sm font-bold uppercase text-black shadow outline-none transition-all duration-150 ease-linear hover:shadow-lg focus:outline-none active:bg-emerald-600"
+                                          type="submit"
 
-                                        // onClick={() => toggle("")}
-                                      >
-                                        Save
-                                      </button>
-                                    </div>
-                                  </Form>
-                                )}
-                              </Formik>
-                              {/*footer*/}
+                                          // onClick={() => toggle("")}
+                                        >
+                                          Save
+                                        </button>
+                                      </div>
+                                    </Form>
+                                  )}
+                                </Formik>
+                                {/*footer*/}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="fixed inset-0 z-40 bg-black opacity-10"></div>
-                      </>
-                    )}
+                          {/* <div className="fixed inset-0 z-40 bg-black opacity-10"></div> */}
+                        </>
+                      )}
+                    </td>
                   </td>
                 ))}
               </tr>

@@ -23,7 +23,7 @@ const AdvancedPricingDialog: React.FC<AdvancedPricingDialogProps> = ({
 }) => {
   useEffect(() => {
     console.log(optionTime);
-  }, []);
+  }, [optionTime]);
 
   return (
     <FieldArray name={`serviceOptions`}>
