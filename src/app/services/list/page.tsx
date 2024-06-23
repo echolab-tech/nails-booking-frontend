@@ -4,8 +4,7 @@ import ServiceList from "@/components/Service/List";
 
 export const metadata: Metadata = {
   title: "Service List | NailsAdmin Template",
-  description:
-    "This is Service List page for NailsAdmin Template",
+  description: "This is Service List page for NailsAdmin Template",
 };
 
 const ServiceListPage = () => {

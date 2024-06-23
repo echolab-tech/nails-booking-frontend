@@ -20,3 +20,6 @@ export const getService = async (id: string): Promise<any> => {
 export const updateService = async (id: string, data: any): Promise<any> => {
   return await http.put<any>(`/services/${id}`, data);
 };
+export const deleteService = async (id: number | null): Promise<any> => {
+  return await http.delete<any>(`/services/${id}`);
+};

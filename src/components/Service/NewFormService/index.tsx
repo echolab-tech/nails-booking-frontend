@@ -143,12 +143,14 @@ const ServiceSingleNew = () => {
           time: "60",
           price: null,
           price_type: optionPriceType[0].value,
-          overwrite: assistantData?.map((assistant: Assistant) => ({
-            assistant_id: assistant?.id || "",
-            time: "60",
-            price_type: "1",
-            price: null,
-          })),
+          serviceOptionAssistants: assistantData?.map(
+            (assistant: Assistant) => ({
+              assistant_id: assistant?.id || "",
+              time: "60",
+              price_type: "1",
+              price: null,
+            }),
+          ),
         },
       ],
     },
@@ -167,7 +169,7 @@ const ServiceSingleNew = () => {
           }
         }
         toast.success("Form submitted successfully!");
-        router.push("list");
+        router.push("/services/list");
       } catch (error) {
         console.error("Error submitting form:", error);
         toast.error("Error submitting form: " + error);
