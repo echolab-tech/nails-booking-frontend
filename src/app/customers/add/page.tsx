@@ -1,5 +1,7 @@
 "use client";
 
+import './style.scss';
+import "react-toastify/dist/ReactToastify.css";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import SelectGroupOne from "@/components/SelectGroup/SelectGroupOne";
@@ -8,17 +10,12 @@ import { CustomerForm } from "@/types/customerForm";
 import flatpickr from "flatpickr";
 import * as Yup from "yup";
 import { useEffect, useState } from "react";
-import { customers, getCountry } from "@/services/customer.service";
+import { customers, getCountry, getStatus } from "@/services/customer.service";
 import { FileInput, Label } from "flowbite-react";
 import { format, parseISO } from "date-fns";
 import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
-// export const metadata: Metadata = {
-//   title: "Next.js Form Layout | TailAdmin - Next.js Dashboard Template",
-//   description:
-//     "This is Next.js Form Layout page for TailAdmin - Next.js Tailwind CSS Admin Dashboard Template",
-// };
+import Select from "react-tailwindcss-select";
+import { FaCircle } from "react-icons/fa";
 
 const CustomerNewSchema = Yup.object().shape({
   name: Yup.string()
@@ -33,10 +30,11 @@ const CustomerNewSchema = Yup.object().shape({
 });
 
 const CustomeNewForm = () => {
-  const [cities, setCities] = useState<{ id: number; name: string }[]>([]);
   const [selectedBirthday, setSelectedBirthday] = useState<string | null>(null);
-
-
+  const [cities, setCities] = useState<{ id: number; name: string }[]>([]);
+  const [country, setCountry] = useState<{ value: string; label: string } | null>(null);
+  const [status, setStatus] = useState<{ id: number; name_status: string; color_code: string }[]>([]);
+  const [avatarImage, setAvatar] = useState("");
 
   useEffect(() => {
     // Init flatpickr
@@ -49,16 +47,21 @@ const CustomeNewForm = () => {
     //     '<svg className="fill-current" width="7" height="11" viewBox="0 0 7 11"><path d="M5.4 10.8l1.4-1.4-4-4 4-4L5.4 0 0 5.4z" /></svg>',
     //   nextArrow:
     //     '<svg className="fill-current" width="7" height="11" viewBox="0 0 7 11"><path d="M1.4 10.8L0 9.4l4-4-4-4L1.4 0l5.4 5.4z" /></svg>',
-      
     // });
     fetchDataCountry();
+    fetchDataStatus();
   }, []);
+
   const fetchDataCountry = async () => {
     const country = await getCountry();
     setCities(country.data.dataCountry);
   };
 
-  const [avatarImage, setAvatar] = useState("");
+  const fetchDataStatus = async () => {
+    const status = await getStatus();
+    console.log(status);
+    setStatus(status.data.dataStatus);
+  };
 
   const handleAvatarChange = (event: any) => {
     const file = event.target.files[0];
@@ -70,7 +73,6 @@ const CustomeNewForm = () => {
     reader.readAsDataURL(file);
   };
 
-
   const formatDate = (dateString: string) => {
     return parseISO(dateString);
   };
@@ -78,6 +80,16 @@ const CustomeNewForm = () => {
   const handleBirthdayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedBirthday(e.target.value);
   };
+
+  const handleChangeCountry = (value: any) => {
+    setCountry(value);
+  };
+
+  const options = cities.map((item) => ({
+    value: item.id.toString(),
+    label: item.name,
+  }));
+
   return (
     <DefaultLayout>
       <Breadcrumb pageName="Add a new customer" />
@@ -194,18 +206,16 @@ const CustomeNewForm = () => {
                         </label>
                         <Field
                           as="select"
+                          type="status"
                           name="status"
                           className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                         >
-                          <option value={0} className="text-black">
-                            Black
-                          </option>
-                          <option value={1} className="text-yellow-500">
-                            Yellow
-                          </option>
-                          <option value={2} className="text-blue-500">
-                            Blue
-                          </option>
+                          {status.map((stt, index) => (
+                            <option key={index} value={stt.id} className="status-option">
+                              <FaCircle style={{ color: stt.color_code, marginRight: '8px' }} />
+                              {stt.name_status}
+                            </option>
+                          ))}
                         </Field>
                       </div>
                     </div>
@@ -343,19 +353,16 @@ const CustomeNewForm = () => {
 
                       <div className="w-full xl:w-1/2">
                         <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                          Country
+                            Country <span className="text-meta-1">*</span>
                         </label>
-                        <Field
-                          as="select"
-                          name="country"
-                          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                        >
-                          {cities.map((city, index) => (
-                            <option key={index} value={city.id}>
-                              {city.name}
-                            </option>
-                          ))}
-                        </Field>
+                        <Select
+                          className="basic-single"
+                          classNamePrefix="select"
+                          value={country}
+                          onChange={handleChangeCountry}
+                          options={options}
+                          primaryColor=''
+                        />
                       </div>
                     </div>
                     <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">

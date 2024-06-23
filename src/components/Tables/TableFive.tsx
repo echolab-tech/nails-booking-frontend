@@ -1,57 +1,72 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams, usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { FaEdit } from "react-icons/fa";
-import { deleteCustomer, getSearchCustomer, getCustomerShow } from "@/services/customer.service";
+import { deleteCustomer, getSearchCustomer } from "@/services/customer.service";
 import Search from "@/app/customers/search/page";
 import { toast } from "react-toastify";
-
-const ITEMS_PER_PAGE = 2;
+import PaginationCustom from '@/components/Pagination/Pagination';
+const ITEMS_PER_PAGE = 10;
 
 const TableFive = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [customerData, setCustomerData] = useState([]);
-  const [selectedCustomer, setSelectedCustomer] = useState();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const { replace } = useRouter();
+  const router = useRouter();
   
   const handlePageChange = (page: number) => {
-      setCurrentPage(page);
+    setCurrentPage(page);
   };
 
   useEffect(() => {
-    getSearchCustomer(currentPage, null).then((data) => {
-      setCustomerData(data.data.data);
-      console.log(data.data.data);
-    });
-  }, []);
+    fetchCustomerData();
+  }, [currentPage]);
 
-  function handleSearch(term: string) {
-    getSearchCustomer(currentPage, term).then((data) => {
+  const fetchCustomerData = async (searchTerm = null) => {
+    try {
+      const data = await getSearchCustomer(currentPage, searchTerm);
       setCustomerData(data.data.data);
-    });
-  }
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    }
+  };
+
+  const handleSearch = (term: any) => {
+    setCurrentPage(1);
+    fetchCustomerData(term);
+  };
 
   const handleButtonDetail = async (customerId: number) => {
     try {
-        const response = await getCustomerShow(customerId);
-        console.log(response);
-        setSelectedCustomer(response.data.data);
+      router.push(`/customers/detail/${customerId}`);
     } catch (error) {
-        console.error('Error fetching category details:', error);
+      console.error('Error navigating to detail page:', error);
     }
-};
+    // try {
+    //     const response = await getCustomerShow(customerId);
+    //     setSelectedCustomer(response.data.data);
+    // } catch (error) {
+    //   console.error('Error fetching customer details:', error);
+    // }
+  };
+
+  const handleButtonEdit = async (customerId: number) => {
+    try {
+      router.push(`/customers/edit/${customerId}`);
+    } catch (error) {
+      console.error('Error navigating to edit page:', error);
+    }
+  };
 
   const handleButtonDelete = async (customerId: number) => {
     try {
-        await deleteCustomer(customerId);
-        toast.success('Delete Success !!!');
+      await deleteCustomer(customerId);
+      toast.success('Delete Success !!!');
+      fetchCustomerData();
     } catch (error) {
-        toast.warning('Delete Fail !!!');
+      toast.warning('Delete Fail !!!');
     }
-}
+  };
 
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
@@ -92,7 +107,7 @@ const TableFive = () => {
                   <h5 className="font-medium text-black dark:text-white">
                     {item.name}
                   </h5>
-                  <p className="text-sm">${item.email}</p>
+                  <p className="text-sm">{item.email}</p>
                 </td>
                 <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                   <p className="text-black dark:text-white">
@@ -100,17 +115,10 @@ const TableFive = () => {
                   </p>
                 </td>
                 <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  <p
-                    className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium ${
-                      item.status === "Paid"
-                        ? "bg-success text-success"
-                        : item.status === "Unpaid"
-                          ? "bg-danger text-danger"
-                          : "bg-warning text-warning"
-                    }`}
-                  >
-                    {item.status}
-                  </p>
+                  <div 
+                    className="border inline-flex items-center justify-center w-6 h-6 rounded-full text-sm font-medium"
+                    style={{ backgroundColor: item.status.color_code }}
+                  ></div>
                 </td>
                 <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                   <p
@@ -122,7 +130,8 @@ const TableFive = () => {
                           : "bg-warning text-warning"
                     }`}
                   >
-                    {item.reviews}
+                    {/* {item.reviews} */}
+                    *****
                   </p>
                 </td>
                 <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
@@ -135,7 +144,7 @@ const TableFive = () => {
                           : "bg-warning text-warning"
                     }`}
                   >
-                    {item.total_sales}
+                    đ {item.total_sales}
                   </p>
                 </td>
                 <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
@@ -161,7 +170,7 @@ const TableFive = () => {
                       </svg>
                     </button>
                     <button className="hover:text-primary">
-                      <FaEdit />
+                      <FaEdit onClick={() => handleButtonEdit(item?.id)}/>
                     </button>
                     <button className="hover:text-primary">
                       <svg

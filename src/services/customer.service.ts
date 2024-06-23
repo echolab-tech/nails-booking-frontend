@@ -4,7 +4,7 @@ import { CustomerForm } from "@/types/customerForm";
 export const customers = async (values: CustomerForm): Promise<any> => {
     return await http.post<any>("/customers", values);
 };
-export const customersList = async (): Promise<any> => {
+export const customersList = async (page: number): Promise<any> => {
     return await http.get<any>("/customers");
 };
 
@@ -26,4 +26,8 @@ export const deleteCustomer = async (id: number): Promise<any> => {
 
 export const getCountry = async (): Promise<any> => {
     return await http.get<any>("/country");
+};
+
+export const getStatus = async (): Promise<any> => {
+    return await http.get<any>("/status");
 };
