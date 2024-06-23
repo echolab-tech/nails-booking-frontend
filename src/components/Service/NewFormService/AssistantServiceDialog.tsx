@@ -29,7 +29,7 @@ const AdvancedPricingDialog: React.FC<AdvancedPricingDialogProps> = ({
   return (
     <Modal
       show={open}
-      size="6xl"
+      size="4xl"
       onClose={() => handleClose()}
       popup
       className=""
@@ -40,7 +40,7 @@ const AdvancedPricingDialog: React.FC<AdvancedPricingDialogProps> = ({
           {({ push, remove }) => (
             <div
               className="flex w-full flex-col gap-6 px-5"
-              style={{ maxHeight: "500px", overflowY: "auto" }}
+              style={{ maxHeight: "400px", overflowY: "auto" }}
             >
               {assistants?.map((assistant: Assistant, index: number) => (
                 <div key={index} className="flex flex-col gap-6 xl:flex-row">

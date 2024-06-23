@@ -11,6 +11,12 @@ export const getListService = async (
   );
 };
 
-export const service = async (values: any): Promise<any> => {
+export const addService = async (values: any): Promise<any> => {
   return await http.post<any>("/services", values);
+};
+export const getService = async (id: string): Promise<any> => {
+  return await http.get<any>(`/services/${id}`);
+};
+export const updateService = async (id: string, data: any): Promise<any> => {
+  return await http.put<any>(`/services/${id}`, data);
 };
