@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { getListService } from "@/services/service.service";
+import { deleteService, getListService } from "@/services/service.service";
 import { formatPrice } from "@/components/common/format_currency";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { BsTrash } from "react-icons/bs";
@@ -9,6 +9,8 @@ import { FaRegPenToSquare } from "react-icons/fa6";
 import Search from "../Search";
 import { serviceType } from "@/types/service";
 import PaginationCustom from "@/components/Pagination/Pagination";
+import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
+import { toast } from "react-toastify";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -27,16 +29,22 @@ const ServiceList = () => {
     per_page: 10,
   });
   const [serviceData, setServiceData] = useState<serviceType[]>([]);
+  const [openModal, setOpenModal] = useState<boolean>(false);
+  const [idDel, setIdDel] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
+    fetchService();
+  }, []);
+
+  const fetchService = async () => {
     getListService(paginationData.current_page, null).then((data) => {
       setServiceData(data.data.data);
       setPaginationData({
         ...data.meta.current_page,
       });
     });
-  }, []);
+  };
 
   const handlePageChange = (page: number) => {
     getListService(paginationData.current_page, "").then((data) => {
@@ -50,8 +58,29 @@ const ServiceList = () => {
     });
   };
 
+  const onClose = () => {
+    setIdDel(null);
+    setOpenModal(false);
+  };
+
   const handleEdit = (id: number) => {
     router.push(`edit/${id}`);
+  };
+
+  const onDelete = async () => {
+    try {
+      await deleteService(idDel);
+      fetchService();
+      setOpenModal(false);
+      toast.success("Delete Success !!!");
+    } catch (error) {
+      toast.warning("you cannot delete !!!");
+    }
+  };
+
+  const handleDelete = (serviceId: number) => {
+    setIdDel(serviceId);
+    setOpenModal(true);
   };
 
   return (
@@ -123,7 +152,10 @@ const ServiceList = () => {
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                     <div className="flex items-center space-x-3.5">
-                      <button className="hover:text-primary">
+                      <button
+                        className="hover:text-primary"
+                        onClick={() => handleDelete(serviceItem?.id)}
+                      >
                         <BsTrash size={25} className="text-red" />
                       </button>
                       <button
@@ -147,6 +179,24 @@ const ServiceList = () => {
           />
         </div>
       </div>
+      <DialogConfirm
+        openModal={openModal}
+        message=" Are you sure you want to delete this service ?"
+        onClose={onClose}
+      >
+        <button
+          onClick={() => onDelete()}
+          className="justify-center rounded bg-red p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          {"Yes, I'm sure"}
+        </button>
+        <button
+          onClick={onClose}
+          className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          No, cancel
+        </button>
+      </DialogConfirm>
     </>
   );
 };
