@@ -36,3 +36,13 @@ type serviceCategoryType = {
   id: number;
   name: string;
 };
+
+export type ServicePackageType = {
+  name: string | null;
+  description: string | null;
+  available_for: string;
+  services: string[];
+  price_type: string | null;
+  price: number | null;
+  enable_booking: boolean;
+};
