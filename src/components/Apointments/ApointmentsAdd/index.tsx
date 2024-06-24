@@ -120,7 +120,6 @@ const ApointmentAdd = () => {
 
   const handleRemoveServiceOption = (id: any) => {
     setServiceOptions((prevServiceOptions) => {
-      // Lọc ra các phần tử có id khác với idToRemove
       const updatedServiceOptions = prevServiceOptions.filter(
         (option) => option.id !== id,
       );
@@ -128,7 +127,6 @@ const ApointmentAdd = () => {
     });
   };
 
-  // console.log(serviceOptions);
   return (
     <>
       <Breadcrumb pageName="Add a new apointments" />
