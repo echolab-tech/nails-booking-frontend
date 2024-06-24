@@ -37,7 +37,7 @@ type serviceCategoryType = {
   name: string;
 };
 
-export type ServicePackageType = {
+export type ServicePackageForm = {
   name: string | null;
   description: string | null;
   available_for: string;
@@ -45,4 +45,20 @@ export type ServicePackageType = {
   price_type: string | null;
   price: number | null;
   enable_booking: boolean;
+};
+
+export type ServicePackageType = {
+  id: string;
+  name: string | null;
+  description: string | null;
+  available_for: string;
+  services: Array<PackageServiceType>;
+  price_type: string | null;
+  price: number | null;
+  enable_booking: boolean;
+};
+
+type PackageServiceType = {
+  id: number;
+  name: string;
 };
