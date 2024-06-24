@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 import { http } from "../lib/http";
+import { ServicePackageType } from "@/types/service";
 
 export const getListService = async (
   page: number,
@@ -22,4 +23,10 @@ export const updateService = async (id: string, data: any): Promise<any> => {
 };
 export const deleteService = async (id: number | null): Promise<any> => {
   return await http.delete<any>(`/services/${id}`);
+};
+
+export const addServicePackage = async (
+  values: ServicePackageType,
+): Promise<any> => {
+  return await http.post<any>("/combos", values);
 };
