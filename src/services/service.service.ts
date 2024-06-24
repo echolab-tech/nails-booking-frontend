@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 import { http } from "../lib/http";
-import { ServicePackageType } from "@/types/service";
+import { ServicePackageForm, ServicePackageType } from "@/types/service";
 
 export const getListService = async (
   page: number,
@@ -21,12 +21,16 @@ export const getService = async (id: string): Promise<any> => {
 export const updateService = async (id: string, data: any): Promise<any> => {
   return await http.put<any>(`/services/${id}`, data);
 };
-export const deleteService = async (id: number | null): Promise<any> => {
+export const deleteService = async (id: string | null): Promise<any> => {
   return await http.delete<any>(`/services/${id}`);
 };
 
 export const addServicePackage = async (
-  values: ServicePackageType,
+  values: ServicePackageForm,
 ): Promise<any> => {
   return await http.post<any>("/combos", values);
+};
+
+export const getListPackages = async (page: number): Promise<any> => {
+  return await http.get<any>(`/combos?page=${page}`);
 };

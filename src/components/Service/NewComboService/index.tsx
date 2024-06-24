@@ -14,7 +14,7 @@ import {
   ErrorMessage,
 } from "formik";
 import { getListService } from "@/services/assistants.service";
-import { ServicePackageType } from "@/types/service";
+import { ServicePackageForm } from "@/types/service";
 import { toast } from "react-toastify";
 import { addServicePackage } from "@/services/service.service";
 import { useRouter } from "next/navigation";
@@ -71,7 +71,7 @@ const ServiceComboNew = () => {
     });
   };
 
-  const formik = useFormik<ServicePackageType>({
+  const formik = useFormik<ServicePackageForm>({
     initialValues: {
       name: null,
       description: null,
@@ -89,7 +89,7 @@ const ServiceComboNew = () => {
           throw new Error("Network response was not ok");
         }
         toast.success("Form submitted successfully!");
-        router.push("/services/list");
+        router.push("/services/package/list");
       } catch (error) {
         console.error("Error submitting form:", error);
         toast.error("Error submitting form: " + error);
