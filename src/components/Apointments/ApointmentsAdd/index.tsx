@@ -14,60 +14,61 @@ import {
 import { getServiceOptionShow } from "@/services/serviceoption.service";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { count } from "console";
-import Link from "next/link";
+import * as Yup from "yup";
+// import { count } from "console";
+// import Link from "next/link";
+// import AppointmentAddAssistant from "../AddAssistant";
 
 // interface CustomerOption {
 //   value: number;
 //   label: string;
 // }
+const CreatedAppointment = Yup.object().shape({
+  customer_id: Yup.string().required("Customer ID is required").nullable(),
+});
 
 const ApointmentAdd = () => {
-    const [customerData, setCustomerData] = useState<
-      { id: number; name: string }[]
-    >([]);
-    const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
-    const [appointments, setListAppointment] = useState<any[]>([]);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    // const [appointment, setAppointment] = useState<any | null>(null);
-    const [serviceOptions, setServiceOptions] = useState<any[]>([]);
-    // const [selectedServiceOptionId, setSelectedServiceOptionId] = useState(null);
-    const [selectedAppointmentId, setSelectedAppointmentId] = useState<
-       number | null
-    >(null);
+  const [customerData, setCustomerData] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [appointments, setListAppointment] = useState<any[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // const [appointment, setAppointment] = useState<any | null>(null);
+  const [serviceOptions, setServiceOptions] = useState<any[]>([]);
+  // const [selectedServiceOptionId, setSelectedServiceOptionId] = useState(null);
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
+    number | null
+  >(null);
 
-    useEffect(() => {
-      fetchCustomer();
-    }, []);
-    const fetchCustomer = async () => {
-      try {
-        const response = await customersList();
-        setCustomerData(response.data.data);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
-    const handleOpenDialogClick = async () => {
-      setIsDialogOpen(true);
-    };
+  useEffect(() => {
+    fetchCustomer();
+  }, []);
+  const fetchCustomer = async () => {
+    try {
+      const response = await customersList();
+      setCustomerData(response.data.data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+  const handleOpenDialogClick = async () => {
+    setIsDialogOpen(true);
+  };
 
-   const handleChange = async (
-     value: any,
-    ) => {
-     setSelectedCustomer(value);
-     setServiceOptions([]);
-     try {
-       const dataListAppointment = await getListAppointmentCustomer(
-         value.value,
-       );
-       setListAppointment(dataListAppointment.data.listAppointment);
-       // if (dataListAppointment.data.listAppointment.length === 0) {
-       //   setServiceOptions([]);
-       // }
-     } catch (error) {
-       console.error("Error fetching appointment data:", error);
-     }
-   };
+  const handleChange = async (value: any) => {
+    setSelectedCustomer(value);
+    setServiceOptions([]);
+    try {
+      const dataListAppointment = await getListAppointmentCustomer(value.value);
+      setListAppointment(dataListAppointment.data.listAppointment);
+      // if (dataListAppointment.data.listAppointment.length === 0) {
+      //   setServiceOptions([]);
+      // }
+    } catch (error) {
+      console.error("Error fetching appointment data:", error);
+    }
+  };
 
   const handleShowServiceOption = async (id: number) => {
     try {
@@ -119,7 +120,6 @@ const ApointmentAdd = () => {
 
   const handleRemoveServiceOption = (id: any) => {
     setServiceOptions((prevServiceOptions) => {
-      // Lọc ra các phần tử có id khác với idToRemove
       const updatedServiceOptions = prevServiceOptions.filter(
         (option) => option.id !== id,
       );
@@ -127,66 +127,68 @@ const ApointmentAdd = () => {
     });
   };
 
-  console.log(serviceOptions);
-    return (
-      <>
-        <Breadcrumb pageName="Add a new apointments" />
-        <div className="grid grid-cols-1 gap-9 sm:grid-cols-1">
-          <div className="flex flex-col gap-9">
-            <Formik
-              enableReinitialize={true}
-              initialValues={{
-                customer_id: null,
-                total_fee: null,
-                status: null,
-                description_request: "",
-                checkout_session_id: "",
-                booking_type: null,
-                is_group: null,
-                total_time: "",
-                // start_time: "",
-                // end_time: "",
-                bookingDetails: null,
-              }}
-              onSubmit={(values: AppointmentAddForm, { resetForm }) => {
-                values.customer_id = parseInt(selectedCustomer?.value);
-                const totalPrice = serviceOptions.reduce(
-                  (accumulator, currentOption) =>
-                    accumulator + parseInt(currentOption.price),
-                  0,
-                );
+  return (
+    <>
+      <Breadcrumb pageName="Add a new apointments" />
+      <div className="grid grid-cols-1 gap-9 sm:grid-cols-1">
+        <div className="flex flex-col gap-9">
+          <Formik
+            enableReinitialize={true}
+            initialValues={{
+              customer_id: null,
+              total_fee: null,
+              status: null,
+              description_request: "",
+              checkout_session_id: "",
+              booking_type: null,
+              is_group: null,
+              total_time: "",
+              // start_time: "",
+              // end_time: "",
+              bookingDetails: null,
+            }}
+            validationSchema={CreatedAppointment}
+            onSubmit={(values: AppointmentAddForm, { resetForm }) => {
+              values.customer_id = parseInt(selectedCustomer?.value);
+              const totalPrice = serviceOptions.reduce(
+                (accumulator, currentOption) =>
+                  accumulator + parseInt(currentOption.price),
+                0,
+              );
 
-                values.total_fee = totalPrice;
-                values.total_time = serviceOptions.reduce(
-                  (accumulator, currentOption) =>
-                    accumulator + parseInt(currentOption.time),
-                  0,
-                );
-                // values.start_time = new Date().toISOString();
-                // const startTime = new Date(values.start_time);
-                // const totalMinutes = serviceOptions.reduce(
-                //   (accumulator, currentOption) =>
-                //     accumulator + parseInt(currentOption.time),
-                //   0,
-                // );
-                // const endTime = new Date(
-                //   startTime.getTime() + totalMinutes * 60000,
-                // );
-                // const formattedEndTime = endTime.toISOString();
-                // values.end_time = formattedEndTime;
-                values.bookingDetails = serviceOptions;
-                // Gán giá trị cho end_time
-                  // values.birthday = selectedBirthday;
-                appointmentsPost(values)
-                  .then((data) => {
-                    toast.success("you created it successfully.");
-                    resetForm();
-                  })
-                  .catch((error) => {
-                    toast.error("you failed to create a new one.");
-                  });
-              }}
-            >
+              values.total_fee = totalPrice;
+              values.total_time = serviceOptions.reduce(
+                (accumulator, currentOption) =>
+                  accumulator + parseInt(currentOption.time),
+                0,
+              );
+              // values.start_time = new Date().toISOString();
+              // const startTime = new Date(values.start_time);
+              // const totalMinutes = serviceOptions.reduce(
+              //   (accumulator, currentOption) =>
+              //     accumulator + parseInt(currentOption.time),
+              //   0,
+              // );
+              // const endTime = new Date(
+              //   startTime.getTime() + totalMinutes * 60000,
+              // );
+              // const formattedEndTime = endTime.toISOString();
+              // values.end_time = formattedEndTime;
+              values.bookingDetails = serviceOptions;
+              // Gán giá trị cho end_time
+              // values.birthday = selectedBirthday;
+              console.log(values);
+              appointmentsPost(values)
+                .then((data) => {
+                  toast.success("you created it successfully.");
+                  resetForm();
+                })
+                .catch((error) => {
+                  toast.error("you failed to create a new one.");
+                });
+            }}
+          >
+            {({ errors, touched }) => (
               <Form>
                 {/* <!-- Profile Form --> */}
                 <div className="rounded-lg border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -221,6 +223,11 @@ const ApointmentAdd = () => {
                       placeholder="Search..."
                       primaryColor={""}
                     />
+                    {errors.customer_id && touched.customer_id && (
+                      <div className="w-full text-rose-500">
+                        {errors.customer_id}
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-6 overflow-x-auto px-6.5 py-4">
                     {appointments.length > 0 ? (
@@ -368,21 +375,20 @@ const ApointmentAdd = () => {
                       </button>
                     </div>
                     <div className="flex w-full justify-center xl:w-1/2">
-                     <Link href="/apointments/add-assistant" passHref>
-                      <button type="button" className="w-full justify-center rounded bg-green-600 p-3 font-medium text-gray hover:bg-opacity-90 sm:w-auto">
-                        Next
+                      <button className="w-full justify-center rounded bg-green-600 p-3 font-medium text-gray hover:bg-opacity-90 sm:w-auto">
+                        Save
                       </button>
-                     </Link>
                     </div>
                   </div>
                 </div>
                 {/* Additional info */}
               </Form>
-            </Formik>
-            <ToastContainer />
-          </div>
+            )}
+          </Formik>
+          <ToastContainer />
         </div>
-      </>
-    );
-}
+      </div>
+    </>
+  );
+};
 export default ApointmentAdd;
