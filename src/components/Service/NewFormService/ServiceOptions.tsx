@@ -1,6 +1,6 @@
 import { ErrorMessage, Field, FieldArray } from "formik";
 import { useEffect, useState } from "react";
-import { BsFillTrashFill } from "react-icons/bs";
+import { BsTrash } from "react-icons/bs";
 import Select from "react-select";
 import AssistantServiceDialog from "./AssistantServiceDialog";
 import { number } from "yup";
@@ -58,7 +58,7 @@ const ServiceOptions = ({
                         }
                       >
                         <span>
-                          <BsFillTrashFill />
+                          <BsTrash size={25} className="text-red" />
                         </span>
                       </button>
                     </div>
@@ -125,11 +125,6 @@ const ServiceOptions = ({
                     type="text"
                     placeholder="Eg: Long hair"
                     className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-1.5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                  />
-                  <ErrorMessage
-                    name={`serviceOptions.${opindex}.name`}
-                    component="div"
-                    className="text-red"
                   />
                 </div>
               </div>

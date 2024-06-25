@@ -198,7 +198,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                 pathname === "/" && "text-white"
                               }`}
                             >
-                              eCommerce
+                              default
                             </Link>
                           </li>
                         </ul>
@@ -377,18 +377,18 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                 "text-white"
                               }`}
                             >
-                              Add single service
+                              New service
                             </Link>
                           </li>
                           <li>
                             <Link
-                              href="/services/combo-new"
+                              href="/services/package/add"
                               className={`group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white ${
-                                pathname === "/services/combo-new" &&
+                                pathname === "/services/package/add" &&
                                 "text-white"
                               }`}
                             >
-                              Add combo service
+                              New package
                             </Link>
                           </li>
                           <li>
@@ -398,7 +398,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                 pathname === "/services/list" && "text-white"
                               } `}
                             >
-                              Service ist
+                              Service List
                             </Link>
                           </li>
                         </ul>

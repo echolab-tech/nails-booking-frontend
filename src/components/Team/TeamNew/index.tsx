@@ -1,10 +1,10 @@
-"use client"
-import React, { useEffect, useState } from 'react';
+"use client";
+import React, { useEffect, useState } from "react";
 import Select from "react-tailwindcss-select";
-import './style.scss';
-import { Field, Form, Formik } from 'formik';
-import { number } from 'yup';
-import { AssistantAddForm } from '@/types/AssistantAddForm';
+import "./style.scss";
+import { Field, Form, Formik } from "formik";
+import { number } from "yup";
+import { AssistantAddForm } from "@/types/AssistantAddForm";
 import { assistants, getListService } from "@/services/assistants.service";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -32,17 +32,18 @@ const TeamNew = () => {
   useEffect(() => {
     fetchDataServices();
   }, []);
+
   const fetchDataServices = async () => {
     const services = await getListService();
-    setServices( services.data.data);
+    setServices(services.data.data);
   };
 
   const handleChange = (value: any) => {
     setAnimal(value);
   };
-   const handleBirthdayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-     setSelectedBirthday(e.target.value);
-   };
+  const handleBirthdayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedBirthday(e.target.value);
+  };
   return (
     <div className="grid grid-cols-1 gap-12">
       <div className="flex flex-col gap-9">
@@ -209,5 +210,5 @@ const TeamNew = () => {
       </div>
     </div>
   );
-}
+};
 export default TeamNew;

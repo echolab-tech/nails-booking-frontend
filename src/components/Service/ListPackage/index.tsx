@@ -1,13 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { deleteService, getListService } from "@/services/service.service";
+import {
+  deleteService,
+  getListPackages,
+  getListService,
+} from "@/services/service.service";
 import { formatPrice } from "@/components/common/format_currency";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { BsTrash } from "react-icons/bs";
 import { FaRegPenToSquare } from "react-icons/fa6";
 import Search from "../Search";
-import { serviceType } from "@/types/service";
+import { ServicePackageType, serviceType } from "@/types/service";
 import PaginationCustom from "@/components/Pagination/Pagination";
 import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
 import { toast } from "react-toastify";
@@ -21,41 +25,41 @@ interface PaginationData {
   per_page: number;
 }
 
-const ServiceList = () => {
+const PackageList = () => {
   const [paginationData, setPaginationData] = useState<PaginationData>({
     current_page: 1,
     total_pages: 1,
     total_items: 0,
     per_page: 10,
   });
-  const [serviceData, setServiceData] = useState<serviceType[]>([]);
+  const [packages, setPackages] = useState<ServicePackageType[]>([]);
   const [openModal, setOpenModal] = useState<boolean>(false);
-  const [idDel, setIdDel] = useState<number | null>(null);
+  const [idDel, setIdDel] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    fetchService();
+    fetchServicePackage();
   }, []);
 
-  const fetchService = async () => {
-    getListService(paginationData.current_page, null).then((data) => {
-      setServiceData(data.data.data);
+  const fetchServicePackage = async () => {
+    getListPackages(paginationData.current_page).then((data) => {
+      setPackages(data.data.data);
       setPaginationData({
         ...paginationData,
-        current_page: data.data.meta.current_page,
+        current_page: data.data.metadata.current_page,
       });
     });
   };
 
   const handlePageChange = (page: number) => {
     getListService(paginationData.current_page, "").then((data) => {
-      setServiceData(data.data.data);
+      setPackages(data.data.data);
     });
   };
 
   const handleSearch = (term: string) => {
     getListService(paginationData.current_page, term).then((data) => {
-      setServiceData(data.data.data);
+      setPackages(data.data.data);
     });
   };
 
@@ -64,14 +68,20 @@ const ServiceList = () => {
     setOpenModal(false);
   };
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
     router.push(`edit/${id}`);
   };
+
+  const options = [
+    { value: "everyone", label: "Everyone" },
+    { value: "females", label: "Females only" },
+    { value: "males", label: "Male only" },
+  ];
 
   const onDelete = async () => {
     try {
       await deleteService(idDel);
-      fetchService();
+      fetchServicePackage();
       setOpenModal(false);
       toast.success("Delete Success !!!");
     } catch (error) {
@@ -79,7 +89,7 @@ const ServiceList = () => {
     }
   };
 
-  const handleDelete = (serviceId: number) => {
+  const handleDelete = (serviceId: string) => {
     setIdDel(serviceId);
     setOpenModal(true);
   };
@@ -96,19 +106,16 @@ const ServiceList = () => {
             <thead>
               <tr className="bg-gray-200 text-left dark:bg-meta-4">
                 <th className="min-w-[220px] px-4 py-4 font-medium text-black dark:text-white xl:pl-11">
-                  Service Name
+                  Package name
                 </th>
                 <th className="min-w-[150px] px-4 py-4 font-medium text-black dark:text-white">
-                  Service Option
+                  Service
                 </th>
                 <th className="min-w-[150px] px-4 py-4 font-medium text-black dark:text-white">
                   Price
                 </th>
                 <th className="min-w-[120px] px-4 py-4 font-medium text-black dark:text-white">
-                  Category
-                </th>
-                <th className="px-4 py-4 font-medium text-black dark:text-white">
-                  Type
+                  Package available for
                 </th>
                 <th className="px-4 py-4 font-medium text-black dark:text-white">
                   Action
@@ -116,52 +123,43 @@ const ServiceList = () => {
               </tr>
             </thead>
             <tbody>
-              {serviceData?.map((serviceItem, index) => (
+              {packages?.map((item, index) => (
                 <tr key={index}>
                   <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
                     <h5 className="font-medium text-black dark:text-white">
-                      {serviceItem?.name}
+                      {item?.name}
                     </h5>
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                    {serviceItem?.serviceOptions?.map((optionItem, j) => (
+                    {item?.services?.map((service, j) => (
                       <div key={j} className="flex">
-                        <span>{optionItem?.name}</span>
-                        <span>{optionItem?.time}min</span>
+                        <span>{service?.name}</span>
                       </div>
                     ))}
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                    <p>
-                      {serviceItem?.serviceOptions?.map((option, index) => (
-                        <div className="flex dark:text-white" key={index}>
-                          {formatPrice(option.price)}
-                        </div>
-                      ))}
-                    </p>
-                  </td>
-                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                    <p>{serviceItem?.category?.name}</p>
+                    {formatPrice(item?.price)}
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                     <p>
-                      {serviceItem.serviceCombos &&
-                      serviceItem.serviceCombos.length > 0
-                        ? "Combo"
-                        : "simple"}
+                      {
+                        options?.find(
+                          (option) => option.value === item?.available_for,
+                        )?.label
+                      }
                     </p>
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                     <div className="flex items-center space-x-3.5">
                       <button
                         className="hover:text-primary"
-                        onClick={() => handleDelete(serviceItem?.id)}
+                        onClick={() => handleDelete(item?.id)}
                       >
                         <BsTrash size={25} className="text-red" />
                       </button>
                       <button
                         className="hover:text-primary"
-                        onClick={() => handleEdit(serviceItem?.id)}
+                        onClick={() => handleEdit(item?.id)}
                       >
                         <FaRegPenToSquare size={25} className="text-primary" />
                       </button>
@@ -202,4 +200,4 @@ const ServiceList = () => {
   );
 };
 
-export default ServiceList;
+export default PackageList;
