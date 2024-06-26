@@ -15,10 +15,13 @@ const CustomInput = forwardRef(({ label, ...props }, ref) => {
   );
 });
 
+// Adding display name for better debugging
+CustomInput.displayName = "CustomInput";
+
 export default CustomInput;
 
 const errorMessage = {
   color: "red",
   position: "absolute",
-  fontSize: "11px"
+  fontSize: "11px",
 };
