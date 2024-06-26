@@ -29,6 +29,8 @@ type serviceOptionAssistantType = {
   time: string;
   price: number;
   assistant_id: number;
+  price_type: string;
+  parent_id: string;
   service_option_id: number;
 };
 
