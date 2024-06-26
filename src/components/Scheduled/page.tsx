@@ -2,7 +2,11 @@
 
 import { useModal } from "@/hooks/useModal";
 import { getListAssistant } from "@/services/assistants.service";
-import { scheduleDelete, scheduleEdit, scheduleList } from "@/services/schedules.service";
+import {
+  scheduleDelete,
+  scheduleEdit,
+  scheduleList,
+} from "@/services/schedules.service";
 import { Schedule, ScheduledOfUser } from "@/types/Schedule";
 import { table, time } from "console";
 import { Form, Formik } from "formik";
@@ -10,9 +14,9 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
-import * as Yup from "yup";
-import PaginationCustom from "../Pagination/Pagination";
 
+import PaginationCustom from "../Pagination/Pagination";
+import ModalEdit from "./ModalEdit/page";
 
 interface SearchValues {
   name: string;
@@ -62,18 +66,20 @@ export default function Scheduled() {
     }
   };
 
-  const fetchDataAssistantList = useCallback(async (page:number) => {
-    const assistants = await getListAssistant(searchValues, page);
-    setAssistantData(assistants.data.assistants);
-    setPaginationData(assistants.data.paginationData);
+  const fetchDataAssistantList = useCallback(
+    async (page: number) => {
+      const assistants = await getListAssistant(searchValues, page);
+      setAssistantData(assistants.data.assistants);
+      setPaginationData(assistants.data.paginationData);
 
-    
-    setAssistantList(assistants.data.assistants);
-  },[searchValues]);
+      setAssistantList(assistants.data.assistants);
+    },
+    [searchValues],
+  );
 
   useEffect(() => {
     fetchDataAssistantList(1);
-  }, [fetchDataAssistantList]);
+  }, []);
 
   useEffect(() => {
     if (isEditSuccess) {
@@ -81,8 +87,6 @@ export default function Scheduled() {
       setIsEditSuccess(false);
     }
   }, [fetchDataAssistantList, isEditSuccess]);
-
-
 
   const HEADERSTABLE = [
     "",
@@ -96,31 +100,45 @@ export default function Scheduled() {
   ];
 
   const totalHours = (schedules: any[]) => {
-    const listTime = schedules.map((item) => Number(item.end_time.split(':')[0]) - Number(item.start_time.split(':')[0]))
-    const total = listTime.reduce((partialSum, a) => partialSum + a,0)
-    return total
-  }
+    const listTime = schedules.map(
+      (item) =>
+        Number(item.end_time.split(":")[0]) -
+        Number(item.start_time.split(":")[0]),
+    );
+    const total = listTime.reduce((partialSum, a) => partialSum + a, 0);
+    return total;
+  };
 
-
-  const checkScheduleOfDays = (day: string, id:string) => {
+  const checkScheduleOfDays = (day: string, id: string) => {
     const scheduleOfDay: any = [];
     assistantLists.map((item) => {
       scheduleOfDay.push(
-        ...item.schedule.filter((shift: any) => shift.weekdays === day && item.id === id),
+        ...item.schedule.filter(
+          (shift: any) => shift.weekdays === day && item.id === id,
+        ),
       );
     });
     return scheduleOfDay;
   };
+
   
 
-  const ScheduleNewSchema = Yup.object().shape({
-    start_time: Yup.string()
+  const handleSaveEdit = (values: any) => {
+    // values.start_time = startTime;
+    // values.end_time = endTime;
+    scheduleEdit(id, values)
+      .then((data) => {
+        toggle("");
+        setIsEditSuccess(true);
+      })
+      .catch((error) => {
+        toast.error("Failed to update schdule.");
+      });
+  };
 
-      .required("Required"),
-    end_time: Yup.string()
 
-      .required("Required"),
-  });
+
+  
 
   return (
     <div className="h-[700px] w-full rounded-2xl border-2  border-stroke pb-2.5  pt-6 dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
@@ -144,9 +162,7 @@ export default function Scheduled() {
                 <td scope="row" className="px-6 py-4">
                   <div className="flex w-max items-center gap-2">
                     <Image
-                      src={
-                        item.avatar ?? "/images/scheduled/avatar.png"
-                      }
+                      src={item.avatar ?? "/images/scheduled/avatar.png"}
                       alt={item.userName}
                       width={40}
                       height={40}
@@ -174,7 +190,11 @@ export default function Scheduled() {
                   </div>
                 </td>
                 {HEADERSTABLE.slice(1).map((headerDay, idx) => (
-                  <td scope="row" className="relative px-6 py-4" key={headerDay} >
+                  <td
+                    scope="row"
+                    className="relative px-6 py-4"
+                    key={headerDay}
+                  >
                     <td key={headerDay}>
                       {checkScheduleOfDays(headerDay, item.id).map(
                         (time: any, id: number) => (
@@ -204,10 +224,11 @@ export default function Scheduled() {
                             Edit this day
                           </p>
                           <Link
-                          href={`edit/${item.name.replace(" ", "-")}?userID=${item.id}`}>
-                          <p className="w-max cursor-pointer text-sm text-black dark:text-white">
-                          Edit regular shifts
-                          </p>
+                            href={`edit/${item.name.replace(" ", "-")}?userID=${item.id}`}
+                          >
+                            <p className="w-max cursor-pointer text-sm text-black dark:text-white">
+                              Edit regular shifts
+                            </p>
                           </Link>
 
                           <p className="w-max text-sm text-black dark:text-white ">
@@ -225,233 +246,13 @@ export default function Scheduled() {
                         </div>
                       )}
                       {visibleId === "Editthisday" && (
-                        <>
-                          <div className="fixed inset-0 z-50 flex  items-center justify-center overflow-y-auto overflow-x-hidden outline-none focus:outline-none">
-                            <div className="relative mx-auto my-6 w-auto max-w-3xl">
-                              {/*content*/}
-                              <div className="relative flex  w-[500px] flex-col rounded-lg border-0 bg-white shadow-lg outline-none focus:outline-none">
-                                {/*header*/}
-                                <div className="border-blueGray-200 flex items-start justify-between rounded-t border-b border-solid p-2">
-                                  <button
-                                    className="float-right ml-auto flex border-0"
-                                    onClick={() => toggle("")}
-                                  >
-                                    <span className="flex h-6 w-6 items-center bg-transparent text-3xl text-black  outline-none focus:outline-none">
-                                      ×
-                                    </span>
-                                  </button>
-                                </div>
-                                {/*body*/}
-                                <Formik
-                                  enableReinitialize={true}
-                                  initialValues={{
-                                    start_time: startTime,
-                                    end_time: endTime,
-                                  }}
-                                  validationSchema={ScheduleNewSchema}
-                                  onSubmit={(
-                                    values: Schedule,
-                                    { resetForm },
-                                  ) => {
-                                    values.start_time = startTime;
-                                    values.end_time = endTime;
-                                    scheduleEdit(id, values)
-                                      .then((data) => {
-                                        toggle("")
-                                        setIsEditSuccess(true)
-                                        resetForm();
-                                      })
-                                      .catch((error) => {
-                                        toast.error("Failed to update schdule.");
-                                      });
-                                  }}
-                                >
-                                  {({
-                                    errors,
-                                    touched,
-                                    validateField,
-                                    validateForm,
-                                    setFieldValue,
-                                  }) => (
-                                    <Form>
-                                      <div className="w-full  p-5">
-                                        <div className="flex items-center gap-5">
-                                          <div className="w-[50%]">
-                                            <p className="w-max cursor-pointer text-sm font-semibold text-black dark:text-white">
-                                              Start time
-                                            </p>
-                                            <select
-                                              className="w-[100%] rounded-xl border"
-                                              name="whatever"
-                                              id="frm-whatever"
-                                              onChange={(text) =>
-                                                setStarTime(text.target.value)
-                                              }
-                                            >
-                                              <option value="">
-                                                {startTime}
-                                              </option>
-                                              <option value="0:00">0:00</option>
-                                              <option value="1:00">1:00</option>
-                                              <option value="2:00">2:00</option>
-                                              <option value="3:00">3:00</option>
-                                              <option value="4:00">4:00</option>
-                                              <option value="5:00">5:00</option>
-                                              <option value="6:00">6:00</option>
-                                              <option value="7:00">7:00</option>
-                                              <option value="8:00">8:00</option>
-                                              <option value="9:00">9:00</option>
-                                              <option value="10:00">
-                                                10:00
-                                              </option>
-                                              <option value="11:00">
-                                                11:00
-                                              </option>
-                                              <option value="12:00">
-                                                12:00
-                                              </option>
-                                              <option value="13:00">
-                                                13:00
-                                              </option>
-                                              <option value="14:00">
-                                                14:00
-                                              </option>
-                                              <option value="15:00">
-                                                15:00
-                                              </option>
-                                              <option value="16:00">
-                                                16:00
-                                              </option>
-                                              <option value="17:00">
-                                                17:00
-                                              </option>
-                                              <option value="18:00">
-                                                18:00
-                                              </option>
-                                              <option value="19:00">
-                                                19:00
-                                              </option>
-                                              <option value="20:00">
-                                                20:00
-                                              </option>
-                                              <option value="21:00">
-                                                21:00
-                                              </option>
-                                              <option value="22:00">
-                                                22:00
-                                              </option>
-                                              <option value="23:00">
-                                                23:00
-                                              </option>
-                                            </select>
-                                          </div>
-                                          <p className="mt-5 w-max cursor-pointer text-xl font-semibold text-black dark:text-white">
-                                            -
-                                          </p>
-                                          <div className="w-[50%]">
-                                            <p className="w-max cursor-pointer text-sm font-semibold text-black dark:text-white">
-                                              End time
-                                            </p>
-                                            <select
-                                              className="w-[100%] rounded-xl border"
-                                              name="whatever"
-                                              id="frm-whatever"
-                                              onChange={(text) =>
-                                                setEndTime(text.target.value)
-                                              }
-                                            >
-                                              <option value="">{endTime}</option>
-                                              <option value="0:00">0:00</option>
-                                              <option value="1:00">1:00</option>
-                                              <option value="2:00">2:00</option>
-                                              <option value="3:00">3:00</option>
-                                              <option value="4:00">4:00</option>
-                                              <option value="5:00">5:00</option>
-                                              <option value="6:00">6:00</option>
-                                              <option value="7:00">7:00</option>
-                                              <option value="8:00">8:00</option>
-                                              <option value="9:00">9:00</option>
-                                              <option value="10:00">
-                                                10:00
-                                              </option>
-                                              <option value="11:00">
-                                                11:00
-                                              </option>
-                                              <option value="12:00">
-                                                12:00
-                                              </option>
-                                              <option value="13:00">
-                                                13:00
-                                              </option>
-                                              <option value="14:00">
-                                                14:00
-                                              </option>
-                                              <option value="15:00">
-                                                15:00
-                                              </option>
-                                              <option value="16:00">
-                                                16:00
-                                              </option>
-                                              <option value="17:00">
-                                                17:00
-                                              </option>
-                                              <option value="18:00">
-                                                18:00
-                                              </option>
-                                              <option value="19:00">
-                                                19:00
-                                              </option>
-                                              <option value="20:00">
-                                                20:00
-                                              </option>
-                                              <option value="21:00">
-                                                21:00
-                                              </option>
-                                              <option value="22:00">
-                                                22:00
-                                              </option>
-                                              <option value="23:00">
-                                                23:00
-                                              </option>
-                                            </select>
-                                          </div>
-
-                                          <Image
-                                            className="mt-5 cursor-pointer"
-                                            //   onClick={() => deleteHandler(input.id, data.days)}
-                                            src="/images/scheduled/trash.svg"
-                                            alt="delete"
-                                            width={30}
-                                            height={30}
-                                          />
-                                        </div>
-                                      </div>
-                                      <div className=" flex items-center justify-end rounded-b  p-6">
-                                        <button
-                                          className="text-red-500 background-transparent mb-1 mr-1 px-6 py-2 text-sm font-bold uppercase outline-none transition-all duration-150 ease-linear focus:outline-none"
-                                          type="submit"
-                                          onClick={() => toggle("")}
-                                        >
-                                          Cancel
-                                        </button>
-                                        <button
-                                          className="mb-1 mr-1 rounded bg-blue-500 px-6 py-3 text-sm font-bold uppercase text-black shadow outline-none transition-all duration-150 ease-linear hover:shadow-lg focus:outline-none active:bg-emerald-600"
-                                          type="submit"
-
-                                          // onClick={() => toggle("")}
-                                        >
-                                          Save
-                                        </button>
-                                      </div>
-                                    </Form>
-                                  )}
-                                </Formik>
-                                {/*footer*/}
-                              </div>
-                            </div>
-                          </div>
-                          {/* <div className="fixed inset-0 z-40 bg-black opacity-10"></div> */}
-                        </>
+                        <ModalEdit
+                        setStartTime={setStarTime}
+                        setEndTime={setEndTime}
+                        startTime={startTime}
+                        endTime={endTime}
+                        toggle={toggle}
+                        handleSaveEdit={handleSaveEdit}/>
                       )}
                     </td>
                   </td>
@@ -463,10 +264,10 @@ export default function Scheduled() {
       </div>
       <ToastContainer />
       <PaginationCustom
-          currentPage={paginationData.current_page}
-          totalPages={paginationData.total_pages}
-          onPageChange={onPageChange}
-        />
+        currentPage={paginationData.current_page}
+        totalPages={paginationData.total_pages}
+        onPageChange={onPageChange}
+      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
-import { Schedule, ScheduledOfUser } from './../types/Schedule';
+import { Schedule, ScheduledOfAssistant, ScheduledOfUser } from './../types/Schedule';
 import { http } from "../lib/http";
 
-export const schedule = async (values: ScheduledOfUser): Promise<any> => {
+export const schedule = async (values: ScheduledOfAssistant): Promise<any> => {
     return await http.post<any>("/schedules", values);
 };
 

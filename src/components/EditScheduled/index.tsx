@@ -5,9 +5,11 @@ import { log } from "console";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 import Breadcrumb from "../Breadcrumbs/Breadcrumb";
 import { useModal } from "@/hooks/useModal";
+import Link from "next/link";
+import { schedule } from "@/services/schedules.service";
+import { toast, ToastContainer } from "react-toastify";
 // const { visibleId, toggle } = useModal();
 
 export default function EditSchduled() {
@@ -15,6 +17,7 @@ export default function EditSchduled() {
   const userID = searchParams.get("userID");
   const [dataAssistant, setDataAssistant] = useState<any>();
 
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const fetchDataAssistant = useCallback(async (userID: number) => {
     const schedules = await getAssistantShow(userID);
@@ -38,25 +41,29 @@ export default function EditSchduled() {
       "Saturday",
       "Sunday",
     ];
+    console.log(dataAssistant);
+
     const scheduleOfUser: any[] = [];
     if (dataAssistant) {
       LISTDAY.map((day) => {
-        const arrTime:  {
-          id: string;
+        const arrTime: {
+          id?: string;
           from: string;
+          assistant_id?: number;
+          date: string;
           to: string;
-        }[] = []
-       const time = dataAssistant.data.schedule.map((data: any) => {
-       
-        if(data.weekdays === day){
-          arrTime.push({
-            id: data.id,
-            from: data.start_time,
-            to: data.end_time
-          })
-        }
-       })
-        
+        }[] = [];
+        dataAssistant.data.schedule.map((data: any) => {
+          if (data.weekdays === day) {
+            arrTime.push({
+              id: data.id,
+              from: data.start_time,
+              to: data.end_time,
+              date: data.date,
+            });
+          }
+        });
+
         scheduleOfUser.push({
           days: day,
           time: arrTime,
@@ -72,9 +79,6 @@ export default function EditSchduled() {
 
   const [inputs, setInputs] = useState<ScheduledOfUser[]>([]);
 
-  console.log(dataAssistant);
-
-
   useEffect(() => {
     if (!inputs.length && DATASCHDULEDOFUSER) {
       setInputs(DATASCHDULEDOFUSER);
@@ -87,44 +91,28 @@ export default function EditSchduled() {
       item.days === day
         ? {
             ...item,
-            time: [...item.time, { id: uuidv4(), from: "8:00", to: "18:00" }],
+            time: [
+              ...item.time,
+              {
+                from: "8:00",
+                to: "18:00",
+                date: item.time[0].date,
+                assistant_id: dataAssistant.data.id,
+              },
+            ],
           }
         : item,
     );
     setInputs(newInput);
   };
 
-  const deleteHandler = (id: string, day: string) => {
-    const newInput = inputs.map((item) =>
-      item.days === day
-        ? { ...item, time: item.time.filter((time) => time.id != id) }
-        : item,
-    );
-
-    setInputs(newInput);
-  };
-
-  const inputHandler = (text: string, day: string, idTime: string) => {
+  const deleteHandler = (key: number, day: string, id?: string) => {
     const newInput = inputs.map((item) =>
       item.days === day
         ? {
             ...item,
-            time: item.time.map((time) =>
-              time.id === idTime ? { ...time, from: text } : time,
-            ),
-          }
-        : item,
-    );
-
-    setInputs(newInput);
-  };
-  const inputHandler2 = (text: string, day: string, idTime: string) => {
-    const newInput = inputs.map((item) =>
-      item.days === day
-        ? {
-            ...item,
-            time: item.time.map((time) =>
-              time.id === idTime ? { ...time, to: text } : time,
+            time: item.time.filter((time, index) =>
+              id ? time.id != id : index != key,
             ),
           }
         : item,
@@ -133,18 +121,143 @@ export default function EditSchduled() {
     setInputs(newInput);
   };
 
+  const inputHandler = (
+    text: string,
+    day: string,
+    key: number,
+    idTime?: string,
+  ) => {
+    const newInput = inputs.map((item) =>
+      item.days === day
+        ? {
+            ...item,
+            time: item.time.map((time, idx) =>
+              idTime
+                ? time.id === idTime
+                  ? { ...time, from: text }
+                  : time
+                : idx === key
+                  ? { ...time, from: text }
+                  : time,
+            ),
+          }
+        : item,
+    );
+
+    setInputs(newInput);
+  };
+  const inputHandler2 = (
+    text: string,
+    day: string,
+    key: number,
+    idTime?: string,
+  ) => {
+    const newInput = inputs.map((item) =>
+      item.days === day
+        ? {
+            ...item,
+            time: item.time.map((time,idx) =>
+              idTime
+                ? time.id === idTime
+                  ? { ...time, to: text }
+                  : time
+                : idx === key
+                  ? { ...time, to: text }
+                  : time,
+            ),
+          }
+        : item,
+    );
+
+    setInputs(newInput);
+  };
+
+  const handleCreateSchedule = () => {
+    const createSchedule: {
+      schedules: any[];
+    } = {
+      schedules: [],
+    };
+
+    inputs.map((item) =>
+      item.time.map((time) =>
+        createSchedule.schedules.push(
+          time.id
+            ? {
+                id: time.id,
+                start_time: time.from,
+                date: time.date,
+                end_time: time.to,
+              }
+            : {
+                start_time: time.from,
+                assistant_id: dataAssistant.data.id,
+                date: time.date,
+                end_time: time.to,
+                weekdays: item.days
+              },
+        ),
+      ),
+    );
+
+    schedule(createSchedule)
+      .then((data) => {
+        const element  = document.getElementById('layout')
+        if(element){
+          
+          element.scroll({ top: 0, behavior: "smooth" })
+        }
+        setIsSuccess(true);
+      })
+      .catch((error) => {
+        toast.error("Failed to update schdule.");
+      });
+    // rap api create
+  };
+
+  useEffect(() => {
+    if (isSuccess) {
+      setTimeout(() => setIsSuccess(false), 10000);
+    }
+  }, [isSuccess]);
   return (
-    <div className="h-full w-full rounded-2xl border-2  border-stroke pb-2.5  pb-6  pt-6 dark:border-strokedark dark:bg-boxdark sm:px-7.5">
-       <Breadcrumb pageName={`Set ${dataAssistant?.data?.name}'s regular shifts`}/>
+    <div  className="h-full w-full rounded-2xl border-2  border-stroke pb-2.5  pb-6  pt-6 dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+      <Breadcrumb
+        pageName={`Set ${dataAssistant?.data?.name}'s regular shifts`}
+      />
+     {isSuccess &&  <div
+        className="animate-fadeInRight  border-gray-200 fixed right-2 top-2 z-[9999] max-w-xs rounded-xl border bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+        role="alert"
+      >
+        <div className="flex p-4">
+          <div className="flex-shrink-0">
+            <svg
+              className="mt-0.5 size-4 flex-shrink-0 text-teal-500"
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              viewBox="0 0 16 16"
+            >
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"></path>
+            </svg>
+          </div>
+          <div className="ms-3">
+            <p className="text-gray-700 text-sm dark:text-neutral-400">
+            Successfully updated or created schedules!
+            </p>
+          </div>
+        </div>
+      </div>}
       <div className="flex flex-col gap-10 ">
         {inputs.map((data) => (
           <div key={data.days} className="flex w-full items-start">
             <div className="flex w-[30%] items-center gap-8">
               <input
-              id="default-checkbox"
-              type="checkbox"
-              defaultChecked 
-              className="bg-gray-100 border-gray-300 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 h-6 w-6 rounded text-blue-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+                id="default-checkbox"
+                type="checkbox"
+                defaultChecked
+                className="bg-gray-100 border-gray-300 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 h-6 w-6 rounded text-blue-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
               />
               <label
                 htmlFor="default-checkbox"
@@ -164,11 +277,16 @@ export default function EditSchduled() {
                       className="w-[40%] rounded-xl border"
                       name="whatever"
                       id="frm-whatever"
+                      value={input.from}
                       onChange={(text) =>
-                        inputHandler(text.target.value, data.days, input.id)
+                        inputHandler(
+                          text.target.value,
+                          data.days,
+                          key,
+                          input.id,
+                        )
                       }
                     >
-                      <option value="">{input.from}</option>
                       <option value="0:00">0:00</option>
                       <option value="1:00">1:00</option>
                       <option value="2:00">2:00</option>
@@ -200,11 +318,16 @@ export default function EditSchduled() {
                       className="w-[40%] rounded-xl border"
                       name="whatever"
                       id="frm-whatever2"
+                      value={input.to}
                       onChange={(text) =>
-                        inputHandler2(text.target.value, data.days, input.id)
+                        inputHandler2(
+                          text.target.value,
+                          data.days,
+                          key,
+                          input.id,
+                        )
                       }
                     >
-                      <option value="">{input.to}</option>
                       <option value="0:00">0:00</option>
                       <option value="1:00">1:00</option>
                       <option value="2:00">2:00</option>
@@ -233,7 +356,7 @@ export default function EditSchduled() {
 
                     <Image
                       className="cursor-pointer"
-                      onClick={() => deleteHandler(input.id, data.days)}
+                      onClick={() => deleteHandler(key, data.days, input?.id)}
                       src="/images/scheduled/trash.svg"
                       alt="delete"
                       width={20}
@@ -252,22 +375,24 @@ export default function EditSchduled() {
           </div>
         ))}
       </div>
-      <div className=" flex items-center justify-end rounded-b  p-6">
-            <button
-              className="text-red-500 background-transparent mb-1 mr-1 px-6 py-2 text-sm font-bold uppercase outline-none transition-all duration-150 ease-linear focus:outline-none"
-              type="submit"
-              // onClick={() => toggle("")}
-              >
-              Cancel
-              </button>
-              <button
-              className="mb-1 mr-1 rounded bg-blue-500 px-6 py-3 text-sm font-bold uppercase text-black shadow outline-none transition-all duration-150 ease-linear hover:shadow-lg focus:outline-none active:bg-emerald-600"
-              type="submit"
-
-              // onClick={() => toggle("")}
-              >
-              Save
-              </button>
+      <div className=" flex items-center justify-center rounded-b  p-6">
+        <Link href="/scheduled">
+          <button
+            className="text-white bg-bodydark mb-1 rounded mr-10 px-6 py-3 text-sm font-bold uppercase outline-none transition-all duration-150 ease-linear focus:outline-none"
+            type="submit"
+            // onClick={() => toggle("")}
+          >
+            Cancel
+          </button>
+        </Link>
+        
+        <button
+          className="active:bg-primary mb-1 ml-10 rounded bg-primary px-6 py-3 text-sm font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-lg focus:outline-none"
+          onClick={handleCreateSchedule}
+        >
+          Save
+        </button>
+        <ToastContainer />
       </div>
     </div>
   );
