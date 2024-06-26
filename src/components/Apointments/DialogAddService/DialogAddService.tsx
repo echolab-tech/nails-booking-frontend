@@ -1,9 +1,10 @@
+import Spinner from "@/components/common/Spinner";
 import { serviceOption } from "@/services/serviceoption.service";
+import { ServiceOptionType } from "@/types/ServiceOption";
 import { Modal, TextInput } from "flowbite-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
 
 interface DialogAddServiceProps {
   onClose: () => void;
@@ -16,11 +17,12 @@ interface SearchServiceOptionValues {
 }
 
 const DialogAddService: React.FC<DialogAddServiceProps> = (props) => {
-  const [serviceOptions, setServiceOptions] = useState<any[]>([]);
+  const [serviceOptions, setServiceOptions] = useState<ServiceOptionType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchServiceOptionValues, setSearchServiceOptionValues] =
     useState<SearchServiceOptionValues>({
       name_service_option: "",
-  });
+    });
 
   useEffect(() => {
     fetchServiceOption();
@@ -28,7 +30,8 @@ const DialogAddService: React.FC<DialogAddServiceProps> = (props) => {
   const fetchServiceOption = async () => {
     try {
       const response = await serviceOption(searchServiceOptionValues);
-      setServiceOptions(response.data.serviceOption);
+      setIsLoading(false);
+      setServiceOptions(response.data.data);
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
@@ -48,79 +51,90 @@ const DialogAddService: React.FC<DialogAddServiceProps> = (props) => {
   return (
     <Modal
       show={props.show}
-      size="md"
+      size="xl"
       popup
       onClose={props.onClose}
       className="z-1"
     >
-      <div className="border-2 border-black">
-        <Modal.Header>
-          <div className="text-gray-900 text-xl font-medium dark:text-white ">
-            Add a service
-          </div>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="flex items-center rounded bg-white px-4 py-2">
-            <svg
-              className="text-gray-500 mr-2 h-7 w-7"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-              onClick={handleSearch}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M21 21l-4.878-4.878M15 10.5a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"
-              ></path>
-            </svg>
+      <Modal.Header>
+        <div className="text-gray-900 text-xl font-medium dark:text-white ">
+          Add a service
+        </div>
+      </Modal.Header>
+      <Modal.Body className="max-h-[550px]">
+        <form className="w-full">
+          <label
+            htmlFor="default-search"
+            className="text-gray-900 sr-only mb-2 text-sm font-medium dark:text-white"
+          >
+            Search
+          </label>
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
+              <svg
+                className="text-gray-500 dark:text-gray-400 h-4 w-4"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
+                />
+              </svg>
+            </div>
             <input
-              type="text"
-              placeholder="Search client"
-              className="w-full focus:outline-none"
-              name="name_service_option"
-              value={searchServiceOptionValues.name_service_option}
-              onChange={handleChangeSearchValues}
+              type="search"
+              id="default-search"
+              className="text-gray-900 border-gray-300 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 block w-full rounded-lg border p-4 ps-10 text-sm focus:border-blue-500 focus:ring-blue-500 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
+              placeholder="Search Mockups, Logos..."
+              required
             />
           </div>
-          <h3 className="mt-3 font-medium text-black dark:text-white">
-            Nails ({serviceOptions.length})
-          </h3>
-          <div className="space-y-6">
-            {serviceOptions.length > 0 ? (
-              serviceOptions.map((serviceOption, index) => (
-                <button
-                  className="service relative mt-3 w-full text-left"
-                  key={index}
-                  onClick={() => handleServiceOptionClick(serviceOption.id)}
-                >
-                  <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
-                  <div className="flex flex-1 px-6.5 py-4">
-                    <div className="w-full xl:w-3/4">
-                      <label className="mb-3 ml-3 block text-sm font-medium text-black dark:text-white">
-                        {serviceOption.name}
-                      </label>
-                      <div className="flex items-center">
-                        <span>{serviceOption.time}min</span>
-                        <span className="ml-5">
-                          {serviceOption.assistant.name}
-                        </span>
+        </form>
+
+        {isLoading ? (
+          <Spinner />
+        ) : (
+          serviceOptions?.map((item, index) => (
+            <div key={index}>
+              <h3 className="mt-3 font-medium text-black dark:text-white">
+                {item?.category_name} ({item?.count})
+              </h3>
+              <div className="space-y-6">
+                {item?.service_options.length > 0 &&
+                  item?.service_options.map((option, index) => (
+                    <button
+                      className="service relative mt-3 w-full text-left"
+                      key={index}
+                      onClick={() => handleServiceOptionClick(option?.id)}
+                    >
+                      <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
+                      <div className="flex flex-1 px-4 py-2">
+                        <div className="w-full xl:w-3/4">
+                          <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                            {option?.service_name}
+                          </label>
+                          <div className="flex items-center">
+                            <span>{option?.duration}min</span>
+                            <span className="ml-5">
+                              {/* {option.assistant.name} */}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="w-full xl:w-1/4">
+                          <label className="mb-3 block flex justify-end text-sm font-medium text-black dark:text-white">
+                            ${option?.price}
+                          </label>
+                        </div>
                       </div>
-                    </div>
-                    <div className="w-full xl:w-1/4">
-                      <label className="mb-3 block flex justify-end text-sm font-medium text-black dark:text-white">
-                        ${serviceOption.price}
-                      </label>
-                    </div>
-                  </div>
-                </button>
-              ))
-            ) : (
-              <p>No service option available</p>
-            )}
-            {/* <div className="service relative mt-3 w-full">
+                    </button>
+                  ))}
+                {/* <div className="service relative mt-3 w-full">
               <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
               <div className="flex flex-1 px-6.5 py-4">
                 <div className="w-full xl:w-3/4">
@@ -160,12 +174,7 @@ const DialogAddService: React.FC<DialogAddServiceProps> = (props) => {
                 </div>
               </div>
             </div> */}
-            <div className="py-4">
-              <label className="mb-3 ml-3 block text-sm font-medium text-black dark:text-white">
-                Menicure (8)
-              </label>
-            </div>
-            {/* <div className="mb-4.5 flex justify-center">
+                {/* <div className="mb-4.5 flex justify-center">
               <button
                 type="submit"
                 className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
@@ -173,9 +182,11 @@ const DialogAddService: React.FC<DialogAddServiceProps> = (props) => {
                 Update
               </button>
             </div> */}
-          </div>
-        </Modal.Body>
-      </div>
+              </div>
+            </div>
+          ))
+        )}
+      </Modal.Body>
     </Modal>
   );
 };
