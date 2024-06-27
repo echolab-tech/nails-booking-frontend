@@ -45,7 +45,7 @@ const ServiceList = () => {
         current_page: data.data.meta.current_page,
       });
     });
-  }, [currentPage]);
+  };
 
   const handlePageChange = (page: number) => {
     getListService(paginationData.current_page, "").then((data) => {
