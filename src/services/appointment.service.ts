@@ -1,4 +1,5 @@
-import { AssistantSearchForm } from "@/types/AssitantSearch";
+
+import { AppointmentSearchForm } from "@/types/AppointmentSearch";
 import { http } from "../lib/http";
 import { AppointmentAddForm } from "@/types/AppointmentAddForm";
 
@@ -12,5 +13,12 @@ export const  getListAppointmentCustomer = async (customer_id: number): Promise<
 
 export const  getAppointmentShow = async (id: number): Promise<any> => {
   return await http.get<any>(`/appointments/${id}`);
+};
+
+export const getListAppointment = async (
+  values: AppointmentSearchForm,
+  page: number,
+): Promise<any> => {
+  return await http.get<any>(`/appointments?page=${page}`, { params: values });
 };
 
