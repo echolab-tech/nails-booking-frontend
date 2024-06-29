@@ -1,4 +1,4 @@
-import TableFive from "@/components/Tables/TableFive";
+// import TableFive from "@/components/Tables/TableFive";
 import Tabs from "@/components/Customer/CustomerDetail";
 
 import { Metadata } from "next";

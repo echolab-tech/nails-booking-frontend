@@ -14,6 +14,10 @@ export const getListCustomers = async (
   return await http.get<any>(`/customers?page=${page}`, { params: values });
 };
 
+export const customersList = async (): Promise<any> => {
+    return await http.get<any>("/customers");
+};
+
 export const getCustomerShow = async (id: number): Promise<any> => {
   return await http.get<any>(`/customers/${id}`);
 };
