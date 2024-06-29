@@ -184,7 +184,7 @@ const ApointmentList = () => {
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                     <h5 className="font-medium text-black dark:text-white">
-                      30/05/2024 16:00
+                      {appointment.start_time.slice(0, 16)}
                     </h5>
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
@@ -193,7 +193,7 @@ const ApointmentList = () => {
                     </h5>
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                    <a href="#">
+                    {/* <a href="#"> */}
                       <h5 className="font-medium text-blue-500 dark:text-white">
                         {appointment.bookingDetails
                           .map(
@@ -202,7 +202,7 @@ const ApointmentList = () => {
                           )
                           .join(", ")}
                       </h5>
-                    </a>
+                    {/* </a> */}
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                     <h5 className="font-medium text-black dark:text-white">
