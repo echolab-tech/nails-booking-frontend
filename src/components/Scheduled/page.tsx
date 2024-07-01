@@ -3,9 +3,9 @@
 import { useModal } from "@/hooks/useModal";
 import { getListAssistant } from "@/services/assistants.service";
 import {
-  scheduleDelete,
-  scheduleEdit,
-  scheduleList,
+  deleteSchedule,
+  editSchedule,
+  getListSchedule,
 } from "@/services/schedules.service";
 import { Schedule, ScheduledOfUser } from "@/types/Schedule";
 import { table, time } from "console";
@@ -57,25 +57,6 @@ export default function Scheduled() {
     phone: null,
     address: "",
   });
-  const handleButtonDelete = async (scheduleID: number) => {
-    try {
-      await scheduleDelete(scheduleID);
-      fetchDataAssistantList(paginationData.current_page); // Load updated schedule list
-    } catch (error) {
-      toast.warning("Delete Fail !!!");
-    }
-  };
-
-  const fetchDataAssistantList = useCallback(
-    async (page: number) => {
-      const assistants = await getListAssistant(searchValues, page);
-      setAssistantData(assistants.data.assistants);
-      setPaginationData(assistants.data.paginationData);
-
-      setAssistantList(assistants.data.assistants);
-    },
-    [searchValues],
-  );
 
   useEffect(() => {
     fetchDataAssistantList(1);
@@ -86,7 +67,27 @@ export default function Scheduled() {
       fetchDataAssistantList(1);
       setIsEditSuccess(false);
     }
-  }, [fetchDataAssistantList, isEditSuccess]);
+  }, [isEditSuccess]);
+  const handleButtonDelete = async (scheduleID: number) => {
+    try {
+      await deleteSchedule(scheduleID);
+      fetchDataAssistantList(paginationData.current_page); // Load updated schedule list
+    } catch (error) {
+      toast.warning("Delete Fail !!!");
+    }
+  };
+
+  const fetchDataAssistantList = async (page: number) => {
+    const assistants = await getListAssistant(searchValues, page);
+    setAssistantData(assistants.data.assistants);
+    setPaginationData(assistants.data.paginationData);
+
+    setAssistantList(assistants.data.assistants);
+  };
+
+  useEffect(() => {
+    fetchDataAssistantList(1);
+  }, []);
 
   const HEADERSTABLE = [
     "",
@@ -121,12 +122,10 @@ export default function Scheduled() {
     return scheduleOfDay;
   };
 
-  
-
   const handleSaveEdit = (values: any) => {
     // values.start_time = startTime;
     // values.end_time = endTime;
-    scheduleEdit(id, values)
+    editSchedule(id, values)
       .then((data) => {
         toggle("");
         setIsEditSuccess(true);
@@ -135,10 +134,6 @@ export default function Scheduled() {
         toast.error("Failed to update schdule.");
       });
   };
-
-
-
-  
 
   return (
     <div className="h-[700px] w-full rounded-2xl border-2  border-stroke pb-2.5  pt-6 dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
@@ -247,12 +242,13 @@ export default function Scheduled() {
                       )}
                       {visibleId === "Editthisday" && (
                         <ModalEdit
-                        setStartTime={setStarTime}
-                        setEndTime={setEndTime}
-                        startTime={startTime}
-                        endTime={endTime}
-                        toggle={toggle}
-                        handleSaveEdit={handleSaveEdit}/>
+                          setStartTime={setStarTime}
+                          setEndTime={setEndTime}
+                          startTime={startTime}
+                          endTime={endTime}
+                          toggle={toggle}
+                          handleSaveEdit={handleSaveEdit}
+                        />
                       )}
                     </td>
                   </td>

@@ -6,6 +6,7 @@ import "@/css/style.css";
 import React, { useEffect, useState, useContext, createContext } from "react";
 import Loader from "@/components/common/Loader";
 import { ToastProvider } from "@/providers/ToastProvider";
+import 'react-toastify/dist/ReactToastify.css'
 
 export default function RootLayout({
   children,
