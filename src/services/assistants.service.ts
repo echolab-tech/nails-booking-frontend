@@ -37,3 +37,7 @@ export const getIsDeleted = async (id: number): Promise<any> => {
 export const getAssistants = async (): Promise<any> => {
   return await http.get<any>("/assistants");
 };
+
+export const getAllAssistants = async (): Promise<any> => {
+  return await http.get<any>("/assistants?getall=true");
+};

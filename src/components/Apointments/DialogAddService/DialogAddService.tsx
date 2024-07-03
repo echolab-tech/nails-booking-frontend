@@ -57,7 +57,7 @@ const DialogAddService: React.FC<DialogAddServiceProps> = (props) => {
       className="z-1"
     >
       <Modal.Header>
-        <div className="text-gray-900 text-xl font-medium dark:text-white ">
+        <div className="text-xl font-medium text-gray-900 dark:text-white ">
           Add a service
         </div>
       </Modal.Header>
@@ -65,7 +65,7 @@ const DialogAddService: React.FC<DialogAddServiceProps> = (props) => {
         <form className="w-full">
           <label
             htmlFor="default-search"
-            className="text-gray-900 sr-only mb-2 text-sm font-medium dark:text-white"
+            className="sr-only mb-2 text-sm font-medium text-gray-900 dark:text-white"
           >
             Search
           </label>
@@ -90,8 +90,8 @@ const DialogAddService: React.FC<DialogAddServiceProps> = (props) => {
             <input
               type="search"
               id="default-search"
-              className="text-gray-900 border-gray-300 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 block w-full rounded-lg border p-4 ps-10 text-sm focus:border-blue-500 focus:ring-blue-500 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
-              placeholder="Search Mockups, Logos..."
+              className="border-gray-300 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 block w-full rounded-lg border p-4 ps-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
+              placeholder="Search service name"
               required
             />
           </div>
@@ -134,54 +134,6 @@ const DialogAddService: React.FC<DialogAddServiceProps> = (props) => {
                       </div>
                     </button>
                   ))}
-                {/* <div className="service relative mt-3 w-full">
-              <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
-              <div className="flex flex-1 px-6.5 py-4">
-                <div className="w-full xl:w-3/4">
-                  <label className="mb-3 ml-3 block text-sm font-medium text-black dark:text-white">
-                    Gel medicure
-                  </label>
-                  <div className="flex items-center">
-                    <span className="ml-3">11:45</span>
-                    <span className="m-1">-</span>
-                    <span>45min</span>
-                  </div>
-                </div>
-                <div className="w-full xl:w-1/4">
-                  <label className="mb-3 block flex justify-end text-sm font-medium text-black dark:text-white">
-                    $55
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div className="service relative mt-3 w-full">
-              <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
-              <div className="flex flex-1 px-6.5 py-4">
-                <div className="w-full xl:w-3/4">
-                  <label className="mb-3 ml-3 block text-sm font-medium text-black dark:text-white">
-                    Gel medicure
-                  </label>
-                  <div className="flex items-center">
-                    <span className="ml-3">11:45</span>
-                    <span className="m-1">-</span>
-                    <span>45min</span>
-                  </div>
-                </div>
-                <div className="w-full xl:w-1/4">
-                  <label className="mb-3 block flex justify-end text-sm font-medium text-black dark:text-white">
-                    $55
-                  </label>
-                </div>
-              </div>
-            </div> */}
-                {/* <div className="mb-4.5 flex justify-center">
-              <button
-                type="submit"
-                className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
-              >
-                Update
-              </button>
-            </div> */}
               </div>
             </div>
           ))

@@ -10,3 +10,8 @@ export type Assistant = {
   created_at: string | null;
   updated_at: string | null;
 };
+
+export type ResourceType = {
+  id: string;
+  title: string;
+};
