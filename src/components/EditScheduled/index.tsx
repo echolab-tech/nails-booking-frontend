@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Breadcrumb from "../Breadcrumbs/Breadcrumb";
 import { useModal } from "@/hooks/useModal";
 import Link from "next/link";
-import { schedule } from "@/services/schedules.service";
+import { createSchedule } from "@/services/schedules.service";
 import { toast, ToastContainer } from "react-toastify";
 // const { visibleId, toggle } = useModal();
 
@@ -93,12 +93,20 @@ export default function EditSchduled() {
             ...item,
             time: [
               ...item.time,
-              {
+              item.time.length == 0 ? {
+                from: '8:00',
+                assistant_id: dataAssistant.data.id,
+                to: '18:00',
+                weekdays: item.days
+              }: {
                 from: "8:00",
                 to: "18:00",
                 date: item.time[0].date,
                 assistant_id: dataAssistant.data.id,
+                weekdays: item.days
+
               },
+             
             ],
           }
         : item,
@@ -173,7 +181,7 @@ export default function EditSchduled() {
   };
 
   const handleCreateSchedule = () => {
-    const createSchedule: {
+    const dataCreateSchedule: {
       schedules: any[];
     } = {
       schedules: [],
@@ -181,7 +189,7 @@ export default function EditSchduled() {
 
     inputs.map((item) =>
       item.time.map((time) =>
-        createSchedule.schedules.push(
+      dataCreateSchedule.schedules.push(
           time.id
             ? {
                 id: time.id,
@@ -200,55 +208,24 @@ export default function EditSchduled() {
       ),
     );
 
-    schedule(createSchedule)
+    createSchedule(dataCreateSchedule)
       .then((data) => {
-        const element  = document.getElementById('layout')
-        if(element){
-          
-          element.scroll({ top: 0, behavior: "smooth" })
-        }
-        setIsSuccess(true);
+       
+        toast.success(data.data.message)
+        
       })
       .catch((error) => {
         toast.error("Failed to update schdule.");
       });
-    // rap api create
   };
 
-  useEffect(() => {
-    if (isSuccess) {
-      setTimeout(() => setIsSuccess(false), 10000);
-    }
-  }, [isSuccess]);
+  
   return (
     <div  className="h-full w-full rounded-2xl border-2  border-stroke pb-2.5  pb-6  pt-6 dark:border-strokedark dark:bg-boxdark sm:px-7.5">
       <Breadcrumb
         pageName={`Set ${dataAssistant?.data?.name}'s regular shifts`}
       />
-     {isSuccess &&  <div
-        className="animate-fadeInRight  border-gray-200 fixed right-2 top-2 z-[9999] max-w-xs rounded-xl border bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
-        role="alert"
-      >
-        <div className="flex p-4">
-          <div className="flex-shrink-0">
-            <svg
-              className="mt-0.5 size-4 flex-shrink-0 text-teal-500"
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              fill="currentColor"
-              viewBox="0 0 16 16"
-            >
-              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"></path>
-            </svg>
-          </div>
-          <div className="ms-3">
-            <p className="text-gray-700 text-sm dark:text-neutral-400">
-            Successfully updated or created schedules!
-            </p>
-          </div>
-        </div>
-      </div>}
+   
       <div className="flex flex-col gap-10 ">
         {inputs.map((data) => (
           <div key={data.days} className="flex w-full items-start">
@@ -270,7 +247,7 @@ export default function EditSchduled() {
               <div className="flex flex-col gap-8">
                 {data.time.map((input, key) => (
                   <div
-                    key={input.id}
+                    key={key}
                     className="flex w-full items-center gap-4"
                   >
                     <select
@@ -380,7 +357,6 @@ export default function EditSchduled() {
           <button
             className="text-white bg-bodydark mb-1 rounded mr-10 px-6 py-3 text-sm font-bold uppercase outline-none transition-all duration-150 ease-linear focus:outline-none"
             type="submit"
-            // onClick={() => toggle("")}
           >
             Cancel
           </button>
@@ -392,8 +368,9 @@ export default function EditSchduled() {
         >
           Save
         </button>
-        <ToastContainer />
       </div>
+      <ToastContainer />
+
     </div>
   );
 }

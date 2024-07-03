@@ -5,7 +5,7 @@ export type ScheduledOfUser = {
     id?: string;
     from: string;
     assistant_id?: number,
-    date :string,
+    date?:string,
     to: string;
   }[];
 };
