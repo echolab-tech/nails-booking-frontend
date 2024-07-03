@@ -1,23 +1,17 @@
 "use client";
 import { getAssistantShow } from "@/services/assistants.service";
 import { ScheduledOfUser } from "@/types/Schedule";
-import { log } from "console";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Breadcrumb from "../Breadcrumbs/Breadcrumb";
-import { useModal } from "@/hooks/useModal";
-import Link from "next/link";
 import { createSchedule } from "@/services/schedules.service";
 import { toast, ToastContainer } from "react-toastify";
-// const { visibleId, toggle } = useModal();
 
 export default function EditSchduled() {
-  const searchParams = useSearchParams();
-  const userID = searchParams.get("userID");
+  const router = useRouter();
   const [dataAssistant, setDataAssistant] = useState<any>();
-
-  const [isSuccess, setIsSuccess] = useState(false);
+  const { id } = useParams<{ id: string }>();
 
   const fetchDataAssistant = useCallback(async (userID: number) => {
     const schedules = await getAssistantShow(userID);
@@ -26,10 +20,10 @@ export default function EditSchduled() {
   }, []);
 
   useEffect(() => {
-    if (userID) {
-      fetchDataAssistant(Number(userID));
+    if (id) {
+      fetchDataAssistant(Number(id));
     }
-  }, [fetchDataAssistant, userID]);
+  }, [fetchDataAssistant, id]);
 
   const DATASCHDULEDOFUSER = useMemo(() => {
     const LISTDAY = [
@@ -68,14 +62,11 @@ export default function EditSchduled() {
           days: day,
           time: arrTime,
         });
-   
-      })
-      
+      });
+
       return scheduleOfUser;
     }
   }, [dataAssistant]);
-
-  
 
   const [inputs, setInputs] = useState<ScheduledOfUser[]>([]);
 
@@ -85,7 +76,6 @@ export default function EditSchduled() {
     }
   }, [DATASCHDULEDOFUSER, inputs]);
 
-
   const addHandler = (day: string) => {
     const newInput = inputs.map((item) =>
       item.days === day
@@ -93,20 +83,20 @@ export default function EditSchduled() {
             ...item,
             time: [
               ...item.time,
-              item.time.length == 0 ? {
-                from: '8:00',
-                assistant_id: dataAssistant.data.id,
-                to: '18:00',
-                weekdays: item.days
-              }: {
-                from: "8:00",
-                to: "18:00",
-                date: item.time[0].date,
-                assistant_id: dataAssistant.data.id,
-                weekdays: item.days
-
-              },
-             
+              item.time.length == 0
+                ? {
+                    from: "8:00",
+                    assistant_id: dataAssistant.data.id,
+                    to: "18:00",
+                    weekdays: item.days,
+                  }
+                : {
+                    from: "8:00",
+                    to: "18:00",
+                    date: item.time[0].date,
+                    assistant_id: dataAssistant.data.id,
+                    weekdays: item.days,
+                  },
             ],
           }
         : item,
@@ -164,7 +154,7 @@ export default function EditSchduled() {
       item.days === day
         ? {
             ...item,
-            time: item.time.map((time,idx) =>
+            time: item.time.map((time, idx) =>
               idTime
                 ? time.id === idTime
                   ? { ...time, to: text }
@@ -189,7 +179,7 @@ export default function EditSchduled() {
 
     inputs.map((item) =>
       item.time.map((time) =>
-      dataCreateSchedule.schedules.push(
+        dataCreateSchedule.schedules.push(
           time.id
             ? {
                 id: time.id,
@@ -202,7 +192,7 @@ export default function EditSchduled() {
                 assistant_id: dataAssistant.data.id,
                 date: time.date,
                 end_time: time.to,
-                weekdays: item.days
+                weekdays: item.days,
               },
         ),
       ),
@@ -210,22 +200,19 @@ export default function EditSchduled() {
 
     createSchedule(dataCreateSchedule)
       .then((data) => {
-       
-        toast.success(data.data.message)
-        
+        toast.success(data.data.message);
       })
       .catch((error) => {
         toast.error("Failed to update schdule.");
       });
   };
 
-  
   return (
-    <div  className="h-full w-full rounded-2xl border-2  border-stroke pb-2.5  pb-6  pt-6 dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+    <div className="h-full w-full rounded-2xl border-2  border-stroke pb-2.5  pb-6  pt-6 dark:border-strokedark dark:bg-boxdark sm:px-7.5">
       <Breadcrumb
         pageName={`Set ${dataAssistant?.data?.name}'s regular shifts`}
       />
-   
+
       <div className="flex flex-col gap-10 ">
         {inputs.map((data) => (
           <div key={data.days} className="flex w-full items-start">
@@ -246,10 +233,7 @@ export default function EditSchduled() {
             <div className="flex w-[70%] flex-col gap-4">
               <div className="flex flex-col gap-8">
                 {data.time.map((input, key) => (
-                  <div
-                    key={key}
-                    className="flex w-full items-center gap-4"
-                  >
+                  <div key={key} className="flex w-full items-center gap-4">
                     <select
                       className="w-[40%] rounded-xl border"
                       name="whatever"
@@ -343,7 +327,7 @@ export default function EditSchduled() {
                 ))}
               </div>
               <span
-                className="cursor-pointer font-semibold text-blue2"
+                className="text-blue2 cursor-pointer font-semibold"
                 onClick={() => addHandler(data.days)}
               >
                 Add a shifts
@@ -353,24 +337,22 @@ export default function EditSchduled() {
         ))}
       </div>
       <div className=" flex items-center justify-center rounded-b  p-6">
-        <Link href="/scheduled">
-          <button
-            className="text-white bg-bodydark mb-1 rounded mr-10 px-6 py-3 text-sm font-bold uppercase outline-none transition-all duration-150 ease-linear focus:outline-none"
-            type="submit"
-          >
-            Cancel
-          </button>
-        </Link>
-        
         <button
-          className="active:bg-primary mb-1 ml-10 rounded bg-primary px-6 py-3 text-sm font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-lg focus:outline-none"
+          onClick={() => router.back()}
+          className="mb-1 mr-10 rounded bg-bodydark px-6 py-3 text-sm font-bold uppercase text-white outline-none transition-all duration-150 ease-linear focus:outline-none"
+          type="button"
+        >
+          Cancel
+        </button>
+
+        <button
+          className="mb-1 ml-10 rounded bg-primary px-6 py-3 text-sm font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-lg focus:outline-none active:bg-primary"
           onClick={handleCreateSchedule}
         >
           Save
         </button>
       </div>
       <ToastContainer />
-
     </div>
   );
 }

@@ -16,7 +16,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 
 import PaginationCustom from "../Pagination/Pagination";
-import ModalEdit from "./ModalEdit/page";
+import ModalEdit from "./ModalEdit";
 
 interface SearchValues {
   name: string;
@@ -172,9 +172,7 @@ export default function Scheduled() {
                         {`${totalHours(item.schedule)}h`}
                       </p>
                     </div>
-                    <Link
-                      href={`edit/${item.name.replace(" ", "-")}?userID=${item.id}`}
-                    >
+                    <Link href={`scheduled-shifts/edit/${item.id}`}>
                       <Image
                         src="/images/scheduled/edit.svg"
                         width={30}
@@ -195,7 +193,7 @@ export default function Scheduled() {
                         (time: any, id: number) => (
                           <div
                             key={time.id}
-                            className=" mt-2 w-max cursor-pointer items-center rounded-2xl bg-gray-4 pb-1.5 pl-1.5 pr-1.5 pt-1.5 lg:pl-5 lg:pr-5"
+                            className=" bg-gray-4 mt-2 w-max cursor-pointer items-center rounded-2xl pb-1.5 pl-1.5 pr-1.5 pt-1.5 lg:pl-5 lg:pr-5"
                             onClick={() => {
                               toggle(`${index}-${idx}-${time.id}`);
                               setVisibleModalId(`${index}-${idx}`);
@@ -218,9 +216,7 @@ export default function Scheduled() {
                           >
                             Edit this day
                           </p>
-                          <Link
-                            href={`edit/${item.name.replace(" ", "-")}?userID=${item.id}`}
-                          >
+                          <Link href={`scheduled-shifts/edit/${item.id}`}>
                             <p className="w-max cursor-pointer text-sm text-black dark:text-white">
                               Edit regular shifts
                             </p>
