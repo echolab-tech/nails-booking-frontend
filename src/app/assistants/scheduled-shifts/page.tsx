@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import Image from "next/image";
 import Link from "next/link";
-import Schduled from "@/components/Scheduled/page";
+import Schduled from "@/components/Scheduled";
 
 export const metadata: Metadata = {
   title: "Next.js Tables | TailAdmin - Next.js Dashboard Template",

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 
 interface SearchProps {
-  handleSearch: (values: { birthday: string; searchText: string }) => void;
+  handleSearch: (birthday: string, searchText: string) => void;
 }
 
 const Search: React.FC<SearchProps> = ({ handleSearch }) => {
@@ -12,7 +12,7 @@ const Search: React.FC<SearchProps> = ({ handleSearch }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleSearch({ birthday, searchText });
+    handleSearch(birthday, searchText);
   };
 
   return (

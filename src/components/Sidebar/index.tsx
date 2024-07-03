@@ -9,7 +9,7 @@ import { GrUserManager } from "react-icons/gr";
 import { GoArchive } from "react-icons/go";
 import { GrCatalogOption } from "react-icons/gr";
 import { LuUsers } from "react-icons/lu";
-import { IoCalendarOutline } from "react-icons/io5";
+import { BsTags } from "react-icons/bs";
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -290,22 +290,23 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <ul className="mb-5.5 mt-4 flex flex-col gap-2.5 pl-6">
                           <li>
                             <Link
-                              href="/assistants/new"
-                              className={`group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white ${
-                                pathname === "/assistants/new" && "text-white"
-                              }`}
-                            >
-                              Add Assistants
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
                               href="/assistants/list"
                               className={`group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white ${
                                 pathname === "/assistants/list" && "text-white"
                               } `}
                             >
                               Assistants List
+                            </Link>
+                          </li>
+                          <li>
+                            <Link
+                              href="/assistants/scheduled-shifts"
+                              className={`group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white ${
+                                pathname === "/assistants/scheduled-shifts" &&
+                                "text-white"
+                              }`}
+                            >
+                              Scheduled shifts
                             </Link>
                           </li>
                         </ul>
@@ -595,8 +596,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                             : setSidebarExpanded(true);
                         }}
                       >
-                        <IoCalendarOutline />
-                        Appointments
+                        <BsTags />
+                        Sales
                         <svg
                           className={`absolute right-4 top-1/2 -translate-y-1/2 fill-current ${
                             open && "rotate-180"
@@ -624,23 +625,23 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                         <ul className="mb-5.5 mt-4 flex flex-col gap-2.5 pl-6">
                           <li>
                             <Link
-                              href="/appointments/add"
-                              className={`group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white ${
-                                pathname === "/appointments/add" && "text-white"
-                              }`}
-                            >
-                              Add Appointments
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
                               href="/appointments/list"
                               className={`group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white ${
                                 pathname === "/appointments/list" &&
                                 "text-white"
+                              }`}
+                            >
+                              Appointments
+                            </Link>
+                          </li>
+                          <li>
+                            <Link
+                              href="/payments/list"
+                              className={`group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white ${
+                                pathname === "/payments/list" && "text-white"
                               } `}
                             >
-                              Appointments List
+                              Payments
                             </Link>
                           </li>
                         </ul>
