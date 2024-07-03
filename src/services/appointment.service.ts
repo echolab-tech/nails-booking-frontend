@@ -1,17 +1,24 @@
-
 import { AppointmentSearchForm } from "@/types/AppointmentSearch";
 import { http } from "../lib/http";
-import { AppointmentAddForm } from "@/types/AppointmentAddForm";
+import { BookingFormType } from "@/types/event";
 
-export const appointmentsPost = async (values: AppointmentAddForm): Promise<any> => {
+export const appointmentsPost = async (
+  values: BookingFormType,
+): Promise<any> => {
   return await http.post<any>("/appointments", values);
 };
 
-export const  getListAppointmentCustomer = async (customer_id: number): Promise<any> => {
+export const getAppointmentByDate = async (): Promise<any> => {
+  return await http.get<any>(`/appointments/list/`);
+};
+
+export const getListAppointmentCustomer = async (
+  customer_id: number,
+): Promise<any> => {
   return await http.get<any>(`/appointments/list/${customer_id}`);
 };
 
-export const  getAppointmentShow = async (id: number): Promise<any> => {
+export const getAppointmentShow = async (id: number): Promise<any> => {
   return await http.get<any>(`/appointments/${id}`);
 };
 
@@ -21,4 +28,3 @@ export const getListAppointment = async (
 ): Promise<any> => {
   return await http.get<any>(`/appointments?page=${page}`, { params: values });
 };
-

@@ -17,6 +17,7 @@
     "@fullcalendar/react": "^6.1.11",
     "@fullcalendar/resource": "^6.1.11",
     "@fullcalendar/resource-timegrid": "^6.1.11",
+    "@fullcalendar/scrollgrid": "^6.1.14",
     "@heroicons/react": "^2.1.3",
     "@preline/select": "^2.1.0",
     "@types/react-router-dom": "^5.3.3",
