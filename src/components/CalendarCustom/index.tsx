@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, ChangeEvent } from "react";
 import FullCalendar from "@fullcalendar/react";
 import { LuCalendar } from "react-icons/lu";
 import { LuCalendarX2 } from "react-icons/lu";
@@ -12,19 +12,24 @@ import bootstrap5Plugin from "@fullcalendar/bootstrap5";
 import { getAllAssistants } from "@/services/assistants.service";
 import { ResourceType } from "@/types/assistant";
 import { BookingFormType, EventType } from "@/types/event";
-import { title } from "process";
-import { Modal } from "flowbite-react";
+import { Modal, Spinner } from "flowbite-react";
 import { FaRegPenToSquare } from "react-icons/fa6";
 import { BsTrash } from "react-icons/bs";
 import { GoInbox } from "react-icons/go";
 import { CustomerType } from "@/types/customer";
-import { customersList } from "@/services/customer.service";
+import { getAllCustomer } from "@/services/customer.service";
 import { addMinutes } from "date-fns";
+import { toZonedTime, formatInTimeZone } from "date-fns-tz";
 import {
   getServiceOptionShow,
   serviceOption,
 } from "@/services/serviceoption.service";
 import { Form, FormikProvider, useFormik, useFormikContext } from "formik";
+import {
+  appointmentsPost,
+  getListAppointment,
+} from "@/services/appointment.service";
+import { toast, ToastContainer } from "react-toastify";
 
 interface SearchServiceOptionValues {
   name_service_option: string;
@@ -41,14 +46,15 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [events, setEvents] = useState<EventType[]>([]);
   const [lastEventId, setLastEventId] = useState<string | null>(null);
   const [serviceOptions, setServiceOptions] = useState<any[]>([]);
-  const [selectServices, setSelectServices] = useState<any[]>([]);
   const [customerData, setCustomerData] = useState<CustomerType[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<boolean>(false);
+  const [isSubmit, setIsSubmit] = useState<boolean>(false);
   const [searchServiceOptionValues, setSearchServiceOptionValues] =
     useState<SearchServiceOptionValues>({
       name_service_option: "",
     });
   useEffect(() => {
+    fetchAppointments();
     fetchService();
     fetchCustomer();
     fetchServiceOption();
@@ -64,9 +70,16 @@ const FullCalenDarCustom: React.FC<any> = () => {
     });
   };
 
+  const fetchAppointments = async () => {
+    getListAppointment().then((data) => {
+      setEvents(data?.data?.data);
+      console.log(data?.data?.data);
+    });
+  };
+
   const fetchCustomer = async () => {
     try {
-      const response = await customersList();
+      const response = await getAllCustomer("");
       setCustomerData(response.data.data);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -180,6 +193,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
       // Nếu dịch vụ đã tồn tại, không thêm lại
       if (existingOption) return;
 
+      const timeZone = "Asia/Ho_Chi_Minh";
+
       // Nếu không có dịch vụ nào trước đó, sử dụng startTime
       const lastServiceEndTime =
         formik.values.services.length > 0
@@ -189,7 +204,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
           : new Date(startTime);
 
       // Thời gian bắt đầu của dịch vụ mới là thời gian kết thúc của dịch vụ cuối cùng
-      const newStartTime = lastServiceEndTime;
+      const newStartTime = toZonedTime(lastServiceEndTime, timeZone);
       const newEndTime = addMinutes(newStartTime, time);
 
       const newService = {
@@ -201,8 +216,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
           id: assistant.id,
           name: assistant.name,
         },
-        start: newStartTime,
-        end: newEndTime,
+        start: formatInTimeZone(
+          newStartTime,
+          timeZone,
+          "yyyy-MM-dd HH:mm:ssXXX",
+        ),
+        end: formatInTimeZone(newEndTime, timeZone, "yyyy-MM-dd HH:mm:ssXXX"),
       };
 
       // Cập nhật danh sách dịch vụ trong formik
@@ -241,13 +260,35 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setSelectedCustomer(false);
   };
 
+  const handleSearchCustomer = (event: ChangeEvent<HTMLInputElement>) => {
+    const delayDebounceFn = setTimeout(async () => {
+      const response = await getAllCustomer(event.target.value);
+      setCustomerData(response.data.data);
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  };
+
   const formik = useFormik<BookingFormType>({
     initialValues: {
       customer: null,
       services: [],
     },
     onSubmit: async (values) => {
-      console.log(values);
+      setIsSubmit(true);
+      appointmentsPost(values)
+        .then((data) => {
+          setIsSubmit(false);
+          setOpenBooking(false);
+          fetchAppointments();
+          setSelectedCustomer(false);
+          formik.resetForm();
+          toast.success("Appointment created");
+        })
+        .catch((e) => {
+          setIsSubmit(false);
+          toast.error(e);
+        });
     },
     enableReinitialize: true,
   });
@@ -278,8 +319,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const renderEventContent = (eventInfo: any) => {
     return (
       <>
-        <b>{eventInfo.timeText}</b>
-        <i>{eventInfo.event.title}</i>
+        <b>
+          {eventInfo.timeText} {eventInfo?.event?.extendedProps?.customerName}
+        </b>
+        <i className="block">{eventInfo.event.title}</i>
       </>
     );
   };
@@ -376,7 +419,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       <h3 className="font-medium text-black dark:text-white">
                         Select a client
                       </h3>
-                      <form className="w-full py-2">
+                      <div className="w-full py-2">
                         <label
                           htmlFor="default-search"
                           className="sr-only mb-2 text-sm font-medium text-gray-900 dark:text-white"
@@ -403,12 +446,13 @@ const FullCalenDarCustom: React.FC<any> = () => {
                           </div>
                           <input
                             type="search"
+                            onChange={handleSearchCustomer}
                             id="default-search"
                             className="border-gray-300 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 block w-full rounded-lg border p-4 ps-10 text-sm text-gray-900 dark:text-white"
                             placeholder="Search service name"
                           />
                         </div>
-                      </form>
+                      </div>
                     </>
                   )}
                   {/* end show info customer */}
@@ -443,7 +487,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                 </div>
                 <div className="w-[70%]">
                   {isSelectService && (
-                    <div className="px-6.5">
+                    <div className="min-h-[400px] px-6.5">
                       {serviceOptions?.map((item, index) => (
                         <div key={index}>
                           <h3 className="mt-3 font-medium text-black dark:text-white">
@@ -490,7 +534,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                   )}
                   {isShowSelected && (
                     <>
-                      <div className="px-6.5">
+                      <div className="min-h-[400px] px-6.5">
                         <h3 className="font-medium text-black dark:text-white">
                           Services
                         </h3>
@@ -575,12 +619,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       </div>
                     </>
                   )}
-                  <div className="flex">
+                  <div className="flex px-6.5">
                     <button
+                      disabled={isSubmit}
                       type="submit"
                       className="inline-flex items-center justify-center rounded-md bg-primary px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
                     >
                       Save
+                      {isSubmit && <Spinner />}
                     </button>
                   </div>
                 </div>
@@ -589,6 +635,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
           </FormikProvider>
         </Modal.Body>
       </Modal>
+      <ToastContainer />
     </>
   );
 };
