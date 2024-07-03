@@ -1,15 +1,14 @@
 export type CustomerForm = {
   name: string;
   email: string;
-  phone: number | null;
-  birthday: string | null;
-  gender: number | null;
-  // pronouns: number | null;
-  language: number | null;
-  source: number | null;
+  phone: string;
+  birthday: string;
+  gender: string;
+  language: string;
+  source: string;
   occupation: string;
-  country: number | null; 
-  avatar: any | null;
-  address: string; 
-  status: number | null;
+  country: string;
+  avatar: string;
+  address: string;
+  status: string;
 };

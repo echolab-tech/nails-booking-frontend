@@ -6,9 +6,26 @@ import { useRouter } from "next/navigation";
 import { FaEdit } from "react-icons/fa";
 import { deleteCustomer, getListCustomers } from "@/services/customer.service";
 import { toast } from "react-toastify";
-import { Customer } from "@/types/customer";
+// import { Customer } from "@/types/customer";
 import PaginationCustom from "../Pagination/Pagination";
 import Search from "@/app/customers/search/page";
+
+export interface Customer {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  birthday: string;
+  status: Status;
+  reviews: number;
+  total_sales: number;
+}
+
+export interface Status {
+  id: number;
+  color_code: string;
+  name_status: string;
+}
 
 interface PaginationData {
   current_page: number;
@@ -39,15 +56,16 @@ const CustomerTable = () => {
   useEffect(() => {
     fetchCustomerData(1);
   }, [searchValues]);
+  console.log(customerData);
 
   const fetchCustomerData = async (page: number) => {
     try {
       const response = await getListCustomers(searchValues, page);
-      setCustomerData(response.data.data);
+      setCustomerData(response.data.data.data);
       setPaginationData({
         ...paginationData,
-        current_page: response.data.metadata.current_page,
-        total_pages: response.data.metadata.total_pages,
+        current_page: response.data.data.metadata.current_page,
+        total_pages: response.data.data.metadata.total_pages,
       });
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -129,14 +147,14 @@ const CustomerTable = () => {
                 </td>
                 <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                   <p
-                    className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium ${item.reviews}`}
+                    className={`rounded-f ull inline-flex bg-opacity-10 px-3 py-1 text-sm font-medium ${item.reviews}`}
                   >
                     *****
                   </p>
                 </td>
                 <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                   <p
-                    className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium ${item.total_sales}`}
+                    className={`inline-flex rounded-full bg-opacity-10 px-3 py-1 text-sm font-medium`}
                   >
                     đ {item.total_sales}
                   </p>
@@ -148,6 +166,7 @@ const CustomerTable = () => {
                       onClick={() => handleButtonDetail(item.id)}
                     >
                       <svg
+                        color="green"
                         className="fill-current"
                         width="18"
                         height="18"
@@ -169,13 +188,14 @@ const CustomerTable = () => {
                       className="hover:text-primary"
                       onClick={() => handleButtonEdit(item.id)}
                     >
-                      <FaEdit />
+                      <FaEdit color="blue" />
                     </button>
                     <button
                       className="hover:text-primary"
                       onClick={() => handleButtonDelete(item.id)}
                     >
                       <svg
+                        color="red"
                         className="fill-current"
                         width="18"
                         height="18"
