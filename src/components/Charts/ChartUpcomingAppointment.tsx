@@ -31,9 +31,9 @@ const ChartUpcomingAppointment: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const last7Days = getFirst7Days();
+    const first7Days = getFirst7Days();
 
-    const datesFormatted = last7Days.map((dateString) => {
+    const datesFormatted = first7Days.map((dateString) => {
       const date = new Date(dateString);
       const dayOfWeek = date.toLocaleDateString("en-US", { weekday: "short" });
       const dayOfMonth = date.getDate();
@@ -43,7 +43,7 @@ const ChartUpcomingAppointment: React.FC = () => {
   }, [serviceData]);
 
   useEffect(() => {
-    const last7Days = getFirst7Days();
+    const first7Days = getFirst7Days();
     const dateCountMap = new Map();
     serviceData.forEach((item) => {
       dateCountMap.set(item.date, item.count);
@@ -52,7 +52,7 @@ const ChartUpcomingAppointment: React.FC = () => {
     const currentDate = new Date();
     const year = currentDate.getFullYear();
     const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-    const seriesData = last7Days.map((day) => {
+    const seriesData = first7Days.map((day) => {
       console.log("day:", day);
       const [dayName, dayDate] = day.split(" ");
       return dateCountMap.get(dayName) || 0;
