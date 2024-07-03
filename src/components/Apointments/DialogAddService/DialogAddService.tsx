@@ -27,27 +27,33 @@ const DialogAddService: React.FC<DialogAddServiceProps> = (props) => {
   useEffect(() => {
     fetchServiceOption();
   }, []);
+
   const fetchServiceOption = async () => {
     try {
       const response = await serviceOption(searchServiceOptionValues);
       setIsLoading(false);
       setServiceOptions(response.data.data);
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      console.error("Error fetching service options:", error);
     }
   };
+
   const handleSearch = async () => {
     fetchServiceOption();
   };
+
   const handleChangeSearchValues = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchServiceOptionValues({
       ...searchServiceOptionValues,
       [e.target.name]: e.target.value,
     });
   };
+
   const handleServiceOptionClick = (id: string) => {
+    // console.log(id);
     props.onServiceOptionSelect(id);
   };
+
   return (
     <Modal
       show={props.show}

@@ -10,12 +10,14 @@ export type serviceTypeNew = {
     price: number | null;
     price_type: string | null;
     type: string | null;
-    overwrite: {
+    serviceOptionAssistants: [
+    {
       assistant_id: number | null;
       time: string | null;
       price_type: string | null;
       price: number | null;
-    }[];
+    }
+  ];
   }[];
   category: string | null;  // Add this line
 };

@@ -134,9 +134,23 @@ const ServiceSingleNew = () => {
       assistantServices:
         service?.assistantServices?.map((assistant: any) => assistant?.id) ||
         assistantData?.map((assistant: Assistant) => assistant?.id),
-      serviceOptions: service?.serviceOptions.filter(
-        (option) => option.parent_id === null,
-      ) || [
+      serviceOptions: service?.serviceOptions
+        .filter((option) => option.parent_id === null)
+        .map((option) => ({
+          ...option,
+          serviceOptionAssistants: assistantData.map((assistant: Assistant) => {
+            const existingAssistant = option.serviceOptionAssistants?.find(
+              (optAssistant: any) => optAssistant.assistant_id === assistant.id,
+            );
+            return {
+              assistant_id: assistant.id,
+              time: existingAssistant?.time || "60",
+              price_type: existingAssistant?.price_type || "1",
+              price: existingAssistant?.price || null,
+              parent_id: existingAssistant?.parent_id || null,
+            };
+          }),
+        })) || [
         {
           id: null,
           name: null,
@@ -145,7 +159,7 @@ const ServiceSingleNew = () => {
           price_type: optionPriceType[0].value,
           serviceOptionAssistants: assistantData?.map(
             (assistant: Assistant) => ({
-              assistant_id: assistant?.id || "",
+              assistant_id: assistant?.id || null,
               time: "60",
               price_type: "1",
               price: null,

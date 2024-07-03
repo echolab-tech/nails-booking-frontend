@@ -27,7 +27,7 @@ import {
 import { Form, FormikProvider, useFormik, useFormikContext } from "formik";
 import {
   appointmentsPost,
-  getListAppointment,
+  getAppointmentByDate,
 } from "@/services/appointment.service";
 import { toast, ToastContainer } from "react-toastify";
 
@@ -71,7 +71,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const fetchAppointments = async () => {
-    getListAppointment().then((data) => {
+    getAppointmentByDate().then((data) => {
       setEvents(data?.data?.data);
       console.log(data?.data?.data);
     });
