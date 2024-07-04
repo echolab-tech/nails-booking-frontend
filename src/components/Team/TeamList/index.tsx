@@ -11,6 +11,8 @@ import { TEAM } from "@/types/team";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
+import { CiSearch } from "react-icons/ci";
+
 import "react-toastify/dist/ReactToastify.css";
 
 interface PaginationData {
@@ -22,9 +24,6 @@ interface PaginationData {
 
 interface SearchValues {
   name: string;
-  email: string;
-  phone: number | null;
-  address: string;
 }
 const TeamList = () => {
   const router = useRouter();
@@ -37,9 +36,6 @@ const TeamList = () => {
   });
   const [searchValues, setSearchValues] = useState<SearchValues>({
     name: "",
-    email: "",
-    phone: null,
-    address: "",
   });
 
   useEffect(() => {
@@ -119,72 +115,30 @@ const TeamList = () => {
   };
   return (
     <div className="rounded-sm border border-stroke bg-white px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
-      <div className="p-6.5">
-        <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
-          <div className="w-full xl:w-1/2">
-            <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-              Name <span className="text-meta-1">*</span>
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={searchValues.name}
-              onChange={handleChangeSearchValues}
-              placeholder="Enter your name"
-              className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-            />
-          </div>
-          <div className="w-full xl:w-1/2">
-            <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-              email <span className="text-meta-1">*</span>
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={searchValues.email}
-              onChange={handleChangeSearchValues}
-              placeholder="Enter your email"
-              className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-            />
-          </div>
+      <div className="mb-4.5 flex flex-col items-center	justify-between gap-6 xl:flex-row	">
+        <div className="flex w-full xl:w-1/2">
+          <input
+            type="text"
+            name="name"
+            value={searchValues.name}
+            onChange={handleChangeSearchValues}
+            placeholder="Enter your name"
+            className="mr-2 w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+          />
+          <button
+            className="inline-flex items-center rounded border px-4 py-2 text-black hover:bg-black hover:text-white"
+            onClick={handleSearch}
+          >
+            <CiSearch className="mr-2" />
+            Search
+          </button>
         </div>
-        <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
-          <div className="w-full xl:w-1/2">
-            <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-              Phone <span className="text-meta-1">*</span>
-            </label>
-            <input
-              name="phone"
-              value={searchValues.phone !== null ? searchValues.phone : ""}
-              onChange={handleChangeSearchValues}
-              placeholder="Enter your phone"
-              className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-            />
-          </div>
-          <div className="w-full xl:w-1/2">
-            <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-              Address <span className="text-meta-1">*</span>
-            </label>
-            <input
-              type="text"
-              name="address"
-              value={searchValues.address}
-              onChange={handleChangeSearchValues}
-              placeholder="Enter your address"
-              className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-            />
-          </div>
-        </div>
-        <div className="mb-4.5 flex flex-col">
-          <div className="flex w-full justify-center">
-            <button
-              className="mt-4 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-              onClick={handleSearch}
-            >
-              Search
-            </button>
-          </div>
-        </div>
+        <button
+          className="w-100 rounded bg-black px-4 py-2 text-white hover:bg-blue-600 xl:w-[200px]"
+          onClick={() => router.push("new")}
+        >
+          Add
+        </button>
       </div>
       <div className="max-w-full overflow-x-auto">
         <table className="w-full table-auto">

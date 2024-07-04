@@ -1,14 +1,18 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Select from "react-tailwindcss-select";
-import "./style.scss";
 import { Field, Form, Formik } from "formik";
-import { assistantUpdate, assistants, getAssistantShow, getListService } from "@/services/assistants.service";
+import {
+  assistantUpdate,
+  getAssistantShow,
+  getListService,
+} from "@/services/assistants.service";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import * as Yup from "yup";
 import { AssistantEditForm } from "@/types/AssistantEditFrom";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import "./style.scss";
 
 const AssistantEditSchema = Yup.object().shape({
   name: Yup.string()
@@ -26,6 +30,7 @@ const TeamEdit = () => {
   const [services, setServices] = useState<{ id: number; name: string }[]>([]);
   const [selectedBirthday, setSelectedBirthday] = useState<string | null>(null);
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const [assistant, setAssistant] = useState<any | null>(null);
   const customerId = parseInt(params.id);
   useEffect(() => {
@@ -35,7 +40,7 @@ const TeamEdit = () => {
 
   const fetchAssistant = (customerId: number) => {
     try {
-        getAssistantShow(customerId).then((data) => {
+      getAssistantShow(customerId).then((data) => {
         setAssistant(data?.data?.data);
         setSelectedBirthday(data?.data?.data?.birthday);
         const servicesData = data?.data?.data?.services;
@@ -43,13 +48,13 @@ const TeamEdit = () => {
           value: String(service.id),
           label: service.name,
         }));
-         setAnimal(formattedServices);
+        setAnimal(formattedServices);
       });
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
   };
-  
+
   const fetchDataServices = async () => {
     const services = await getListService();
     setServices(services.data.data);
@@ -58,9 +63,9 @@ const TeamEdit = () => {
   const handleChangeServices = (value: any) => {
     setAnimal(value);
   };
-   const handleBirthdayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-     setSelectedBirthday(e.target.value);
-   };
+  const handleBirthdayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedBirthday(e.target.value);
+  };
   return (
     <div className="grid grid-cols-1 gap-12">
       <div className="flex flex-col gap-9">
@@ -214,12 +219,19 @@ const TeamEdit = () => {
                     </div>
                   </div>
                   <div className="mb-4.5 flex justify-center">
-                    <div className="flex w-full justify-end xl:w-1/2">
+                    <div className="flex w-full justify-center gap-10">
+                      <button
+                        type="button"
+                        onClick={() => router.back()}
+                        className="inline-flex w-[200px] justify-center rounded border bg-transparent p-3 font-medium text-black hover:bg-opacity-90"
+                      >
+                        Back
+                      </button>
                       <button
                         type="submit"
-                        className="justify-center rounded bg-green-600 p-3 font-medium text-gray hover:bg-opacity-90"
+                        className="inline-flex w-[200px] justify-center rounded bg-black p-3 font-medium text-gray hover:bg-opacity-90"
                       >
-                        UPDATE
+                        Save
                       </button>
                     </div>
                   </div>
