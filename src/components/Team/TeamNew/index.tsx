@@ -1,14 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Select from "react-tailwindcss-select";
-import "./style.scss";
 import { Field, Form, Formik } from "formik";
-import { number } from "yup";
 import { AssistantAddForm } from "@/types/AssistantAddForm";
 import { assistants, getListService } from "@/services/assistants.service";
 import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import * as Yup from "yup";
+import "react-toastify/dist/ReactToastify.css";
+import "./style.scss";
+import { useRouter } from "next/navigation";
 
 const AssistantNewSchema = Yup.object().shape({
   name: Yup.string()
@@ -29,6 +29,7 @@ const TeamNew = () => {
   const [animal, setAnimal] = useState(null);
   const [services, setServices] = useState<{ id: number; name: string }[]>([]);
   const [selectedBirthday, setSelectedBirthday] = useState<string | null>(null);
+  const router = useRouter();
   useEffect(() => {
     fetchDataServices();
   }, []);
@@ -195,9 +196,16 @@ const TeamNew = () => {
                     </div>
                   </div>
                   <div className="mb-4.5 flex justify-center">
-                    <div className="flex w-full justify-end xl:w-1/2">
-                      <button className="justify-center rounded bg-green-600 p-3 font-medium text-gray hover:bg-opacity-90">
-                        Add
+                    <div className="flex w-full justify-center gap-10">
+                      <button
+                        type="button"
+                        onClick={() => router.back()}
+                        className="inline-flex w-[200px] justify-center rounded border bg-transparent p-3 font-medium text-black hover:bg-opacity-90"
+                      >
+                        Back
+                      </button>
+                      <button className="inline-flex w-[200px] justify-center rounded bg-black p-3 font-medium text-gray hover:bg-opacity-90">
+                        Created
                       </button>
                     </div>
                   </div>

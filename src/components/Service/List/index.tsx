@@ -86,10 +86,26 @@ const ServiceList = () => {
 
   return (
     <>
-      <Search
-        placeholder="search"
-        handleSearch={(value) => handleSearch(value)}
-      />
+      <div className="flex flex-col xl:flex-row">
+        <Search
+          placeholder="search"
+          handleSearch={(value) => handleSearch(value)}
+        />
+        <div className="inline-flex gap-2">
+          <button
+            className="w-100 rounded bg-black px-4 py-2 text-white hover:bg-blue-600 xl:w-[120px]"
+            onClick={() => router.push("form-new")}
+          >
+            Add singe
+          </button>
+          <button
+            className="w-100 rounded bg-black px-4 py-2 text-white hover:bg-blue-600 xl:w-[120px]"
+            onClick={() => router.push("package/add")}
+          >
+            Add pakage
+          </button>
+        </div>
+      </div>
       <div className="mt-5 rounded-sm border border-stroke bg-white  px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
         <div className="max-w-full overflow-x-auto">
           <table className="w-full table-auto">
