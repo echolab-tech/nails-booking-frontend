@@ -42,9 +42,10 @@ const ChartRecentSale: React.FC = () => {
       const date = new Date(dateString);
       const dayOfWeek = date.toLocaleDateString("en-US", { weekday: "short" });
       const dayOfMonth = date.getDate();
-      return `${dayOfWeek} ${dayOfMonth}`;
+      return { formatted: `${dayOfWeek} ${dayOfMonth}`, date: date };
     });
-    setFormattedDates(datesFormatted);
+    datesFormatted.sort((a, b) => a.date.getTime() - b.date.getTime());
+    setFormattedDates(datesFormatted.map((item) => item.formatted));
   }, [serviceData]);
 
   useEffect(() => {
@@ -53,10 +54,6 @@ const ChartRecentSale: React.FC = () => {
     serviceData.forEach((item) => {
       dateCountMap.set(item.date, item.count);
     });
-
-    const currentDate = new Date();
-    const year = currentDate.getFullYear();
-    const month = String(currentDate.getMonth() + 1).padStart(2, "0");
 
     const seriesData = last7Days.map((day) => {
       console.log("day:", day);
