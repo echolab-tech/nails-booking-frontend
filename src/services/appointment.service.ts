@@ -9,7 +9,7 @@ export const appointmentsPost = async (
 };
 
 export const getAppointmentByDate = async (): Promise<any> => {
-  return await http.get<any>(`/appointments/list/`);
+  return await http.get<any>(`/appointments/list`);
 };
 
 export const getListAppointmentCustomer = async (
