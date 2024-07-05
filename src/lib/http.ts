@@ -1,5 +1,6 @@
 import { ToastContext } from "@/providers/ToastProvider";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { redirect } from "next/navigation";
 
 enum StatusCode {
   Unauthorized = 401,
@@ -111,7 +112,8 @@ class Http {
         break;
       }
       case StatusCode.Unauthorized: {
-        // Handle Unauthorized
+        localStorage.removeItem("accessToken");
+        redirect("/auth/signin");
         break;
       }
       case StatusCode.TooManyRequests: {
