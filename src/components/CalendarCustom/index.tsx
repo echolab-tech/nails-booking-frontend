@@ -12,7 +12,7 @@ import bootstrap5Plugin from "@fullcalendar/bootstrap5";
 import { getAllAssistants } from "@/services/assistants.service";
 import { ResourceType } from "@/types/assistant";
 import { BookingFormType, EventType } from "@/types/event";
-import { Modal, Spinner } from "flowbite-react";
+import { Drawer, Modal, Spinner } from "flowbite-react";
 import { FaRegPenToSquare } from "react-icons/fa6";
 import { BsTrash } from "react-icons/bs";
 import { GoInbox } from "react-icons/go";
@@ -404,15 +404,19 @@ const FullCalenDarCustom: React.FC<any> = () => {
           </Modal.Body>
         </Modal>
       )}
-      <Modal size="4xl" show={openBooking} onClose={onCloseModalBooking}>
-        <Modal.Header>
-          <h3 className="text-black">{startTime}</h3>
-        </Modal.Header>
-        <Modal.Body>
+      <Drawer
+        className="w-[50%]"
+        open={openBooking}
+        onClose={onCloseModalBooking}
+        position="right"
+        backdrop={false}
+      >
+        <Drawer.Header titleIcon={() => <></>} title={`${startTime}`} />
+        <Drawer.Items>
           <FormikProvider value={formik}>
             <Form>
-              <div className="flex">
-                <div className="h-100 w-[30%] overflow-auto">
+              <div className="flex h-screen">
+                <div className="w-[40%] overflow-auto">
                   {/* start show info customer */}
                   {!selectedCustomer && (
                     <>
@@ -485,9 +489,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       </div>
                     ))}
                 </div>
-                <div className="w-[70%]">
+                <div className="w-[60%]">
                   {isSelectService && (
-                    <div className="min-h-[400px] px-6.5">
+                    <div className="h-[85%] px-6.5">
                       {serviceOptions?.map((item, index) => (
                         <div key={index}>
                           <h3 className="mt-3 font-medium text-black dark:text-white">
@@ -534,7 +538,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                   )}
                   {isShowSelected && (
                     <>
-                      <div className="min-h-[400px] px-6.5">
+                      <div className="h-[75%] px-6.5">
                         <h3 className="font-medium text-black dark:text-white">
                           Services
                         </h3>
@@ -633,8 +637,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
               </div>
             </Form>
           </FormikProvider>
-        </Modal.Body>
-      </Modal>
+        </Drawer.Items>
+      </Drawer>
       <ToastContainer />
     </>
   );
