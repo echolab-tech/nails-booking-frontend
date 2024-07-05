@@ -33,16 +33,14 @@ const SignIn: React.FC = () => {
                   width={176}
                   height={32}
                 />
-                <h3 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">Logo Nails Admin</h3>
               </Link>
               <span className="mt-15 inline-block">
-              <svg width="350" height="350" viewBox="0 0 350 350" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <image
-                  href="https://png.pngtree.com/png-vector/20230120/ourmid/pngtree-beauty-logo-design-png-image_6568470.png"
-                  width="350"
-                  height="350"
+                <Image
+                  src="/images/logo/Luxury-2.png"
+                  width={500}
+                  height={500}
+                  alt="Picture of the author"
                 />
-              </svg>
               </span>
             </div>
           </div>
@@ -107,7 +105,7 @@ const SignIn: React.FC = () => {
                           </svg>
                         </span>
                         {errors.email && touched.email ? (
-                          <span className="text-red-500 ml-1 mt-1 flex items-center text-xs font-medium tracking-wide">
+                          <span className="ml-1 mt-1 flex items-center text-xs font-medium tracking-wide text-red">
                             {errors.email}
                           </span>
                         ) : null}
@@ -148,7 +146,7 @@ const SignIn: React.FC = () => {
                           </svg>
                         </span>
                         {errors.password && touched.password ? (
-                          <span className="text-red-500 ml-1 mt-1 flex items-center text-xs font-medium tracking-wide">
+                          <span className="ml-1 mt-1 flex items-center text-xs font-medium tracking-wide text-red">
                             {errors.password}
                           </span>
                         ) : null}

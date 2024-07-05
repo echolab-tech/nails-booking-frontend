@@ -6,7 +6,8 @@ import "@/css/style.css";
 import React, { useEffect, useState, useContext, createContext } from "react";
 import Loader from "@/components/common/Loader";
 import { ToastProvider } from "@/providers/ToastProvider";
-import 'react-toastify/dist/ReactToastify.css'
+import "react-toastify/dist/ReactToastify.css";
+import { AuthProvider } from "@/providers/AuthProvider";
 
 export default function RootLayout({
   children,
@@ -26,7 +27,7 @@ export default function RootLayout({
     <html lang="en">
       <body suppressHydrationWarning={true}>
         <div className="dark:bg-boxdark-2 dark:text-bodydark">
-          {loading ? <Loader /> : <ToastProvider>{children}</ToastProvider>}
+          {loading ? <Loader /> : <AuthProvider>{children}</AuthProvider>}
         </div>
       </body>
     </html>
