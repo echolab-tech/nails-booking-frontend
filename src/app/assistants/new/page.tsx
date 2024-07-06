@@ -4,8 +4,7 @@ import TeamNew from "@/components/Team/TeamNew";
 
 export const metadata: Metadata = {
   title: "Team New | NailsAdmin Template",
-  description:
-    "This is Team New page for NailsAdmin Template",
+  description: "This is Team New page for NailsAdmin Template",
 };
 
 const TeamNewPage = () => {

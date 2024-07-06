@@ -173,14 +173,14 @@ const ServiceSingleNew = () => {
       try {
         if (id) {
           const response = await updateService(id, values);
-          if (!response.statusText) {
-            throw new Error("Network response was not ok");
-          }
+          // if (!response.statusText) {
+          //   throw new Error("Network response was not ok");
+          // }
         } else {
           const response = await addService(values);
-          if (!response.statusText) {
-            throw new Error("Network response was not ok");
-          }
+          // if (!response.statusText) {
+          //   throw new Error("Network response was not ok");
+          // }
         }
         toast.success("Form submitted successfully!");
         router.push("/services/list");

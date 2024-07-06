@@ -14,7 +14,8 @@ export type BookingFormType = {
 };
 
 type serviceSelectType = {
-  id: string;
+  id: string | null;
+  serviceId: string;
   serviceName: string;
   name: string;
   price: number | null;

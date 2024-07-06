@@ -24,10 +24,11 @@ import {
   getServiceOptionShow,
   serviceOption,
 } from "@/services/serviceoption.service";
-import { Form, FormikProvider, useFormik, useFormikContext } from "formik";
+import { Form, FormikProvider, useFormik } from "formik";
 import {
   appointmentsPost,
   getAppointmentByDate,
+  getAppointmentById,
 } from "@/services/appointment.service";
 import { toast, ToastContainer } from "react-toastify";
 
@@ -45,6 +46,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [isShowSelected, setIsShowSelected] = useState<boolean>(true);
   const [events, setEvents] = useState<EventType[]>([]);
   const [lastEventId, setLastEventId] = useState<string | null>(null);
+  const [eventId, setEventId] = useState<number | null>(null);
   const [serviceOptions, setServiceOptions] = useState<any[]>([]);
   const [customerData, setCustomerData] = useState<CustomerType[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<boolean>(false);
@@ -73,7 +75,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const fetchAppointments = async () => {
     getAppointmentByDate().then((data) => {
       setEvents(data?.data?.data);
-      console.log(data?.data?.data);
     });
   };
 
@@ -96,7 +97,22 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleEventClick = (arg: any) => {
-    console.log(arg.event.title);
+    getAppointmentById(arg?.event?.extendedProps?.booking_id).then((result) => {
+      console.log(result?.data?.data?.bookingDetails);
+
+      formik.setValues({
+        ...formik.values,
+        customer: result?.data?.data?.customer,
+        services: result?.data?.data?.bookingDetails,
+      });
+      setSelectedCustomer(true);
+    });
+
+    setAssistantId(arg?.event?.extendedProps?.assistant?.id);
+    setEventId(arg?.event?.extendedProps?.booking_id);
+    setOpenBooking(true);
+    setIsSelectService(false);
+    setIsShowSelected(true);
   };
 
   const handleSelectDate = (info: any) => {
@@ -156,6 +172,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
       );
       setLastEventId(null);
     }
+    formik.resetForm();
+    setEventId(null);
+    setSelectedCustomer(false);
     setOpenBooking(false);
     setIsSelectService(false);
     setIsShowSelected(true);
@@ -178,16 +197,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const handleServiceOptionSelect = async (id: any) => {
     try {
       const result = await getServiceOptionShow(id, assistantId);
-      const {
-        id: serviceId,
-        service_name,
-        price,
-        time,
-        assistant,
-      } = result.data.data;
+      const { service_id, title, price, time, assistant } = result.data.data;
 
       const existingOption = formik.values.services.find(
-        (option) => option.id === serviceId,
+        (option) => option.serviceId === service_id,
       );
 
       // Nếu dịch vụ đã tồn tại, không thêm lại
@@ -208,8 +221,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
       const newEndTime = addMinutes(newStartTime, time);
 
       const newService = {
-        id: serviceId,
-        service_name,
+        id: null,
+        service_id,
+        title,
         price,
         time,
         assistant: {
@@ -230,6 +244,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
       setIsShowSelected(true);
       setIsSelectService(false);
+
+      console.log(formik.values.services);
     } catch (error) {
       console.error("Error fetching service option details:", error);
     }
@@ -405,7 +421,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
         </Modal>
       )}
       <Drawer
-        className="w-[50%]"
+        className="w-[50%] shadow-2xl"
         open={openBooking}
         onClose={onCloseModalBooking}
         position="right"
@@ -513,7 +529,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                                     <div className="flex flex-1 px-4 py-2">
                                       <div className="w-full xl:w-3/4">
                                         <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                          {option?.service_name}
+                                          {option?.title}
                                         </label>
                                         <div className="flex items-center">
                                           <span>{option?.duration}min</span>
@@ -553,7 +569,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                                 <div className="flex flex-1 px-6.5 py-4">
                                   <div className="w-full xl:w-3/4">
                                     <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                      {detail?.service_name}
+                                      {detail?.title}
                                     </label>
                                     <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                                       {detail?.name}

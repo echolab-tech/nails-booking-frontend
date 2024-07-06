@@ -18,7 +18,7 @@ export const getListAppointmentCustomer = async (
   return await http.get<any>(`/appointments/list/${customer_id}`);
 };
 
-export const getAppointmentShow = async (id: number): Promise<any> => {
+export const getAppointmentById = async (id: number): Promise<any> => {
   return await http.get<any>(`/appointments/${id}`);
 };
 
