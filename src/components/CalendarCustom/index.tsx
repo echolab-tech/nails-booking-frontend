@@ -138,22 +138,46 @@ const FullCalenDarCustom: React.FC<any> = () => {
     }
   };
 
-  const formatHoursMinute = (strDate: string) => {
-    const startDate = new Date(strDate);
-    const hours = startDate.getHours();
-    const minutes = startDate.getMinutes();
-    return `${hours}:${minutes}`;
+  const formatHoursMinute = (strDate: string): string => {
+    const date = new Date(strDate);
+    const formattedTime = date.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    return formattedTime;
   };
 
-  // const formatDateTime = (strDate: string) => {
-  //   const startDate = new Date(strDate);
-  //   const year = startDate.getFullYear();
-  //   const month = startDate.getMonth();
-  //   const date = startDate.getDate();
-  //   const hours = startDate.getHours();
-  //   const minutes = startDate.getMinutes();
-  //   return `${date}/${month + 1}/${year} ${hours}:${minutes}`;
-  // };
+  function formatDateTime(inputDateTime: string): string {
+    // Create a new Date object from the ISO 8601 string
+    const date = new Date(inputDateTime);
+
+    if (isNaN(date.getTime())) {
+      throw new Error("Invalid date format: unable to parse date.");
+    }
+
+    // Define options for formatting the date
+    const dateOptions: Intl.DateTimeFormatOptions = {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    };
+
+    // Format the date part
+    const formattedDate = new Intl.DateTimeFormat("en-GB", dateOptions).format(
+      date,
+    );
+
+    // Format the time part
+    const formattedTime = date.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    // Combine the formatted date and time parts
+    return `${formattedDate} ${formattedTime}`;
+  }
 
   const onCloseModalSelect = () => {
     if (lastEventId) {
@@ -197,14 +221,22 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const handleServiceOptionSelect = async (id: any) => {
     try {
       const result = await getServiceOptionShow(id, assistantId);
-      const { service_id, title, price, time, assistant } = result.data.data;
+      const { serviceOptionId, title, price, time, assistant } =
+        result.data.data;
 
-      const existingOption = formik.values.services.find(
-        (option) => option.serviceId === service_id,
-      );
+      // const existingOption = formik.values.services.find(
+      //   (option) => option.serviceOptionId === serviceOptionId,
+      // );
 
-      // Nếu dịch vụ đã tồn tại, không thêm lại
-      if (existingOption) return;
+      // // Nếu dịch vụ đã tồn tại, không thêm lại
+      // if (existingOption) {
+      //   setIsShowSelected(true);
+      //   setIsSelectService(false);
+      //   toast.warning(
+      //     "Select service already exists, please select another service",
+      //   );
+      //   return;
+      // }
 
       const timeZone = "Asia/Ho_Chi_Minh";
 
@@ -222,7 +254,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
       const newService = {
         id: null,
-        service_id,
+        serviceOptionId,
         title,
         price,
         time,
@@ -244,8 +276,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
       setIsShowSelected(true);
       setIsSelectService(false);
-
-      console.log(formik.values.services);
     } catch (error) {
       console.error("Error fetching service option details:", error);
     }
@@ -427,7 +457,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
         position="right"
         backdrop={false}
       >
-        <Drawer.Header titleIcon={() => <></>} title={`${startTime}`} />
+        <Drawer.Header
+          titleIcon={() => <></>}
+          title={`${startTime && formatDateTime(startTime)}`}
+        />
         <Drawer.Items>
           <FormikProvider value={formik}>
             <Form>
