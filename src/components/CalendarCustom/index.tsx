@@ -29,6 +29,7 @@ import {
   appointmentsPost,
   getAppointmentByDate,
   getAppointmentById,
+  updateAppointment,
 } from "@/services/appointment.service";
 import { toast } from "react-toastify";
 
@@ -46,7 +47,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [isShowSelected, setIsShowSelected] = useState<boolean>(true);
   const [events, setEvents] = useState<EventType[]>([]);
   const [lastEventId, setLastEventId] = useState<string | null>(null);
-  const [eventId, setEventId] = useState<number | null>(null);
+  const [eventId, setEventId] = useState<string | null>(null);
   const [serviceOptions, setServiceOptions] = useState<any[]>([]);
   const [customerData, setCustomerData] = useState<CustomerType[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<boolean>(false);
@@ -62,6 +63,28 @@ const FullCalenDarCustom: React.FC<any> = () => {
     fetchServiceOption();
   }, []);
 
+  const bookingStatus = [
+    {
+      value: 0,
+      name: "Booked",
+    },
+    {
+      value: 1,
+      name: "Confirmed",
+    },
+    {
+      value: 2,
+      name: "Arrived",
+    },
+    {
+      value: 3,
+      name: "Start",
+    },
+    {
+      value: 4,
+      name: "Cancel",
+    },
+  ];
   const handleDateClick = (arg: any) => {
     alert(arg.dateStr);
   };
@@ -97,6 +120,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleEventClick = (arg: any) => {
+    setStartTime(arg.event.startStr);
     getAppointmentById(arg?.event?.extendedProps?.booking_id).then((result) => {
       console.log(result?.data?.data?.bookingDetails);
 
@@ -322,19 +346,31 @@ const FullCalenDarCustom: React.FC<any> = () => {
     },
     onSubmit: async (values) => {
       setIsSubmit(true);
-      appointmentsPost(values)
-        .then((data) => {
-          setIsSubmit(false);
-          setOpenBooking(false);
-          fetchAppointments();
-          setSelectedCustomer(false);
-          formik.resetForm();
-          toast.success("Appointment created");
-        })
-        .catch((e) => {
-          setIsSubmit(false);
-          toast.error(e);
-        });
+      const handleSuccess = (message: string) => {
+        setIsSubmit(false);
+        setOpenBooking(false);
+        fetchAppointments();
+        setSelectedCustomer(false);
+        formik.resetForm();
+        toast.success(message);
+      };
+
+      const handleError = (error: any) => {
+        setIsSubmit(false);
+        toast.error(error);
+      };
+
+      try {
+        if (eventId) {
+          await updateAppointment(eventId, values);
+          handleSuccess("Appointment updated");
+        } else {
+          await appointmentsPost(values);
+          handleSuccess("Appointment created");
+        }
+      } catch (e) {
+        handleError(e);
+      }
     },
     enableReinitialize: true,
   });
@@ -457,10 +493,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
         position="right"
         backdrop={false}
       >
-        <Drawer.Header
-          titleIcon={() => <></>}
-          title={`${startTime && formatDateTime(startTime)}`}
-        />
+        <Drawer.Header titleIcon={() => <></>} />
         <Drawer.Items>
           <FormikProvider value={formik}>
             <Form>
@@ -538,148 +571,173 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       </div>
                     ))}
                 </div>
-                <div className="w-[60%]">
-                  {isSelectService && (
-                    <div className="h-[85%] px-6.5">
-                      {serviceOptions?.map((item, index) => (
-                        <div key={index}>
-                          <h3 className="mt-3 font-medium text-black dark:text-white">
-                            {item?.category_name} ({item?.count})
-                          </h3>
-                          <div className="space-y-6">
-                            {item?.service_options.length > 0 &&
-                              item?.service_options.map(
-                                (option: any, index: number) => (
-                                  <button
-                                    type="button"
-                                    className="service relative mt-3 w-full text-left"
-                                    key={index}
-                                    onClick={() =>
-                                      handleServiceOptionSelect(option?.id)
-                                    }
-                                  >
-                                    <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
-                                    <div className="flex flex-1 px-4 py-2">
-                                      <div className="w-full xl:w-3/4">
-                                        <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                          {option?.title}
-                                        </label>
-                                        <div className="flex items-center">
-                                          <span>{option?.duration}min</span>
-                                          <span className="ml-5">
-                                            {/* {option.assistant.name} */}
-                                          </span>
+                <div className="flex w-[60%] flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between px-6.5">
+                      <h3 className="text-2xl font-bold	text-black">{`${startTime && formatDateTime(startTime)}`}</h3>
+                      {eventId && (
+                        <select
+                          id="status"
+                          className="bg-gray-50 border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 block w-[150px] w-full rounded-lg border p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                        >
+                          {bookingStatus?.map((item, i) => (
+                            <option value={item?.value} key={i}>
+                              {item?.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    {isSelectService && (
+                      <div className="px-6.5">
+                        {serviceOptions?.map((item, index) => (
+                          <div key={index}>
+                            <h3 className="mt-3 font-medium text-black dark:text-white">
+                              {item?.category_name} ({item?.count})
+                            </h3>
+                            <div className="space-y-6">
+                              {item?.service_options.length > 0 &&
+                                item?.service_options.map(
+                                  (option: any, index: number) => (
+                                    <button
+                                      type="button"
+                                      className="service relative mt-3 w-full text-left"
+                                      key={index}
+                                      onClick={() =>
+                                        handleServiceOptionSelect(option?.id)
+                                      }
+                                    >
+                                      <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
+                                      <div className="flex flex-1 px-4 py-2">
+                                        <div className="w-full xl:w-3/4">
+                                          <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                            {option?.title}
+                                          </label>
+                                          <div className="flex items-center">
+                                            <span>{option?.duration}min</span>
+                                            <span className="ml-5">
+                                              {/* {option.assistant.name} */}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div className="w-full xl:w-1/4">
+                                          <label className="mb-3 block flex justify-end text-sm font-medium text-black dark:text-white">
+                                            ${option?.price}
+                                          </label>
                                         </div>
                                       </div>
-                                      <div className="w-full xl:w-1/4">
-                                        <label className="mb-3 block flex justify-end text-sm font-medium text-black dark:text-white">
-                                          ${option?.price}
-                                        </label>
+                                    </button>
+                                  ),
+                                )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {isShowSelected && (
+                      <>
+                        <div className="px-6.5">
+                          <h3 className="font-medium text-black dark:text-white">
+                            Services
+                          </h3>
+                          {formik.values.services.length > 0 ? (
+                            formik.values.services.map(
+                              (detail: any, index: number) => (
+                                <div
+                                  className="service relative mt-3 w-full"
+                                  key={index}
+                                >
+                                  <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
+                                  <div className="flex flex-1 px-6.5 py-4">
+                                    <div className="w-full xl:w-3/4">
+                                      <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                        {detail?.title}
+                                      </label>
+                                      <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                        {detail?.name}
+                                      </label>
+                                      <div className="flex items-center">
+                                        <span>
+                                          {formatHoursMinute(detail?.start)}
+                                        </span>
+                                        <span className="m-1">・</span>
+                                        <span>
+                                          {detail?.time}
+                                          min
+                                        </span>
+                                        <span className="m-1">・</span>
+                                        <span>{detail?.assistant?.name}</span>
                                       </div>
                                     </div>
-                                  </button>
-                                ),
-                              )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {isShowSelected && (
-                    <>
-                      <div className="h-[75%] px-6.5">
-                        <h3 className="font-medium text-black dark:text-white">
-                          Services
-                        </h3>
-                        {formik.values.services.length > 0 ? (
-                          formik.values.services.map(
-                            (detail: any, index: number) => (
-                              <div
-                                className="service relative mt-3 w-full"
-                                key={index}
-                              >
-                                <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
-                                <div className="flex flex-1 px-6.5 py-4">
-                                  <div className="w-full xl:w-3/4">
-                                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                      {detail?.title}
-                                    </label>
-                                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                      {detail?.name}
-                                    </label>
-                                    <div className="flex items-center">
-                                      <span>
-                                        {formatHoursMinute(detail?.start)}
-                                      </span>
-                                      <span className="m-1">・</span>
-                                      <span>
-                                        {detail?.time}
-                                        min
-                                      </span>
-                                      <span className="m-1">・</span>
-                                      <span>{detail?.assistant?.name}</span>
-                                    </div>
-                                  </div>
-                                  <div className="w-full xl:w-1/4">
-                                    <label className="mb-3 ml-3 block flex justify-end text-sm font-medium text-black dark:text-white">
-                                      ${detail.price}
-                                    </label>
-                                    <div className="flex justify-end space-x-3.5">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleEditService(detail?.id)
-                                        }
-                                        className="hover:text-primary"
-                                      >
-                                        <FaRegPenToSquare
-                                          size={25}
-                                          className="text-black"
-                                        />
-                                      </button>
-                                      <button
-                                        className="hover:text-primary"
-                                        onClick={() =>
-                                          handleRemoveServiceOption(detail.id)
-                                        }
-                                      >
-                                        <BsTrash
-                                          size={25}
-                                          className="text-black"
-                                        />
-                                      </button>
+                                    <div className="w-full xl:w-1/4">
+                                      <label className="mb-3 ml-3 block flex justify-end text-sm font-medium text-black dark:text-white">
+                                        ${detail.price}
+                                      </label>
+                                      <div className="flex justify-end space-x-3.5">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleEditService(detail?.id)
+                                          }
+                                          className="hover:text-primary"
+                                        >
+                                          <FaRegPenToSquare
+                                            size={25}
+                                            className="text-black"
+                                          />
+                                        </button>
+                                        <button
+                                          className="hover:text-primary"
+                                          onClick={() =>
+                                            handleRemoveServiceOption(detail.id)
+                                          }
+                                        >
+                                          <BsTrash
+                                            size={25}
+                                            className="text-black"
+                                          />
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
-                            ),
-                          )
-                        ) : (
-                          <div className="flex min-h-[200px] flex-col items-center">
-                            <GoInbox size={50} />
-                            <p>Add a service to save the appointment</p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex justify-center px-6.5 py-4">
-                        <button
-                          onClick={handleShowService}
-                          type="button"
-                          className="border-gray-300 hover:bg-gray-100 focus:ring-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 mb-2 me-2 rounded-full border bg-white px-5 py-2.5 text-sm font-medium text-gray-900 focus:outline-none focus:ring-4 dark:text-white"
-                        >
-                          Add Service
-                        </button>
-                      </div>
-                    </>
-                  )}
-                  <div className="flex px-6.5">
+                              ),
+                            )
+                          ) : (
+                            <div className="flex min-h-[200px] flex-col items-center">
+                              <GoInbox size={50} />
+                              <p>Add a service to save the appointment</p>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex justify-center px-6.5 py-4">
+                          <button
+                            onClick={handleShowService}
+                            type="button"
+                            className="border-gray-300 hover:bg-gray-100 focus:ring-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 mb-2 me-2 rounded-full border bg-white px-5 py-2.5 text-sm font-medium text-gray-900 focus:outline-none focus:ring-4 dark:text-white"
+                          >
+                            Add Service
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex gap-2 px-6.5">
                     <button
                       disabled={isSubmit}
                       type="submit"
-                      className="inline-flex items-center justify-center rounded-md bg-primary px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                      className="border-gray-300 inline-flex w-1/2 items-center justify-center rounded-md border bg-transparent px-10 py-2 text-center font-medium text-black hover:bg-opacity-90 lg:px-8 xl:px-10"
                     >
-                      Save
                       {isSubmit && <Spinner />}
+                      Checkout
+                    </button>
+                    <button
+                      disabled={isSubmit}
+                      type="submit"
+                      className="inline-flex w-1/2 items-center justify-center rounded-md bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                    >
+                      {isSubmit && <Spinner />}
+                      Save
                     </button>
                   </div>
                 </div>

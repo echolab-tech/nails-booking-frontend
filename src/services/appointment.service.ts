@@ -8,6 +8,13 @@ export const appointmentsPost = async (
   return await http.post<any>("/appointments", values);
 };
 
+export const updateAppointment = async (
+  id: string,
+  values: BookingFormType,
+): Promise<any> => {
+  return await http.put<any>(`/appointments/${id}`, values);
+};
+
 export const getAppointmentByDate = async (): Promise<any> => {
   return await http.get<any>(`/appointments/list`);
 };
