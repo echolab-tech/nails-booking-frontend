@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getTopServices } from "@/services/dashboard.service"; // Import service call
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const TopServicesList = () => {
@@ -56,7 +56,6 @@ const TopServicesList = () => {
             ))}
           </tbody>
         </table>
-        <ToastContainer />
       </div>
     </div>
   );

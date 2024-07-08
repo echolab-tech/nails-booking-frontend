@@ -4,7 +4,7 @@ import Select from "react-tailwindcss-select";
 import { Field, Form, Formik } from "formik";
 import { AssistantAddForm } from "@/types/AssistantAddForm";
 import { assistants, getListService } from "@/services/assistants.service";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import * as Yup from "yup";
 import "react-toastify/dist/ReactToastify.css";
 import "./style.scss";
@@ -213,7 +213,6 @@ const TeamNew = () => {
               </Form>
             )}
           </Formik>
-          <ToastContainer />
         </div>
       </div>
     </div>

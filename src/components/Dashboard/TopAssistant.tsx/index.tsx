@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getTopAssistants } from "@/services/dashboard.service"; // Import service call
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const TopAssistantsList = () => {
@@ -14,7 +14,6 @@ const TopAssistantsList = () => {
     try {
       const response = await getTopAssistants();
       setTopAssistantsData(response.data.data);
-      
     } catch (error) {
       console.error("Error fetching top assistants:", error);
       toast.error("Error fetching top assistants");
@@ -57,7 +56,6 @@ const TopAssistantsList = () => {
             ))}
           </tbody>
         </table>
-        <ToastContainer />
       </div>
     </div>
   );

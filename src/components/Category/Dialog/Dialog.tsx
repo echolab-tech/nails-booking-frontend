@@ -2,14 +2,17 @@ import { Modal, TextInput } from "flowbite-react";
 import React, { useState, useEffect } from "react";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getCategoryUpdate } from "@/services/categories.service";
 import { CATEGORYESHOW } from "@/types/CategoryEdit";
 import { CATEGORY } from "@/types/Category";
 
 const UpdateCategorySchema = Yup.object().shape({
-  name: Yup.string().min(2, "Category name must be at least 2 characters").max(50, "Category name is too long").required("Category name is required"),
+  name: Yup.string()
+    .min(2, "Category name must be at least 2 characters")
+    .max(50, "Category name is too long")
+    .required("Category name is required"),
 });
 
 interface DialogEditProps {
@@ -50,10 +53,18 @@ const DialogEdit: React.FC<DialogEditProps> = (props) => {
       popup
       onClose={props.onClose}
       className="z-1"
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', minWidth: '50%' }}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+        minWidth: "50%",
+      }}
     >
       <Modal.Header>
-        <div className="text-xl font-medium text-gray-900 dark:text-white">Category Edit</div>
+        <div className="text-xl font-medium text-gray-900 dark:text-white">
+          Category Edit
+        </div>
       </Modal.Header>
       <Modal.Body>
         <Formik
@@ -83,7 +94,10 @@ const DialogEdit: React.FC<DialogEditProps> = (props) => {
                   )}
                 </div>
                 <div className="mb-4.5 flex justify-center">
-                  <button type="submit" className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90">
+                  <button
+                    type="submit"
+                    className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
+                  >
                     Update
                   </button>
                 </div>

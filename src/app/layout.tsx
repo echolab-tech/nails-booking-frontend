@@ -8,6 +8,7 @@ import Loader from "@/components/common/Loader";
 import { ToastProvider } from "@/providers/ToastProvider";
 import "react-toastify/dist/ReactToastify.css";
 import { AuthProvider } from "@/providers/AuthProvider";
+import { ToastContainer } from "react-toastify";
 
 export default function RootLayout({
   children,
@@ -29,6 +30,7 @@ export default function RootLayout({
         <div className="dark:bg-boxdark-2 dark:text-bodydark">
           {loading ? <Loader /> : <AuthProvider>{children}</AuthProvider>}
         </div>
+        <ToastContainer />
       </body>
     </html>
   );

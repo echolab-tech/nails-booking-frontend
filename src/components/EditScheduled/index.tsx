@@ -6,7 +6,7 @@ import { useRouter, useSearchParams, useParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Breadcrumb from "../Breadcrumbs/Breadcrumb";
 import { createSchedule } from "@/services/schedules.service";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 
 export default function EditSchduled() {
   const router = useRouter();
@@ -352,7 +352,6 @@ export default function EditSchduled() {
           Save
         </button>
       </div>
-      <ToastContainer />
     </div>
   );
 }

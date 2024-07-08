@@ -30,7 +30,7 @@ import {
   getAppointmentByDate,
   getAppointmentById,
 } from "@/services/appointment.service";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 
 interface SearchServiceOptionValues {
   name_service_option: string;
@@ -688,7 +688,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
           </FormikProvider>
         </Drawer.Items>
       </Drawer>
-      <ToastContainer />
     </>
   );
 };

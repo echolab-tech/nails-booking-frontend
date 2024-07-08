@@ -70,10 +70,15 @@ const ServiceList = () => {
 
   const onDelete = async () => {
     try {
-      await deleteService(idDel);
+      const { data } = await deleteService(idDel);
+      if (data?.data?.code != 200) {
+        setOpenModal(false);
+        toast.warning(data?.data?.message);
+        return;
+      }
       fetchService();
       setOpenModal(false);
-      toast.success("Delete Success !!!");
+      toast.success(data?.data?.message);
     } catch (error) {
       toast.warning("you cannot delete !!!");
     }
