@@ -96,7 +96,7 @@ const ServiceList = () => {
             className="w-100 rounded bg-black px-4 py-2 text-white hover:bg-blue-600 xl:w-[120px]"
             onClick={() => router.push("form-new")}
           >
-            Add singe
+            Add single
           </button>
           <button
             className="w-100 rounded bg-black px-4 py-2 text-white hover:bg-blue-600 xl:w-[120px]"
