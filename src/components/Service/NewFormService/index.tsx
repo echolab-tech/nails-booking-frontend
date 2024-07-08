@@ -6,7 +6,7 @@ import AssistantList from "./AssistantCheckboxes";
 import ServiceOptions from "./ServiceOptions";
 import { FormikProvider, Field, Form, ErrorMessage, useFormik } from "formik";
 import * as Yup from "yup";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { getCategories } from "@/services/categories.service";
 import { CATEGORYESHOW } from "@/types/CategoryEdit";
 import { getAssistants } from "@/services/assistants.service";
@@ -323,7 +323,6 @@ const ServiceSingleNew = () => {
               </div>
             </Form>
           </FormikProvider>
-          <ToastContainer />
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@
 import React from "react";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { CATEGORY } from "@/types/Category";
 import { categories } from "@/services/categories.service";
@@ -71,7 +71,6 @@ const CategoryNew = () => {
               </Form>
             )}
           </Formik>
-          <ToastContainer />
         </div>
       </div>
     </div>

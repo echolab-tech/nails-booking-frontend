@@ -10,7 +10,7 @@ import { AssistantEditForm } from "@/types/AssistantEditFrom";
 import { TEAM } from "@/types/team";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { CiSearch } from "react-icons/ci";
 
 import "react-toastify/dist/ReactToastify.css";
@@ -269,7 +269,6 @@ const TeamList = () => {
           </tbody>
         </table>
       </div>
-      <ToastContainer />
       <PaginationCustom
         currentPage={paginationData.current_page}
         totalPages={paginationData.total_pages}

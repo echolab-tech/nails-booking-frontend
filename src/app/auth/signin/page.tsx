@@ -9,7 +9,7 @@ import * as Yup from "yup";
 import { login } from "@/services/login.service";
 import { useRouter } from "next/navigation";
 import { LoginType } from "@/types/login";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const SigninSchema = Yup.object().shape({
@@ -209,7 +209,6 @@ const SignIn: React.FC = () => {
                   </Form>
                 )}
               </Formik>
-              <ToastContainer />
             </div>
           </div>
         </div>

@@ -14,7 +14,7 @@ import {
 } from "@/services/customer.service";
 import { FileInput, Label } from "flowbite-react";
 import { format, parseISO } from "date-fns";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { CustomerEditForm } from "@/types/customerEditForm";
 import { useParams } from "next/navigation";
@@ -400,7 +400,6 @@ const CustomeEditForm = () => {
               </Form>
             )}
           </Formik>
-          <ToastContainer />
         </div>
       </div>
     </DefaultLayout>

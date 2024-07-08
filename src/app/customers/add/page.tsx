@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import { customers, getCountry, getStatus } from "@/services/customer.service";
 import { FileInput } from "flowbite-react";
 import { parseISO } from "date-fns";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import Select from "react-tailwindcss-select";
 import SelectStatus from "@/components/Customer/SelectStatus";
 
@@ -359,7 +359,6 @@ const CustomeNewForm = () => {
               </Form>
             )}
           </Formik>
-          <ToastContainer />
         </div>
       </div>
     </DefaultLayout>
