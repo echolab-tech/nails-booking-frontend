@@ -11,6 +11,10 @@ export type EventType = {
 export type BookingFormType = {
   customer: CustomerType | null;
   services: Array<serviceSelectType> | [];
+  tips: Array<tipsType> | [];
+  payment_method: string | null;
+  totalFee: number;
+  totalTime: number;
 };
 
 type serviceSelectType = {
@@ -25,4 +29,10 @@ type serviceSelectType = {
     id: string;
     name: string;
   };
+};
+
+type tipsType = {
+  bookingId: string | null;
+  assistantId: string;
+  fee: number;
 };
