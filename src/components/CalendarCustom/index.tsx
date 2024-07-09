@@ -4,6 +4,7 @@ import FullCalendar from "@fullcalendar/react";
 import { LuCalendar } from "react-icons/lu";
 import { LuCalendarX2 } from "react-icons/lu";
 import { BiTransfer } from "react-icons/bi";
+import { FaArrowRight } from "react-icons/fa6";
 import { AiOutlineUsergroupAdd } from "react-icons/ai";
 import resourceTimeGridPlugin from "@fullcalendar/resource-timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -32,6 +33,8 @@ import {
   updateAppointment,
 } from "@/services/appointment.service";
 import { toast } from "react-toastify";
+import TipButtonGrid from "../TipButtonGrid";
+import PaymentButtonGrid from "../PaymentButtonGrid";
 
 interface SearchServiceOptionValues {
   name_service_option: string;
@@ -52,6 +55,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [customerData, setCustomerData] = useState<CustomerType[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<boolean>(false);
   const [isSubmit, setIsSubmit] = useState<boolean>(false);
+  const [openTips, setOpenTips] = useState<boolean>(false);
+  const [isSelectPayment, setIsSelectPayment] = useState<boolean>(false);
+  const [selectTips, setSelectTips] = useState<string>("No Tips");
+  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [searchServiceOptionValues, setSearchServiceOptionValues] =
     useState<SearchServiceOptionValues>({
       name_service_option: "",
@@ -128,6 +135,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
         ...formik.values,
         customer: result?.data?.data?.customer,
         services: result?.data?.data?.bookingDetails,
+        totalFee: Number(result?.data?.data?.total_fee),
+        totalTime: result?.data?.data?.total_time,
       });
       setSelectedCustomer(true);
     });
@@ -228,12 +237,27 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setIsShowSelected(true);
   };
 
+  const onCloseTips = () => {
+    setOpenTips(false);
+  };
+
+  const onCloseSelectService = () => {
+    setIsSelectService(false);
+  };
+
+  const handleChangTips = (label: string) => {
+    setSelectTips(label);
+  };
+
+  const handleChangeMethod = (method: string) => {
+    setPaymentMethod(method);
+  };
+
   const handleDrop = (info: any) => {
     console.log(info.event);
   };
 
   const handleShowService = () => {
-    setIsShowSelected(false);
     setIsSelectService(true);
   };
 
@@ -248,19 +272,19 @@ const FullCalenDarCustom: React.FC<any> = () => {
       const { serviceOptionId, title, price, time, assistant } =
         result.data.data;
 
-      // const existingOption = formik.values.services.find(
-      //   (option) => option.serviceOptionId === serviceOptionId,
-      // );
+      const existingOption = formik.values.services.find(
+        (option) => option.serviceOptionId === serviceOptionId,
+      );
 
-      // // Nếu dịch vụ đã tồn tại, không thêm lại
-      // if (existingOption) {
-      //   setIsShowSelected(true);
-      //   setIsSelectService(false);
-      //   toast.warning(
-      //     "Select service already exists, please select another service",
-      //   );
-      //   return;
-      // }
+      // Nếu dịch vụ đã tồn tại, không thêm lại
+      if (existingOption) {
+        setIsShowSelected(true);
+        setIsSelectService(false);
+        toast.warning(
+          "Select service already exists, please select another service",
+        );
+        return;
+      }
 
       const timeZone = "Asia/Ho_Chi_Minh";
 
@@ -296,20 +320,56 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
       // Cập nhật danh sách dịch vụ trong formik
       const updatedServices = [...formik.values.services, newService];
+      // Tính tổng thời gian và giá
+      const { totalTime, totalFee } = calculateTotals(updatedServices);
+      // update value services
       formik.setFieldValue("services", updatedServices);
-
-      setIsShowSelected(true);
+      // update value totalTime
+      formik.setFieldValue("totalTime", totalTime);
+      // update value totalFree
+      formik.setFieldValue("totalFee", totalFee);
       setIsSelectService(false);
     } catch (error) {
       console.error("Error fetching service option details:", error);
     }
   };
 
+  // Hàm tính tổng thời gian và giá
+  const calculateTotals = (services: any[]) => {
+    let totalTime = 0;
+    let totalFee = 0;
+
+    services.forEach((service) => {
+      totalTime += Number(service.time);
+      totalFee += Number(service.price);
+    });
+
+    return { totalTime, totalFee };
+  };
+
+  // Hàm quy đổi phút ra giờ và phút
+  const formatMinutesToHoursAndMinutes = (totalMinutes: number) => {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${hours}h${minutes > 0 ? ` ${minutes}min` : ""}`;
+  };
+
+  // Hàm định dạng giá tiền thành dạng có hai chữ số thập phân
+  const formatPrice = (price: number) => {
+    return `$${price.toFixed(2)}`;
+  };
+
   const handleRemoveServiceOption = (id: string) => {
     const updatedServiceOptions = formik.values.services.filter(
-      (option) => option.id !== id,
+      (option) => option.serviceOptionId !== id,
     );
+    // Tính lại tổng thời gian và giá sau khi xóa
+    const { totalTime, totalFee } = calculateTotals(updatedServiceOptions);
+
+    // Cập nhật giá trị totalTime và totalFee trong formik
     formik.setFieldValue("services", updatedServiceOptions);
+    formik.setFieldValue("totalTime", totalTime);
+    formik.setFieldValue("totalFee", totalFee);
   };
 
   const handleEditService = (id: string) => {};
@@ -343,6 +403,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
     initialValues: {
       customer: null,
       services: [],
+      tips: [],
+      payment_method: null,
+      totalFee: 0,
+      totalTime: 0,
     },
     onSubmit: async (values) => {
       setIsSubmit(true);
@@ -498,7 +562,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
           <FormikProvider value={formik}>
             <Form>
               <div className="flex h-screen">
-                <div className="w-[40%] overflow-auto">
+                <div className="w-[40%] overflow-auto border-r border-stroke p-6.5">
                   {/* start show info customer */}
                   {!selectedCustomer && (
                     <>
@@ -578,7 +642,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       {eventId && (
                         <select
                           id="status"
-                          className="bg-gray-50 border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 block w-[150px] w-full rounded-lg border p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                          className="bg-gray-50 border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 block w-[150px] rounded-lg border p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
                         >
                           {bookingStatus?.map((item, i) => (
                             <option value={item?.value} key={i}>
@@ -588,162 +652,338 @@ const FullCalenDarCustom: React.FC<any> = () => {
                         </select>
                       )}
                     </div>
-                    {isSelectService && (
-                      <div className="px-6.5">
-                        {serviceOptions?.map((item, index) => (
-                          <div key={index}>
-                            <h3 className="mt-3 font-medium text-black dark:text-white">
-                              {item?.category_name} ({item?.count})
-                            </h3>
-                            <div className="space-y-6">
-                              {item?.service_options.length > 0 &&
-                                item?.service_options.map(
-                                  (option: any, index: number) => (
-                                    <button
-                                      type="button"
-                                      className="service relative mt-3 w-full text-left"
-                                      key={index}
-                                      onClick={() =>
-                                        handleServiceOptionSelect(option?.id)
-                                      }
-                                    >
-                                      <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
-                                      <div className="flex flex-1 px-4 py-2">
-                                        <div className="w-full xl:w-3/4">
-                                          <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                            {option?.title}
-                                          </label>
-                                          <div className="flex items-center">
-                                            <span>{option?.duration}min</span>
-                                            <span className="ml-5">
-                                              {/* {option.assistant.name} */}
-                                            </span>
-                                          </div>
-                                        </div>
-                                        <div className="w-full xl:w-1/4">
-                                          <label className="mb-3 block flex justify-end text-sm font-medium text-black dark:text-white">
-                                            ${option?.price}
-                                          </label>
-                                        </div>
-                                      </div>
-                                    </button>
-                                  ),
-                                )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {isShowSelected && (
-                      <>
-                        <div className="px-6.5">
-                          <h3 className="font-medium text-black dark:text-white">
-                            Services
-                          </h3>
-                          {formik.values.services.length > 0 ? (
-                            formik.values.services.map(
-                              (detail: any, index: number) => (
-                                <div
-                                  className="service relative mt-3 w-full"
-                                  key={index}
-                                >
-                                  <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
-                                  <div className="flex flex-1 px-6.5 py-4">
-                                    <div className="w-full xl:w-3/4">
-                                      <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                        {detail?.title}
-                                      </label>
-                                      <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                        {detail?.name}
-                                      </label>
-                                      <div className="flex items-center">
-                                        <span>
-                                          {formatHoursMinute(detail?.start)}
-                                        </span>
-                                        <span className="m-1">・</span>
-                                        <span>
-                                          {detail?.time}
-                                          min
-                                        </span>
-                                        <span className="m-1">・</span>
-                                        <span>{detail?.assistant?.name}</span>
-                                      </div>
-                                    </div>
-                                    <div className="w-full xl:w-1/4">
-                                      <label className="mb-3 ml-3 block flex justify-end text-sm font-medium text-black dark:text-white">
-                                        ${detail.price}
-                                      </label>
-                                      <div className="flex justify-end space-x-3.5">
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handleEditService(detail?.id)
-                                          }
-                                          className="hover:text-primary"
-                                        >
-                                          <FaRegPenToSquare
-                                            size={25}
-                                            className="text-black"
-                                          />
-                                        </button>
-                                        <button
-                                          className="hover:text-primary"
-                                          onClick={() =>
-                                            handleRemoveServiceOption(detail.id)
-                                          }
-                                        >
-                                          <BsTrash
-                                            size={25}
-                                            className="text-black"
-                                          />
-                                        </button>
-                                      </div>
-                                    </div>
+                    <div className="px-6.5">
+                      <h3 className="font-medium text-black dark:text-white">
+                        Services
+                      </h3>
+                      {formik.values.services.length > 0 ? (
+                        formik.values.services.map(
+                          (detail: any, index: number) => (
+                            <div
+                              className="service relative mt-3 w-full"
+                              key={index}
+                            >
+                              <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
+                              <div className="flex flex-1 px-6.5 py-4">
+                                <div className="w-full xl:w-3/4">
+                                  <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                    {detail?.title}
+                                  </label>
+                                  <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                    {detail?.name}
+                                  </label>
+                                  <div className="flex items-center">
+                                    <span>
+                                      {formatHoursMinute(detail?.start)}
+                                    </span>
+                                    <span className="m-1">・</span>
+                                    <span>
+                                      {detail?.time}
+                                      min
+                                    </span>
+                                    <span className="m-1">・</span>
+                                    <span>{detail?.assistant?.name}</span>
                                   </div>
                                 </div>
-                              ),
-                            )
-                          ) : (
-                            <div className="flex min-h-[200px] flex-col items-center">
-                              <GoInbox size={50} />
-                              <p>Add a service to save the appointment</p>
+                                <div className="w-full xl:w-1/4">
+                                  <label className="mb-3 ml-3 block flex justify-end text-sm font-medium text-black dark:text-white">
+                                    ${detail.price}
+                                  </label>
+                                  <div className="flex justify-end space-x-3.5">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleEditService(detail?.id)
+                                      }
+                                      className="hover:text-primary"
+                                    >
+                                      <FaRegPenToSquare
+                                        size={25}
+                                        className="text-black"
+                                      />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="hover:text-primary"
+                                      onClick={() =>
+                                        handleRemoveServiceOption(
+                                          detail.serviceOptionId,
+                                        )
+                                      }
+                                    >
+                                      <BsTrash
+                                        size={25}
+                                        className="text-black"
+                                      />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
-                          )}
+                          ),
+                        )
+                      ) : (
+                        <div className="flex min-h-[200px] flex-col items-center">
+                          <GoInbox size={50} />
+                          <p>Add a service to save the appointment</p>
                         </div>
-                        <div className="flex justify-center px-6.5 py-4">
-                          <button
-                            onClick={handleShowService}
-                            type="button"
-                            className="border-gray-300 hover:bg-gray-100 focus:ring-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 mb-2 me-2 rounded-full border bg-white px-5 py-2.5 text-sm font-medium text-gray-900 focus:outline-none focus:ring-4 dark:text-white"
-                          >
-                            Add Service
-                          </button>
-                        </div>
-                      </>
-                    )}
+                      )}
+                    </div>
+                    <div className="flex justify-center px-6.5 py-4">
+                      <button
+                        onClick={handleShowService}
+                        type="button"
+                        className="border-gray-300 hover:bg-gray-100 focus:ring-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 mb-2 me-2 rounded-full border bg-white px-5 py-2.5 text-sm font-medium text-gray-900 focus:outline-none focus:ring-4 dark:text-white"
+                      >
+                        Add Service
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2 px-6.5">
-                    <button
-                      disabled={isSubmit}
-                      type="submit"
-                      className="border-gray-300 inline-flex w-1/2 items-center justify-center rounded-md border bg-transparent px-10 py-2 text-center font-medium text-black hover:bg-opacity-90 lg:px-8 xl:px-10"
-                    >
-                      {isSubmit && <Spinner />}
-                      Checkout
-                    </button>
-                    <button
-                      disabled={isSubmit}
-                      type="submit"
-                      className="inline-flex w-1/2 items-center justify-center rounded-md bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
-                    >
-                      {isSubmit && <Spinner />}
-                      Save
-                    </button>
+                  <div className="flex flex-col px-6.5">
+                    <div className="flex justify-between">
+                      <h3 className="font-2xl text-lg font-bold text-black">
+                        Total
+                      </h3>
+                      <div className="flex gap-2">
+                        <span className="text-lg font-bold text-black">
+                          {formatPrice(formik.values.totalFee)}
+                        </span>
+                        <span className="text-md">
+                          {formatMinutesToHoursAndMinutes(
+                            formik.values.totalTime,
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        disabled={isSubmit}
+                        type="button"
+                        onClick={() => setOpenTips(true)}
+                        className="border-gray-300 inline-flex w-1/2 items-center justify-center rounded-md border bg-transparent px-10 py-2 text-center font-medium text-black hover:bg-opacity-90 lg:px-8 xl:px-10"
+                      >
+                        {isSubmit && <Spinner />}
+                        Checkout
+                      </button>
+                      <button
+                        disabled={isSubmit}
+                        type="submit"
+                        className="inline-flex w-1/2 items-center justify-center rounded-md bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                      >
+                        {isSubmit && <Spinner />}
+                        Save
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </Form>
           </FormikProvider>
+        </Drawer.Items>
+      </Drawer>
+      {/* start draw select service  */}
+      <Drawer
+        className="w-[30%]"
+        open={isSelectService}
+        onClose={onCloseSelectService}
+        position="right"
+        backdrop={false}
+      >
+        <Drawer.Header titleIcon={() => <></>} closeIcon={FaArrowRight} />
+        <Drawer.Items>
+          {isSelectService && (
+            <div className="px-6.5">
+              {serviceOptions?.map((item, index) => (
+                <div key={index}>
+                  <h3 className="mt-3 font-medium text-black dark:text-white">
+                    {item?.category_name} ({item?.count})
+                  </h3>
+                  <div className="space-y-6">
+                    {item?.service_options.length > 0 &&
+                      item?.service_options.map(
+                        (option: any, index: number) => (
+                          <button
+                            type="button"
+                            className="service relative mt-3 w-full text-left"
+                            key={index}
+                            onClick={() =>
+                              handleServiceOptionSelect(option?.id)
+                            }
+                          >
+                            <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
+                            <div className="flex flex-1 px-4 py-2">
+                              <div className="w-full xl:w-3/4">
+                                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                  {option?.title}
+                                </label>
+                                <div className="flex items-center">
+                                  <span>{option?.duration}min</span>
+                                  <span className="ml-5">
+                                    {/* {option.assistant.name} */}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="w-full xl:w-1/4">
+                                <label className="mb-3 block flex justify-end text-sm font-medium text-black dark:text-white">
+                                  ${option?.price}
+                                </label>
+                              </div>
+                            </div>
+                          </button>
+                        ),
+                      )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Drawer.Items>
+      </Drawer>
+      {/* start draw tips */}
+      <Drawer
+        className="w-[70%] shadow-2xl"
+        open={openTips}
+        onClose={onCloseTips}
+        position="right"
+        backdrop={false}
+      >
+        <Drawer.Header titleIcon={() => <></>} />
+        <Drawer.Items>
+          <div className="flex h-screen">
+            <div className="w-[60%] overflow-auto border-r border-stroke p-6.5">
+              <h3 className="mb-2 text-2xl font-bold text-black">
+                {isSelectPayment ? "Select Payment" : "Select tip"}
+              </h3>
+              {isSelectPayment ? (
+                <PaymentButtonGrid
+                  value={paymentMethod}
+                  onChange={(method) => handleChangeMethod(method)}
+                />
+              ) : (
+                <TipButtonGrid
+                  value={selectTips}
+                  onChange={(label) => handleChangTips(label)}
+                />
+              )}
+            </div>
+            <div className="flex w-[40%] flex-col justify-between">
+              <div className="p-6.5">
+                <div className="flex flex-col">
+                  <h3 className="text-center font-medium">
+                    {formik.values?.customer?.name}
+                  </h3>
+                  <p className="mb-4">{formik.values?.customer?.email}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleRemoveCustomer}
+                      type="button"
+                      className="mb-2 inline-flex w-full items-center justify-center rounded-md border border-red bg-transparent py-2 font-medium text-black text-red hover:bg-opacity-90 "
+                    >
+                      <BiTransfer size={25} className="mr-2" />
+                      Remove customer
+                    </button>
+                    <button
+                      type="button"
+                      className="mb-2 inline-flex w-full items-center justify-center rounded-md border border-black bg-transparent py-2 font-medium text-black text-black hover:bg-opacity-90 "
+                    >
+                      View profile
+                    </button>
+                  </div>
+                </div>
+                {formik.values.services.length > 0 &&
+                  formik.values.services.map((detail: any, index: number) => (
+                    <div className="service relative mt-3 w-full" key={index}>
+                      <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
+                      <div className="flex flex-1 px-6.5 py-4">
+                        <div className="w-full xl:w-3/4">
+                          <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                            {detail?.title}
+                          </label>
+                          <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                            {detail?.name}
+                          </label>
+                          <div className="flex items-center">
+                            <span>{formatHoursMinute(detail?.start)}</span>
+                            <span className="m-1">・</span>
+                            <span>
+                              {detail?.time}
+                              min
+                            </span>
+                            <span className="m-1">・</span>
+                            <span>{detail?.assistant?.name}</span>
+                          </div>
+                        </div>
+                        <div className="w-full xl:w-1/4">
+                          <label className="mb-3 ml-3 block flex justify-end text-sm font-medium text-black dark:text-white">
+                            ${detail.price}
+                          </label>
+                          <div className="flex justify-end space-x-3.5">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleEditService(detail?.serviceOptionId)
+                              }
+                              className="hover:text-primary"
+                            >
+                              <FaRegPenToSquare
+                                size={25}
+                                className="text-black"
+                              />
+                            </button>
+                            <button
+                              className="hover:text-primary"
+                              onClick={() =>
+                                handleRemoveServiceOption(
+                                  detail.serviceOptionId,
+                                )
+                              }
+                            >
+                              <BsTrash size={25} className="text-black" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+              <div className="border-t border-stroke p-6.5">
+                <div className="flex justify-between">
+                  <h3 className="font-2xl text-lg font-bold text-black">
+                    Total
+                  </h3>
+                  <div className="flex gap-2">
+                    <span className="text-lg font-bold text-black">
+                      {formatPrice(formik.values.totalFee)}
+                    </span>
+                    <span className="text-md">
+                      {formatMinutesToHoursAndMinutes(formik.values.totalTime)}
+                    </span>
+                  </div>
+                </div>
+                {!isSelectPayment ? (
+                  <button
+                    disabled={isSubmit}
+                    type="button"
+                    onClick={() => setIsSelectPayment(true)}
+                    className="border-gray-300 inline-flex w-full items-center justify-center rounded-md border bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                  >
+                    {isSubmit && <Spinner />}
+                    Continue to payment
+                  </button>
+                ) : (
+                  <button
+                    disabled={isSubmit}
+                    type="button"
+                    onClick={() => setIsSelectPayment(true)}
+                    className="border-gray-300 inline-flex w-full items-center justify-center rounded-md border bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                  >
+                    {isSubmit && <Spinner />}
+                    Pay now
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </Drawer.Items>
       </Drawer>
     </>
