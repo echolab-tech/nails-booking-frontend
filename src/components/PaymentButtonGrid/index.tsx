@@ -32,6 +32,7 @@ const PaymentButtonGrid: React.FC<PaymentButtonGridProps> = ({
     <div className="grid grid-cols-3 gap-4">
       {paymentMethods.map(({ method, icon }) => (
         <PaymentButton
+          key={method}
           method={method}
           icon={icon}
           isActive={activeButton === method}
