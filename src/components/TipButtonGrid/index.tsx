@@ -2,21 +2,28 @@ import React, { useState } from "react";
 import TipButton from "../TipButton";
 
 interface TipButtonGridProps {
-  onChange: (label: string) => void;
+  onChange: (value: number | undefined, label: string) => void;
   value: string;
+  totalAmount: number;
 }
-const TipButtonGrid: React.FC<TipButtonGridProps> = ({ onChange, value }) => {
+const TipButtonGrid: React.FC<TipButtonGridProps> = ({
+  onChange,
+  value,
+  totalAmount,
+}) => {
   const [activeButton, setActiveButton] = useState<string | null>(value);
 
   const handleButtonClick = (label: string) => {
     setActiveButton(label);
-    onChange(label);
+    onChange(calculateTip(label), label);
   };
 
-  const totalAmount = 100;
   const calculateTip = (label: string): number | undefined => {
-    if (label === "No Tips" || label === "Custom") {
+    if (label === "No Tips") {
       return undefined;
+    }
+    if (label === "Custom") {
+      return 0;
     }
     const percentage = parseInt(label);
     return (totalAmount * percentage) / 100;
