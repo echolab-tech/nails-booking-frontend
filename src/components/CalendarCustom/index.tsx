@@ -11,7 +11,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import scrollGridPlugin from "@fullcalendar/scrollgrid";
 import bootstrap5Plugin from "@fullcalendar/bootstrap5";
 import { getAllAssistants } from "@/services/assistants.service";
-import { ResourceType } from "@/types/assistant";
+import { Assistant, ResourceType } from "@/types/assistant";
 import { BookingFormType, EventType } from "@/types/event";
 import { Drawer, Modal, Spinner } from "flowbite-react";
 import { FaRegPenToSquare } from "react-icons/fa6";
@@ -43,11 +43,11 @@ interface SearchServiceOptionValues {
 const FullCalenDarCustom: React.FC<any> = () => {
   const [resources, setResources] = useState<ResourceType[]>([]);
   const [assistantId, setAssistantId] = useState<string>("");
+  const [assistant, setAssistant] = useState<Assistant>();
   const [startTime, setStartTime] = useState<string>("");
   const [openSelect, setOpenSelect] = useState<boolean>(false);
   const [openBooking, setOpenBooking] = useState<boolean>(false);
   const [isSelectService, setIsSelectService] = useState<boolean>(false);
-  const [isShowSelected, setIsShowSelected] = useState<boolean>(true);
   const [events, setEvents] = useState<EventType[]>([]);
   const [lastEventId, setLastEventId] = useState<string | null>(null);
   const [eventId, setEventId] = useState<string | null>(null);
@@ -58,6 +58,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [openTips, setOpenTips] = useState<boolean>(false);
   const [isSelectPayment, setIsSelectPayment] = useState<boolean>(false);
   const [selectTips, setSelectTips] = useState<string>("No Tips");
+  const [originalTotalFee, setOriginalTotalFee] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [searchServiceOptionValues, setSearchServiceOptionValues] =
     useState<SearchServiceOptionValues>({
@@ -129,8 +130,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const handleEventClick = (arg: any) => {
     setStartTime(arg.event.startStr);
     getAppointmentById(arg?.event?.extendedProps?.booking_id).then((result) => {
-      console.log(result?.data?.data?.bookingDetails);
-
       formik.setValues({
         ...formik.values,
         customer: result?.data?.data?.customer,
@@ -139,13 +138,15 @@ const FullCalenDarCustom: React.FC<any> = () => {
         totalTime: result?.data?.data?.total_time,
       });
       setSelectedCustomer(true);
+      const { totalFee } = calculateTotals(result?.data?.data?.bookingDetails);
+      setOriginalTotalFee(totalFee);
     });
 
     setAssistantId(arg?.event?.extendedProps?.assistant?.id);
+    setAssistant(arg?.event?.extendedProps?.assistant);
     setEventId(arg?.event?.extendedProps?.booking_id);
     setOpenBooking(true);
     setIsSelectService(false);
-    setIsShowSelected(true);
   };
 
   const handleSelectDate = (info: any) => {
@@ -158,6 +159,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     };
     setLastEventId(newEvent.id);
     setAssistantId(info.resource.id);
+    setAssistant(info.resource);
     setEvents((prevEvents) => [...prevEvents, newEvent]);
     setOpenSelect(true);
     setStartTime(info.startStr);
@@ -234,19 +236,34 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setSelectedCustomer(false);
     setOpenBooking(false);
     setIsSelectService(false);
-    setIsShowSelected(true);
   };
 
   const onCloseTips = () => {
     setOpenTips(false);
+    setSelectTips("No Tips");
+    formik.resetForm();
   };
 
   const onCloseSelectService = () => {
     setIsSelectService(false);
   };
 
-  const handleChangTips = (label: string) => {
+  const handleChangTips = (value: number | undefined, label: string) => {
     setSelectTips(label);
+    if (value !== undefined) {
+      formik.setFieldValue("totalFee", originalTotalFee + value);
+      formik.setFieldValue("tips", [
+        {
+          bookingId: eventId,
+          assistantId: assistantId,
+          fee: value,
+        },
+      ]);
+    } else {
+      const { totalFee } = calculateTotals(formik.values.services);
+      formik.setFieldValue("totalFee", totalFee);
+      formik.setFieldValue("tips", []);
+    }
   };
 
   const handleChangeMethod = (method: string) => {
@@ -278,7 +295,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
       // Nếu dịch vụ đã tồn tại, không thêm lại
       if (existingOption) {
-        setIsShowSelected(true);
         setIsSelectService(false);
         toast.warning(
           "Select service already exists, please select another service",
@@ -328,6 +344,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       formik.setFieldValue("totalTime", totalTime);
       // update value totalFree
       formik.setFieldValue("totalFee", totalFee);
+      setOriginalTotalFee(totalFee);
       setIsSelectService(false);
     } catch (error) {
       console.error("Error fetching service option details:", error);
@@ -366,6 +383,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     // Tính lại tổng thời gian và giá sau khi xóa
     const { totalTime, totalFee } = calculateTotals(updatedServiceOptions);
 
+    setOriginalTotalFee(totalFee);
     // Cập nhật giá trị totalTime và totalFee trong formik
     formik.setFieldValue("services", updatedServiceOptions);
     formik.setFieldValue("totalTime", totalTime);
@@ -399,6 +417,42 @@ const FullCalenDarCustom: React.FC<any> = () => {
     return () => clearTimeout(delayDebounceFn);
   };
 
+  const handleCheckout = async () => {
+    if (eventId === null) {
+      setIsSubmit(true);
+      const { data } = await appointmentsPost(formik.values);
+      handleSuccess("Appointment created");
+      setEventId(data?.data?.id);
+      getAppointmentById(data?.data?.id).then((result) => {
+        formik.setValues({
+          ...formik.values,
+          customer: result?.data?.data?.customer,
+          services: result?.data?.data?.bookingDetails,
+          totalFee: Number(result?.data?.data?.total_fee),
+          totalTime: result?.data?.data?.total_time,
+        });
+        setSelectedCustomer(true);
+      });
+    } else {
+      setOpenBooking(false);
+    }
+    setOpenTips(true);
+  };
+
+  const handleSuccess = (message: string) => {
+    setIsSubmit(false);
+    setOpenBooking(false);
+    fetchAppointments();
+    setSelectedCustomer(false);
+    formik.resetForm();
+    toast.success(message);
+  };
+
+  const handleError = (error: any) => {
+    setIsSubmit(false);
+    toast.error(error);
+  };
+
   const formik = useFormik<BookingFormType>({
     initialValues: {
       customer: null,
@@ -410,20 +464,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
     },
     onSubmit: async (values) => {
       setIsSubmit(true);
-      const handleSuccess = (message: string) => {
-        setIsSubmit(false);
-        setOpenBooking(false);
-        fetchAppointments();
-        setSelectedCustomer(false);
-        formik.resetForm();
-        toast.success(message);
-      };
-
-      const handleError = (error: any) => {
-        setIsSubmit(false);
-        toast.error(error);
-      };
-
       try {
         if (eventId) {
           await updateAppointment(eventId, values);
@@ -759,7 +799,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       <button
                         disabled={isSubmit}
                         type="button"
-                        onClick={() => setOpenTips(true)}
+                        onClick={handleCheckout}
                         className="border-gray-300 inline-flex w-1/2 items-center justify-center rounded-md border bg-transparent px-10 py-2 text-center font-medium text-black hover:bg-opacity-90 lg:px-8 xl:px-10"
                       >
                         {isSubmit && <Spinner />}
@@ -861,8 +901,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
                 />
               ) : (
                 <TipButtonGrid
+                  totalAmount={originalTotalFee}
                   value={selectTips}
-                  onChange={(label) => handleChangTips(label)}
+                  onChange={(value, label) => handleChangTips(value, label)}
                 />
               )}
             </div>
@@ -947,6 +988,18 @@ const FullCalenDarCustom: React.FC<any> = () => {
                   ))}
               </div>
               <div className="border-t border-stroke p-6.5">
+                {/* show info tips */}
+                {formik.values.tips.length > 0 && (
+                  <div className="flex justify-between">
+                    <h3 className="font-xl text-lg text-black">
+                      Tips for {assistant?.name}
+                    </h3>
+                    <span className="text-lg font-bold text-black">
+                      {formatPrice(formik.values.tips[0].fee)}
+                    </span>
+                  </div>
+                )}
+                {/* show total fee */}
                 <div className="flex justify-between">
                   <h3 className="font-2xl text-lg font-bold text-black">
                     Total
@@ -964,7 +1017,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                   <button
                     disabled={isSubmit}
                     type="button"
-                    onClick={() => setIsSelectPayment(true)}
+                    onClick={() => console.log(formik.values)}
                     className="border-gray-300 inline-flex w-full items-center justify-center rounded-md border bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
                   >
                     {isSubmit && <Spinner />}
