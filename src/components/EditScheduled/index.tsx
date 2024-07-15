@@ -3,7 +3,13 @@ import { getAssistantShow } from "@/services/assistants.service";
 import { ScheduledOfUser } from "@/types/Schedule";
 import Image from "next/image";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import Breadcrumb from "../Breadcrumbs/Breadcrumb";
 import { createSchedule } from "@/services/schedules.service";
 import { toast } from "react-toastify";
@@ -46,6 +52,7 @@ export default function EditSchduled() {
           assistant_id?: number;
           date: string;
           to: string;
+          isDelete?: boolean;
         }[] = [];
         dataAssistant.data.schedule.map((data: any) => {
           if (data.weekdays === day) {
@@ -54,12 +61,14 @@ export default function EditSchduled() {
               from: data.start_time,
               to: data.end_time,
               date: data.date,
+              isDelete: false,
             });
           }
         });
 
         scheduleOfUser.push({
           days: day,
+          isChecked: arrTime.length > 0,
           time: arrTime,
         });
       });
@@ -83,20 +92,23 @@ export default function EditSchduled() {
             ...item,
             time: [
               ...item.time,
-              item.time.length == 0
-                ? {
-                    from: "8:00",
-                    assistant_id: dataAssistant.data.id,
-                    to: "18:00",
-                    weekdays: item.days,
-                  }
-                : {
-                    from: "8:00",
-                    to: "18:00",
-                    date: item.time[0].date,
-                    assistant_id: dataAssistant.data.id,
-                    weekdays: item.days,
-                  },
+              item.time.length == 0 ? {
+                from: '8:00',
+                assistant_id: dataAssistant.data.id,
+                to: '18:00',
+                weekdays: item.days,
+                isDelete: false,
+                isNewInput: true,
+              }: {
+                from: "8:00",
+                to: "18:00",
+                date: item.time[0].date,
+                assistant_id: dataAssistant.data.id,
+                weekdays: item.days,
+                isDelete: false,
+                isNewInput: true,
+              },
+             
             ],
           }
         : item,
@@ -105,16 +117,28 @@ export default function EditSchduled() {
   };
 
   const deleteHandler = (key: number, day: string, id?: string) => {
-    const newInput = inputs.map((item) =>
-      item.days === day
-        ? {
-            ...item,
-            time: item.time.filter((time, index) =>
-              id ? time.id != id : index != key,
-            ),
+    const newInput = inputs.map((item) => {
+      if (item.days === day) {
+        const newTime = item.time.map((time, index) => {
+          if (key === index) {
+            return {
+              ...time,
+              isDelete: !time.isDelete,
+            };
           }
-        : item,
-    );
+
+          return time;
+        });
+        console.log(newTime);
+
+        return {
+          ...item,
+          time: newTime,
+        };
+      }
+
+      return item;
+    });
 
     setInputs(newInput);
   };
@@ -144,6 +168,17 @@ export default function EditSchduled() {
 
     setInputs(newInput);
   };
+
+  const handleChangeDays = (e: any, index: number) => {
+    const newInputs = [...inputs];
+
+    newInputs[index].isChecked = e.target.checked;
+
+    setInputs(newInputs);
+  };
+
+  console.log(inputs);
+
   const inputHandler2 = (
     text: string,
     day: string,
@@ -177,26 +212,34 @@ export default function EditSchduled() {
       schedules: [],
     };
 
-    inputs.map((item) =>
-      item.time.map((time) =>
-        dataCreateSchedule.schedules.push(
-          time.id
-            ? {
-                id: time.id,
-                start_time: time.from,
-                date: time.date,
-                end_time: time.to,
-              }
-            : {
-                start_time: time.from,
-                assistant_id: dataAssistant.data.id,
-                date: time.date,
-                end_time: time.to,
-                weekdays: item.days,
-              },
-        ),
-      ),
-    );
+    inputs.map((item) => {
+      if (item.isChecked) {
+        item.time.map((time) => {
+          if (time.isNewInput && !time.isDelete) {
+            dataCreateSchedule.schedules.push(
+              {
+                  start_time: time.from,
+                  assistant_id: dataAssistant.data.id,
+                  date: time.date,
+                  end_time: time.to,
+                  weekdays: item.days
+                },
+            );
+          }
+          if(!time.isNewInput){
+            dataCreateSchedule.schedules.push( 
+              {
+                  id: time.id,
+                  start_time: time.from,
+                  date: time.date,
+                  end_time: time.to,
+                  isDelete: time.isDelete
+                }
+              )
+          }
+        });
+      }
+    });
 
     createSchedule(dataCreateSchedule)
       .then((data) => {
@@ -214,15 +257,17 @@ export default function EditSchduled() {
       />
 
       <div className="flex flex-col gap-10 ">
-        {inputs.map((data) => (
+        {inputs.map((data, idx) => (
           <div key={data.days} className="flex w-full items-start">
             <div className="flex w-[30%] items-center gap-8">
               <input
                 id="default-checkbox"
                 type="checkbox"
-                defaultChecked
+                defaultChecked={data.isChecked}
+                onChange={(e) => handleChangeDays(e, idx)}
                 className="bg-gray-100 border-gray-300 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 h-6 w-6 rounded text-blue-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
               />
+
               <label
                 htmlFor="default-checkbox"
                 className="text-lg font-semibold text-black"
@@ -233,7 +278,10 @@ export default function EditSchduled() {
             <div className="flex w-[70%] flex-col gap-4">
               <div className="flex flex-col gap-8">
                 {data.time.map((input, key) => (
-                  <div key={key} className="flex w-full items-center gap-4">
+                  <div
+                    key={key}
+                    className="flex w-full items-center gap-4"
+                  >
                     <select
                       className="w-[40%] rounded-xl border"
                       name="whatever"
@@ -274,56 +322,58 @@ export default function EditSchduled() {
                       <option value="23:00">23:00</option>
                     </select>
 
-                    <span className="text-xl font-semibold ">-</span>
-                    <select
-                      className="w-[40%] rounded-xl border"
-                      name="whatever"
-                      id="frm-whatever2"
-                      value={input.to}
-                      onChange={(text) =>
-                        inputHandler2(
-                          text.target.value,
-                          data.days,
-                          key,
-                          input.id,
-                        )
-                      }
-                    >
-                      <option value="0:00">0:00</option>
-                      <option value="1:00">1:00</option>
-                      <option value="2:00">2:00</option>
-                      <option value="3:00">3:00</option>
-                      <option value="4:00">4:00</option>
-                      <option value="5:00">5:00</option>
-                      <option value="6:00">6:00</option>
-                      <option value="7:00">7:00</option>
-                      <option value="8:00">8:00</option>
-                      <option value="9:00">9:00</option>
-                      <option value="10:00">10:00</option>
-                      <option value="11:00">11:00</option>
-                      <option value="12:00">12:00</option>
-                      <option value="13:00">13:00</option>
-                      <option value="14:00">14:00</option>
-                      <option value="15:00">15:00</option>
-                      <option value="16:00">16:00</option>
-                      <option value="17:00">17:00</option>
-                      <option value="18:00">18:00</option>
-                      <option value="19:00">19:00</option>
-                      <option value="20:00">20:00</option>
-                      <option value="21:00">21:00</option>
-                      <option value="22:00">22:00</option>
-                      <option value="23:00">23:00</option>
-                    </select>
+                        <span className="text-xl font-semibold ">-</span>
+                        <select
+                          className="w-[40%] rounded-xl border"
+                          name="whatever"
+                          id="frm-whatever2"
+                          value={input.to}
+                          onChange={(text) =>
+                            inputHandler2(
+                              text.target.value,
+                              data.days,
+                              key,
+                              input.id,
+                            )
+                          }
+                        >
+                          <option value="0:00">0:00</option>
+                          <option value="1:00">1:00</option>
+                          <option value="2:00">2:00</option>
+                          <option value="3:00">3:00</option>
+                          <option value="4:00">4:00</option>
+                          <option value="5:00">5:00</option>
+                          <option value="6:00">6:00</option>
+                          <option value="7:00">7:00</option>
+                          <option value="8:00">8:00</option>
+                          <option value="9:00">9:00</option>
+                          <option value="10:00">10:00</option>
+                          <option value="11:00">11:00</option>
+                          <option value="12:00">12:00</option>
+                          <option value="13:00">13:00</option>
+                          <option value="14:00">14:00</option>
+                          <option value="15:00">15:00</option>
+                          <option value="16:00">16:00</option>
+                          <option value="17:00">17:00</option>
+                          <option value="18:00">18:00</option>
+                          <option value="19:00">19:00</option>
+                          <option value="20:00">20:00</option>
+                          <option value="21:00">21:00</option>
+                          <option value="22:00">22:00</option>
+                          <option value="23:00">23:00</option>
+                        </select>
 
-                    <Image
-                      className="cursor-pointer"
-                      onClick={() => deleteHandler(key, data.days, input?.id)}
-                      src="/images/scheduled/trash.svg"
-                      alt="delete"
-                      width={20}
-                      height={20}
-                    />
-                  </div>
+                        <Image
+                          className="cursor-pointer"
+                          onClick={() =>
+                            deleteHandler(key, data.days, input?.id)
+                          }
+                          src="/images/scheduled/trash.svg"
+                          alt="delete"
+                          width={20}
+                          height={20}
+                        />
+                      </div>
                 ))}
               </div>
               <span
@@ -337,14 +387,14 @@ export default function EditSchduled() {
         ))}
       </div>
       <div className=" flex items-center justify-center rounded-b  p-6">
-        <button
+      <button
           onClick={() => router.back()}
           className="mb-1 mr-10 rounded bg-bodydark px-6 py-3 text-sm font-bold uppercase text-white outline-none transition-all duration-150 ease-linear focus:outline-none"
           type="button"
         >
           Cancel
         </button>
-
+        
         <button
           className="mb-1 ml-10 rounded bg-primary px-6 py-3 text-sm font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-lg focus:outline-none active:bg-primary"
           onClick={handleCreateSchedule}
