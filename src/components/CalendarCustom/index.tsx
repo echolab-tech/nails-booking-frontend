@@ -28,6 +28,7 @@ import {
 import { Form, FormikProvider, useFormik } from "formik";
 import {
   appointmentsPost,
+  checkoutAppointment,
   getAppointmentByDate,
   getAppointmentById,
   updateAppointment,
@@ -35,6 +36,7 @@ import {
 import { toast } from "react-toastify";
 import TipButtonGrid from "../TipButtonGrid";
 import PaymentButtonGrid from "../PaymentButtonGrid";
+import CashPaymentDialog from "../CashPaymentDialog";
 
 interface SearchServiceOptionValues {
   name_service_option: string;
@@ -51,6 +53,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [events, setEvents] = useState<EventType[]>([]);
   const [lastEventId, setLastEventId] = useState<string | null>(null);
   const [eventId, setEventId] = useState<string | null>(null);
+  const [eventStatus, setEventStatus] = useState<number | undefined>();
   const [serviceOptions, setServiceOptions] = useState<any[]>([]);
   const [customerData, setCustomerData] = useState<CustomerType[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<boolean>(false);
@@ -59,7 +62,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [isSelectPayment, setIsSelectPayment] = useState<boolean>(false);
   const [selectTips, setSelectTips] = useState<string>("No Tips");
   const [originalTotalFee, setOriginalTotalFee] = useState<number>(0);
-  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+  const [cashPaymentVisible, setCashPaymentVisible] = useState<boolean>(false);
   const [searchServiceOptionValues, setSearchServiceOptionValues] =
     useState<SearchServiceOptionValues>({
       name_service_option: "",
@@ -137,6 +140,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
         totalFee: Number(result?.data?.data?.total_fee),
         totalTime: result?.data?.data?.total_time,
       });
+      setEventStatus(result?.data?.data?.status);
       setSelectedCustomer(true);
       const { totalFee } = calculateTotals(result?.data?.data?.bookingDetails);
       setOriginalTotalFee(totalFee);
@@ -244,6 +248,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
     formik.resetForm();
   };
 
+  const handleConfirmTips = () => {
+    setIsSelectPayment(true);
+  };
+
   const onCloseSelectService = () => {
     setIsSelectService(false);
   };
@@ -267,7 +275,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleChangeMethod = (method: string) => {
-    setPaymentMethod(method);
+    if (method === "cash") {
+      setCashPaymentVisible(true);
+    }
+    formik.setFieldValue("paymentMethod", method);
   };
 
   const handleDrop = (info: any) => {
@@ -439,6 +450,23 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setOpenTips(true);
   };
 
+  const handleCloseCashPayment = () => {
+    setCashPaymentVisible(false);
+    formik.setFieldValue("paymentMethod", "");
+    formik.setFieldValue("payTotal", 0);
+  };
+
+  const handleSaveCashPayment = (amount: number) => {
+    formik.setFieldValue("payTotal", amount);
+    setCashPaymentVisible(false);
+  };
+
+  const handlePay = async () => {
+    const { data } = await checkoutAppointment(eventId, formik.values);
+    setOpenTips(false);
+    toast.success(data.message);
+    fetchAppointments();
+  };
   const handleSuccess = (message: string) => {
     setIsSubmit(false);
     setOpenBooking(false);
@@ -458,7 +486,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
       customer: null,
       services: [],
       tips: [],
-      payment_method: null,
+      paymentMethod: "",
+      payTotal: 0,
       totalFee: 0,
       totalTime: 0,
     },
@@ -769,15 +798,17 @@ const FullCalenDarCustom: React.FC<any> = () => {
                         </div>
                       )}
                     </div>
-                    <div className="flex justify-center px-6.5 py-4">
-                      <button
-                        onClick={handleShowService}
-                        type="button"
-                        className="border-gray-300 hover:bg-gray-100 focus:ring-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 mb-2 me-2 rounded-full border bg-white px-5 py-2.5 text-sm font-medium text-gray-900 focus:outline-none focus:ring-4 dark:text-white"
-                      >
-                        Add Service
-                      </button>
-                    </div>
+                    {eventStatus !== 5 && (
+                      <div className="flex justify-center px-6.5 py-4">
+                        <button
+                          onClick={handleShowService}
+                          type="button"
+                          className="border-gray-300 hover:bg-gray-100 focus:ring-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 mb-2 me-2 rounded-full border bg-white px-5 py-2.5 text-sm font-medium text-gray-900 focus:outline-none focus:ring-4 dark:text-white"
+                        >
+                          Add Service
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-col px-6.5">
                     <div className="flex justify-between">
@@ -796,23 +827,35 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button
-                        disabled={isSubmit}
-                        type="button"
-                        onClick={handleCheckout}
-                        className="border-gray-300 inline-flex w-1/2 items-center justify-center rounded-md border bg-transparent px-10 py-2 text-center font-medium text-black hover:bg-opacity-90 lg:px-8 xl:px-10"
-                      >
-                        {isSubmit && <Spinner />}
-                        Checkout
-                      </button>
-                      <button
-                        disabled={isSubmit}
-                        type="submit"
-                        className="inline-flex w-1/2 items-center justify-center rounded-md bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
-                      >
-                        {isSubmit && <Spinner />}
-                        Save
-                      </button>
+                      {eventStatus === 5 ? (
+                        <button
+                          type="button"
+                          className="border-gray-300 inline-flex w-full items-center justify-center rounded-md border bg-transparent px-10 py-2 text-center font-medium text-black hover:bg-opacity-90 lg:px-8 xl:px-10"
+                        >
+                          {isSubmit && <Spinner />}
+                          View Payment
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            disabled={isSubmit}
+                            type="button"
+                            onClick={handleCheckout}
+                            className="border-gray-300 inline-flex w-1/2 items-center justify-center rounded-md border bg-transparent px-10 py-2 text-center font-medium text-black hover:bg-opacity-90 lg:px-8 xl:px-10"
+                          >
+                            {isSubmit && <Spinner />}
+                            Checkout
+                          </button>
+                          <button
+                            disabled={isSubmit}
+                            type="submit"
+                            className="inline-flex w-1/2 items-center justify-center rounded-md bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                          >
+                            {isSubmit && <Spinner />}
+                            Save
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -881,7 +924,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       </Drawer>
       {/* start draw tips */}
       <Drawer
-        className="w-[70%] shadow-2xl"
+        className="w-[80%] shadow-2xl"
         open={openTips}
         onClose={onCloseTips}
         position="right"
@@ -896,7 +939,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
               </h3>
               {isSelectPayment ? (
                 <PaymentButtonGrid
-                  value={paymentMethod}
+                  value={formik.values.paymentMethod}
                   onChange={(method) => handleChangeMethod(method)}
                 />
               ) : (
@@ -1013,11 +1056,23 @@ const FullCalenDarCustom: React.FC<any> = () => {
                     </span>
                   </div>
                 </div>
+                {formik.values.paymentMethod !== "" && (
+                  <div className="flex justify-between">
+                    <h3 className="font-2xl text-lg font-bold text-black">
+                      {formik.values.paymentMethod}
+                    </h3>
+                    <div className="flex">
+                      <span className="text-lg font-bold text-black">
+                        {formatPrice(formik.values.payTotal)}
+                      </span>
+                    </div>
+                  </div>
+                )}
                 {!isSelectPayment ? (
                   <button
                     disabled={isSubmit}
                     type="button"
-                    onClick={() => console.log(formik.values)}
+                    onClick={handleConfirmTips}
                     className="border-gray-300 inline-flex w-full items-center justify-center rounded-md border bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
                   >
                     {isSubmit && <Spinner />}
@@ -1025,10 +1080,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
                   </button>
                 ) : (
                   <button
-                    disabled={isSubmit}
+                    disabled={isSubmit || formik.values.paymentMethod == ""}
                     type="button"
-                    onClick={() => setIsSelectPayment(true)}
-                    className="border-gray-300 inline-flex w-full items-center justify-center rounded-md border bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                    onClick={handlePay}
+                    className="border-gray-300 inline-flex w-full items-center justify-center rounded-md border bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 disabled:bg-gray lg:px-8 xl:px-10"
                   >
                     {isSubmit && <Spinner />}
                     Pay now
@@ -1039,6 +1094,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
           </div>
         </Drawer.Items>
       </Drawer>
+      {cashPaymentVisible && (
+        <CashPaymentDialog
+          isVisible={cashPaymentVisible}
+          onClose={handleCloseCashPayment}
+          onSave={(amount) => handleSaveCashPayment(amount)}
+          initialAmount={formik.values.totalFee}
+        />
+      )}
     </>
   );
 };
