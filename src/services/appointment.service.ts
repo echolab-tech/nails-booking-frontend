@@ -35,3 +35,10 @@ export const getListAppointment = async (
 ): Promise<any> => {
   return await http.get<any>(`/appointments?page=${page}`, { params: values });
 };
+
+export const checkoutAppointment = async (
+  id: string | null,
+  values: BookingFormType,
+): Promise<any> => {
+  return await http.post<any>(`/appointments/checkout/${id}`, values);
+};
