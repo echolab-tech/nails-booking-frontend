@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BsCashCoin } from "react-icons/bs";
 import { GoGift } from "react-icons/go";
 import { LuSplitSquareHorizontal } from "react-icons/lu";
@@ -15,6 +15,9 @@ const PaymentButtonGrid: React.FC<PaymentButtonGridProps> = ({
   value,
 }) => {
   const [activeButton, setActiveButton] = useState<string | null>(value);
+  useEffect(() => {
+    setActiveButton(value);
+  }, [value]);
 
   const handleButtonClick = (method: string) => {
     setActiveButton(method);
