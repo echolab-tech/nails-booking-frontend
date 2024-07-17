@@ -277,9 +277,10 @@ export default function EditSchduled() {
             </div>
             <div className="flex w-[70%] flex-col gap-4">
               <div className="flex flex-col gap-8">
-                {data.time.map((input, key) => (
-                  <div
-                    key={key}
+              
+               {data.time.map((input, key) => (
+                 <React.Fragment key={key}>
+                  {!input.isDelete &&  <div
                     className="flex w-full items-center gap-4"
                   >
                     <select
@@ -373,8 +374,9 @@ export default function EditSchduled() {
                           width={20}
                           height={20}
                         />
-                      </div>
-                ))}
+                      </div>}
+                 </React.Fragment>
+                ))}              
               </div>
               <span
                 className="text-blue2 cursor-pointer font-semibold"
