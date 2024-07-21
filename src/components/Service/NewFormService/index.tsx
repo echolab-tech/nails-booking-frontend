@@ -59,7 +59,7 @@ const ServiceSingleNew = () => {
   ];
 
   useEffect(() => {
-    fetchCategories(1);
+    fetchCategories();
     fetchAssistant(1);
     if (id) {
       getService(id).then((result) => {
@@ -76,9 +76,9 @@ const ServiceSingleNew = () => {
       console.error("Error fetching assistant:", error);
     }
   };
-  const fetchCategories = async (page: number) => {
+  const fetchCategories = async () => {
     try {
-      const response = await getCategories(page);
+      const response = await getCategories();
       setCategoryData(response.data.data);
     } catch (error) {
       console.error("Error fetching categories:", error);

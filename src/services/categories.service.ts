@@ -4,8 +4,8 @@ export const categories = async (values: CATEGORY): Promise<any> => {
   return await http.post<any>("/categories", values);
 };
 
-export const getCategories = async (page: number): Promise<any> => {
-  return await http.get<any>(`/categories?page=${page}`);
+export const getCategories = async (): Promise<any> => {
+  return await http.get<any>(`/categories?all=true`);
 };
 
 export const getCategoryShow = async (id: number): Promise<any> => {
