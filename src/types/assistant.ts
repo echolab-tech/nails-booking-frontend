@@ -14,4 +14,9 @@ export type Assistant = {
 export type ResourceType = {
   id: string;
   title: string;
+  businessHours: {
+    startTime: string;
+    endTime: string;
+    daysOfWeek: number[];
+  }[];
 };
