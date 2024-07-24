@@ -4,13 +4,14 @@ import FullCalendar from "@fullcalendar/react";
 import { LuCalendar } from "react-icons/lu";
 import { LuCalendarX2 } from "react-icons/lu";
 import { BiTransfer } from "react-icons/bi";
+import { FaArrowRight } from "react-icons/fa6";
 import { AiOutlineUsergroupAdd } from "react-icons/ai";
 import resourceTimeGridPlugin from "@fullcalendar/resource-timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import scrollGridPlugin from "@fullcalendar/scrollgrid";
 import bootstrap5Plugin from "@fullcalendar/bootstrap5";
 import { getAllAssistants } from "@/services/assistants.service";
-import { ResourceType } from "@/types/assistant";
+import { Assistant, ResourceType } from "@/types/assistant";
 import { BookingFormType, EventType } from "@/types/event";
 import { Drawer, Modal, Spinner } from "flowbite-react";
 import { FaRegPenToSquare } from "react-icons/fa6";
@@ -27,12 +28,17 @@ import {
 import { Form, FormikProvider, useFormik, Field } from "formik";
 import {
   appointmentsPost,
+  checkoutAppointment,
   getAppointmentByDate,
   getAppointmentById,
+  updateAppointment,
 } from "@/services/appointment.service";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import { BlockTimeType } from "@/types/BlockTime";
 import { addBlockedTime, getBlockType } from "@/services/blocktime.service";
+import TipButtonGrid from "../TipButtonGrid";
+import PaymentButtonGrid from "../PaymentButtonGrid";
+import CashPaymentDialog from "../CashPaymentDialog";
 
 const generateTimeOptions = () => {
   const timeOptions = [];
@@ -67,6 +73,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [resources, setResources] = useState<ResourceType[]>([]);
   const [assistantId, setAssistantId] = useState<string>("");
   const [dateTime, setDateTime] = useState<string>("");
+  const [assistant, setAssistant] = useState<Assistant>();
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
   const [blockType, setBlockType] = useState<
@@ -76,14 +83,19 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [openBooking, setOpenBooking] = useState<boolean>(false);
   const [openBlockTime, setOpenBlockTime] = useState<boolean>(false);
   const [isSelectService, setIsSelectService] = useState<boolean>(false);
-  const [isShowSelected, setIsShowSelected] = useState<boolean>(true);
   const [events, setEvents] = useState<EventType[]>([]);
   const [lastEventId, setLastEventId] = useState<string | null>(null);
-  const [eventId, setEventId] = useState<number | null>(null);
+  const [eventId, setEventId] = useState<string | null>(null);
+  const [eventStatus, setEventStatus] = useState<number | undefined>();
   const [serviceOptions, setServiceOptions] = useState<any[]>([]);
   const [customerData, setCustomerData] = useState<CustomerType[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<boolean>(false);
   const [isSubmit, setIsSubmit] = useState<boolean>(false);
+  const [openTips, setOpenTips] = useState<boolean>(false);
+  const [isSelectPayment, setIsSelectPayment] = useState<boolean>(false);
+  const [selectTips, setSelectTips] = useState<string>("No Tips");
+  const [originalTotalFee, setOriginalTotalFee] = useState<number>(0);
+  const [cashPaymentVisible, setCashPaymentVisible] = useState<boolean>(false);
   const [searchServiceOptionValues, setSearchServiceOptionValues] =
     useState<SearchServiceOptionValues>({
       name_service_option: "",
@@ -96,6 +108,28 @@ const FullCalenDarCustom: React.FC<any> = () => {
     fetchDataBlockType();
   }, []);
 
+  const bookingStatus = [
+    {
+      value: 0,
+      name: "Booked",
+    },
+    {
+      value: 1,
+      name: "Confirmed",
+    },
+    {
+      value: 2,
+      name: "Arrived",
+    },
+    {
+      value: 3,
+      name: "Start",
+    },
+    {
+      value: 4,
+      name: "Cancel",
+    },
+  ];
   const handleDateClick = (arg: any) => {
     setDateTime(arg.dateStr);
   };
@@ -141,21 +175,25 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleEventClick = (arg: any) => {
+    setStartTime(arg.event.startStr);
     getAppointmentById(arg?.event?.extendedProps?.booking_id).then((result) => {
-      console.log(result?.data?.data?.bookingDetails);
-
       formik.setValues({
         ...formik.values,
         customer: result?.data?.data?.customer,
         services: result?.data?.data?.bookingDetails,
+        totalFee: Number(result?.data?.data?.total_fee),
+        totalTime: result?.data?.data?.total_time,
       });
+      setEventStatus(result?.data?.data?.status);
       setSelectedCustomer(true);
+      const { totalFee } = calculateTotals(result?.data?.data?.bookingDetails);
+      setOriginalTotalFee(totalFee);
     });
     setAssistantId(arg?.event?.extendedProps?.assistant?.id);
+    setAssistant(arg?.event?.extendedProps?.assistant);
     setEventId(arg?.event?.extendedProps?.booking_id);
     setOpenBooking(true);
     setIsSelectService(false);
-    setIsShowSelected(true);
   };
 
   const handleSelectDate = (info: any) => {
@@ -168,6 +206,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     };
     setLastEventId(newEvent.id);
     setAssistantId(info.resource.id);
+    setAssistant(info.resource);
     setEvents((prevEvents) => [...prevEvents, newEvent]);
     setOpenSelect(true);
     setStartTime(info.startStr);
@@ -183,17 +222,47 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const formatHoursMinute = (strDate: string): string => {
-    const startDate = new Date(strDate);
-    const hours = startDate.getHours();
-    const minutes = startDate.getMinutes();
-
-    const formattedHours = String(hours).padStart(2, "0");
-    const formattedMinutes = String(minutes).padStart(2, "0");
-
-    return `${formattedHours}:${formattedMinutes}`;
+    const date = new Date(strDate);
+    const formattedTime = date.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    return formattedTime;
   };
 
-  const formatDateTime = (dateTime: string) => {
+  function formatDateTime(inputDateTime: string): string {
+    // Create a new Date object from the ISO 8601 string
+    const date = new Date(inputDateTime);
+
+    if (isNaN(date.getTime())) {
+      throw new Error("Invalid date format: unable to parse date.");
+    }
+
+    // Define options for formatting the date
+    const dateOptions: Intl.DateTimeFormatOptions = {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    };
+
+    // Format the date part
+    const formattedDate = new Intl.DateTimeFormat("en-GB", dateOptions).format(
+      date,
+    );
+
+    // Format the time part
+    const formattedTime = date.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    // Combine the formatted date and time parts
+    return `${formattedDate} ${formattedTime}`;
+  }
+
+  const formatDateTimeCustom = (dateTime: string) => {
     const date = new Date(dateTime);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -223,7 +292,45 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setSelectedCustomer(false);
     setOpenBooking(false);
     setIsSelectService(false);
-    setIsShowSelected(true);
+  };
+
+  const onCloseTips = () => {
+    setOpenTips(false);
+    setSelectTips("No Tips");
+    formik.resetForm();
+  };
+
+  const handleConfirmTips = () => {
+    setIsSelectPayment(true);
+  };
+
+  const onCloseSelectService = () => {
+    setIsSelectService(false);
+  };
+
+  const handleChangTips = (value: number | undefined, label: string) => {
+    setSelectTips(label);
+    if (value !== undefined) {
+      formik.setFieldValue("totalFee", originalTotalFee + value);
+      formik.setFieldValue("tips", [
+        {
+          bookingId: eventId,
+          assistantId: assistantId,
+          fee: value,
+        },
+      ]);
+    } else {
+      const { totalFee } = calculateTotals(formik.values.services);
+      formik.setFieldValue("totalFee", totalFee);
+      formik.setFieldValue("tips", []);
+    }
+  };
+
+  const handleChangeMethod = (method: string) => {
+    if (method === "cash") {
+      setCashPaymentVisible(true);
+    }
+    formik.setFieldValue("paymentMethod", method);
   };
 
   const onCloseModalBlockTime = () => {
@@ -234,7 +341,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
       setLastEventId(null);
     }
     setOpenBlockTime(false);
-    setIsShowSelected(true);
   };
 
   const handleDrop = (info: any) => {
@@ -242,7 +348,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleShowService = () => {
-    setIsShowSelected(false);
     setIsSelectService(true);
   };
 
@@ -259,14 +364,21 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const handleServiceOptionSelect = async (id: any) => {
     try {
       const result = await getServiceOptionShow(id, assistantId);
-      const { service_id, title, price, time, assistant } = result.data.data;
+      const { serviceOptionId, title, price, time, assistant } =
+        result.data.data;
 
       const existingOption = formik.values.services.find(
-        (option) => option.serviceId === service_id,
+        (option) => option.serviceOptionId === serviceOptionId,
       );
 
       // Nếu dịch vụ đã tồn tại, không thêm lại
-      if (existingOption) return;
+      if (existingOption) {
+        setIsSelectService(false);
+        toast.warning(
+          "Select service already exists, please select another service",
+        );
+        return;
+      }
 
       const timeZone = "Asia/Ho_Chi_Minh";
 
@@ -284,7 +396,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
       const newService = {
         id: null,
-        service_id,
+        serviceOptionId,
         title,
         price,
         time,
@@ -302,22 +414,58 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
       // Cập nhật danh sách dịch vụ trong formik
       const updatedServices = [...formik.values.services, newService];
+      // Tính tổng thời gian và giá
+      const { totalTime, totalFee } = calculateTotals(updatedServices);
+      // update value services
       formik.setFieldValue("services", updatedServices);
-
-      setIsShowSelected(true);
+      // update value totalTime
+      formik.setFieldValue("totalTime", totalTime);
+      // update value totalFree
+      formik.setFieldValue("totalFee", totalFee);
+      setOriginalTotalFee(totalFee);
       setIsSelectService(false);
-
-      console.log(formik.values.services);
     } catch (error) {
       console.error("Error fetching service option details:", error);
     }
   };
 
+  // Hàm tính tổng thời gian và giá
+  const calculateTotals = (services: any[]) => {
+    let totalTime = 0;
+    let totalFee = 0;
+
+    services.forEach((service) => {
+      totalTime += Number(service.time);
+      totalFee += Number(service.price);
+    });
+
+    return { totalTime, totalFee };
+  };
+
+  // Hàm quy đổi phút ra giờ và phút
+  const formatMinutesToHoursAndMinutes = (totalMinutes: number) => {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${hours}h${minutes > 0 ? ` ${minutes}min` : ""}`;
+  };
+
+  // Hàm định dạng giá tiền thành dạng có hai chữ số thập phân
+  const formatPrice = (price: number) => {
+    return `$${price.toFixed(2)}`;
+  };
+
   const handleRemoveServiceOption = (id: string) => {
     const updatedServiceOptions = formik.values.services.filter(
-      (option) => option.id !== id,
+      (option) => option.serviceOptionId !== id,
     );
+    // Tính lại tổng thời gian và giá sau khi xóa
+    const { totalTime, totalFee } = calculateTotals(updatedServiceOptions);
+
+    setOriginalTotalFee(totalFee);
+    // Cập nhật giá trị totalTime và totalFee trong formik
     formik.setFieldValue("services", updatedServiceOptions);
+    formik.setFieldValue("totalTime", totalTime);
+    formik.setFieldValue("totalFee", totalFee);
   };
 
   const handleEditService = (id: string) => {};
@@ -347,26 +495,82 @@ const FullCalenDarCustom: React.FC<any> = () => {
     return () => clearTimeout(delayDebounceFn);
   };
 
+  const handleCheckout = async () => {
+    if (eventId === null) {
+      setIsSubmit(true);
+      const { data } = await appointmentsPost(formik.values);
+      handleSuccess("Appointment created");
+      setEventId(data?.data?.id);
+      getAppointmentById(data?.data?.id).then((result) => {
+        formik.setValues({
+          ...formik.values,
+          customer: result?.data?.data?.customer,
+          services: result?.data?.data?.bookingDetails,
+          totalFee: Number(result?.data?.data?.total_fee),
+          totalTime: result?.data?.data?.total_time,
+        });
+        setSelectedCustomer(true);
+      });
+    } else {
+      setOpenBooking(false);
+    }
+    setOpenTips(true);
+  };
+
+  const handleCloseCashPayment = () => {
+    setCashPaymentVisible(false);
+    formik.setFieldValue("paymentMethod", "");
+    formik.setFieldValue("payTotal", 0);
+  };
+
+  const handleSaveCashPayment = (amount: number) => {
+    formik.setFieldValue("payTotal", amount);
+    setCashPaymentVisible(false);
+  };
+
+  const handlePay = async () => {
+    const { data } = await checkoutAppointment(eventId, formik.values);
+    setOpenTips(false);
+    toast.success(data.message);
+    fetchAppointments();
+  };
+  const handleSuccess = (message: string) => {
+    setIsSubmit(false);
+    setOpenBooking(false);
+    fetchAppointments();
+    setSelectedCustomer(false);
+    formik.resetForm();
+    toast.success(message);
+  };
+
+  const handleError = (error: any) => {
+    setIsSubmit(false);
+    toast.error(error);
+  };
+
   const formik = useFormik<BookingFormType>({
     initialValues: {
       customer: null,
       services: [],
+      tips: [],
+      paymentMethod: "",
+      payTotal: 0,
+      totalFee: 0,
+      totalTime: 0,
     },
     onSubmit: async (values) => {
       setIsSubmit(true);
-      appointmentsPost(values)
-        .then((data) => {
-          setIsSubmit(false);
-          setOpenBooking(false);
-          fetchAppointments();
-          setSelectedCustomer(false);
-          formik.resetForm();
-          toast.success("Appointment created");
-        })
-        .catch((e) => {
-          setIsSubmit(false);
-          toast.error(e);
-        });
+      try {
+        if (eventId) {
+          await updateAppointment(eventId, values);
+          handleSuccess("Appointment updated");
+        } else {
+          await appointmentsPost(values);
+          handleSuccess("Appointment created");
+        }
+      } catch (e) {
+        handleError(e);
+      }
     },
     enableReinitialize: true,
   });
@@ -376,7 +580,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       assistant_id: assistantId,
       reason: "",
       block_type: "1",
-      date: formatDateTime(dateTime),
+      date: formatDateTimeCustom(dateTime),
       start_time: formatHoursMinute(startTime),
       end_time: formatHoursMinute(endTime),
       frequency: "1",
@@ -533,12 +737,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
         position="right"
         backdrop={false}
       >
-        <Drawer.Header titleIcon={() => <></>} title={`${startTime}`} />
+        <Drawer.Header titleIcon={() => <></>} />
         <Drawer.Items>
           <FormikProvider value={formik}>
             <Form>
               <div className="flex h-screen">
-                <div className="w-[40%] overflow-auto">
+                <div className="w-[40%] overflow-auto border-r border-stroke p-6.5">
                   {/* start show info customer */}
                   {!selectedCustomer && (
                     <>
@@ -611,129 +815,101 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       </div>
                     ))}
                 </div>
-                <div className="w-[60%]">
-                  {isSelectService && (
-                    <div className="h-[85%] px-6.5">
-                      {serviceOptions?.map((item, index) => (
-                        <div key={index}>
-                          <h3 className="mt-3 font-medium text-black dark:text-white">
-                            {item?.category_name} ({item?.count})
-                          </h3>
-                          <div className="space-y-6">
-                            {item?.service_options.length > 0 &&
-                              item?.service_options.map(
-                                (option: any, index: number) => (
-                                  <button
-                                    type="button"
-                                    className="service relative mt-3 w-full text-left"
-                                    key={index}
-                                    onClick={() =>
-                                      handleServiceOptionSelect(option?.id)
-                                    }
-                                  >
-                                    <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
-                                    <div className="flex flex-1 px-4 py-2">
-                                      <div className="w-full xl:w-3/4">
-                                        <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                          {option?.title}
-                                        </label>
-                                        <div className="flex items-center">
-                                          <span>{option?.duration}min</span>
-                                          <span className="ml-5">
-                                            {/* {option.assistant.name} */}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <div className="w-full xl:w-1/4">
-                                        <label className="mb-3 block flex justify-end text-sm font-medium text-black dark:text-white">
-                                          ${option?.price}
-                                        </label>
-                                      </div>
-                                    </div>
-                                  </button>
-                                ),
-                              )}
-                          </div>
-                        </div>
-                      ))}
+                <div className="flex w-[60%] flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between px-6.5">
+                      <h3 className="text-2xl font-bold	text-black">{`${startTime && formatDateTime(startTime)}`}</h3>
+                      {eventId && (
+                        <select
+                          id="status"
+                          className="bg-gray-50 border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 block w-[150px] rounded-lg border p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                        >
+                          {bookingStatus?.map((item, i) => (
+                            <option value={item?.value} key={i}>
+                              {item?.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
-                  )}
-                  {isShowSelected && (
-                    <>
-                      <div className="h-[75%] px-6.5">
-                        <h3 className="font-medium text-black dark:text-white">
-                          Services
-                        </h3>
-                        {formik.values.services.length > 0 ? (
-                          formik.values.services.map(
-                            (detail: any, index: number) => (
-                              <div
-                                className="service relative mt-3 w-full"
-                                key={index}
-                              >
-                                <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
-                                <div className="flex flex-1 px-6.5 py-4">
-                                  <div className="w-full xl:w-3/4">
-                                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                      {detail?.title}
-                                    </label>
-                                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                      {detail?.name}
-                                    </label>
-                                    <div className="flex items-center">
-                                      <span>
-                                        {formatHoursMinute(detail?.start)}
-                                      </span>
-                                      <span className="m-1">・</span>
-                                      <span>
-                                        {detail?.time}
-                                        min
-                                      </span>
-                                      <span className="m-1">・</span>
-                                      <span>{detail?.assistant?.name}</span>
-                                    </div>
+                    <div className="px-6.5">
+                      <h3 className="font-medium text-black dark:text-white">
+                        Services
+                      </h3>
+                      {formik.values.services.length > 0 ? (
+                        formik.values.services.map(
+                          (detail: any, index: number) => (
+                            <div
+                              className="service relative mt-3 w-full"
+                              key={index}
+                            >
+                              <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
+                              <div className="flex flex-1 px-6.5 py-4">
+                                <div className="w-full xl:w-3/4">
+                                  <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                    {detail?.title}
+                                  </label>
+                                  <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                    {detail?.name}
+                                  </label>
+                                  <div className="flex items-center">
+                                    <span>
+                                      {formatHoursMinute(detail?.start)}
+                                    </span>
+                                    <span className="m-1">・</span>
+                                    <span>
+                                      {detail?.time}
+                                      min
+                                    </span>
+                                    <span className="m-1">・</span>
+                                    <span>{detail?.assistant?.name}</span>
                                   </div>
-                                  <div className="w-full xl:w-1/4">
-                                    <label className="mb-3 ml-3 block flex justify-end text-sm font-medium text-black dark:text-white">
-                                      ${detail.price}
-                                    </label>
-                                    <div className="flex justify-end space-x-3.5">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleEditService(detail?.id)
-                                        }
-                                        className="hover:text-primary"
-                                      >
-                                        <FaRegPenToSquare
-                                          size={25}
-                                          className="text-black"
-                                        />
-                                      </button>
-                                      <button
-                                        className="hover:text-primary"
-                                        onClick={() =>
-                                          handleRemoveServiceOption(detail.id)
-                                        }
-                                      >
-                                        <BsTrash
-                                          size={25}
-                                          className="text-black"
-                                        />
-                                      </button>
-                                    </div>
+                                </div>
+                                <div className="w-full xl:w-1/4">
+                                  <label className="mb-3 ml-3 block flex justify-end text-sm font-medium text-black dark:text-white">
+                                    ${detail.price}
+                                  </label>
+                                  <div className="flex justify-end space-x-3.5">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleEditService(detail?.id)
+                                      }
+                                      className="hover:text-primary"
+                                    >
+                                      <FaRegPenToSquare
+                                        size={25}
+                                        className="text-black"
+                                      />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="hover:text-primary"
+                                      onClick={() =>
+                                        handleRemoveServiceOption(
+                                          detail.serviceOptionId,
+                                        )
+                                      }
+                                    >
+                                      <BsTrash
+                                        size={25}
+                                        className="text-black"
+                                      />
+                                    </button>
                                   </div>
                                 </div>
                               </div>
-                            ),
-                          )
-                        ) : (
-                          <div className="flex min-h-[200px] flex-col items-center">
-                            <GoInbox size={50} />
-                            <p>Add a service to save the appointment</p>
-                          </div>
-                        )}
-                      </div>
+                            </div>
+                          ),
+                        )
+                      ) : (
+                        <div className="flex min-h-[200px] flex-col items-center">
+                          <GoInbox size={50} />
+                          <p>Add a service to save the appointment</p>
+                        </div>
+                      )}
+                    </div>
+                    {eventStatus !== 5 && (
                       <div className="flex justify-center px-6.5 py-4">
                         <button
                           onClick={handleShowService}
@@ -743,17 +919,55 @@ const FullCalenDarCustom: React.FC<any> = () => {
                           Add Service
                         </button>
                       </div>
-                    </>
-                  )}
-                  <div className="flex px-6.5">
-                    <button
-                      disabled={isSubmit}
-                      type="submit"
-                      className="inline-flex items-center justify-center rounded-md bg-primary px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
-                    >
-                      Save
-                      {isSubmit && <Spinner />}
-                    </button>
+                    )}
+                  </div>
+                  <div className="flex flex-col px-6.5">
+                    <div className="flex justify-between">
+                      <h3 className="font-2xl text-lg font-bold text-black">
+                        Total
+                      </h3>
+                      <div className="flex gap-2">
+                        <span className="text-lg font-bold text-black">
+                          {formatPrice(formik.values.totalFee)}
+                        </span>
+                        <span className="text-md">
+                          {formatMinutesToHoursAndMinutes(
+                            formik.values.totalTime,
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {eventStatus === 5 ? (
+                        <button
+                          type="button"
+                          className="border-gray-300 inline-flex w-full items-center justify-center rounded-md border bg-transparent px-10 py-2 text-center font-medium text-black hover:bg-opacity-90 lg:px-8 xl:px-10"
+                        >
+                          {isSubmit && <Spinner />}
+                          View Payment
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            disabled={isSubmit}
+                            type="button"
+                            onClick={handleCheckout}
+                            className="border-gray-300 inline-flex w-1/2 items-center justify-center rounded-md border bg-transparent px-10 py-2 text-center font-medium text-black hover:bg-opacity-90 lg:px-8 xl:px-10"
+                          >
+                            {isSubmit && <Spinner />}
+                            Checkout
+                          </button>
+                          <button
+                            disabled={isSubmit}
+                            type="submit"
+                            className="inline-flex w-1/2 items-center justify-center rounded-md bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                          >
+                            {isSubmit && <Spinner />}
+                            Save
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -894,7 +1108,244 @@ const FullCalenDarCustom: React.FC<any> = () => {
           </FormikProvider>
         </Drawer.Items>
       </Drawer>
-      <ToastContainer />
+      {/* start draw select service  */}
+      <Drawer
+        className="w-[30%]"
+        open={isSelectService}
+        onClose={onCloseSelectService}
+        position="right"
+        backdrop={false}
+      >
+        <Drawer.Header titleIcon={() => <></>} closeIcon={FaArrowRight} />
+        <Drawer.Items>
+          {isSelectService && (
+            <div className="px-6.5">
+              {serviceOptions?.map((item, index) => (
+                <div key={index}>
+                  <h3 className="mt-3 font-medium text-black dark:text-white">
+                    {item?.category_name} ({item?.count})
+                  </h3>
+                  <div className="space-y-6">
+                    {item?.service_options.length > 0 &&
+                      item?.service_options.map(
+                        (option: any, index: number) => (
+                          <button
+                            type="button"
+                            className="service relative mt-3 w-full text-left"
+                            key={index}
+                            onClick={() =>
+                              handleServiceOptionSelect(option?.id)
+                            }
+                          >
+                            <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
+                            <div className="flex flex-1 px-4 py-2">
+                              <div className="w-full xl:w-3/4">
+                                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                  {option?.title}
+                                </label>
+                                <div className="flex items-center">
+                                  <span>{option?.duration}min</span>
+                                  <span className="ml-5">
+                                    {/* {option.assistant.name} */}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="w-full xl:w-1/4">
+                                <label className="mb-3 block flex justify-end text-sm font-medium text-black dark:text-white">
+                                  ${option?.price}
+                                </label>
+                              </div>
+                            </div>
+                          </button>
+                        ),
+                      )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Drawer.Items>
+      </Drawer>
+      {/* start draw tips */}
+      <Drawer
+        className="w-[80%] shadow-2xl"
+        open={openTips}
+        onClose={onCloseTips}
+        position="right"
+        backdrop={false}
+      >
+        <Drawer.Header titleIcon={() => <></>} />
+        <Drawer.Items>
+          <div className="flex h-screen">
+            <div className="w-[60%] overflow-auto border-r border-stroke p-6.5">
+              <h3 className="mb-2 text-2xl font-bold text-black">
+                {isSelectPayment ? "Select Payment" : "Select tip"}
+              </h3>
+              {isSelectPayment ? (
+                <PaymentButtonGrid
+                  value={formik.values.paymentMethod}
+                  onChange={(method) => handleChangeMethod(method)}
+                />
+              ) : (
+                <TipButtonGrid
+                  totalAmount={originalTotalFee}
+                  value={selectTips}
+                  onChange={(value, label) => handleChangTips(value, label)}
+                />
+              )}
+            </div>
+            <div className="flex w-[40%] flex-col justify-between">
+              <div className="p-6.5">
+                <div className="flex flex-col">
+                  <h3 className="text-center font-medium">
+                    {formik.values?.customer?.name}
+                  </h3>
+                  <p className="mb-4">{formik.values?.customer?.email}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleRemoveCustomer}
+                      type="button"
+                      className="mb-2 inline-flex w-full items-center justify-center rounded-md border border-red bg-transparent py-2 font-medium text-black text-red hover:bg-opacity-90 "
+                    >
+                      <BiTransfer size={25} className="mr-2" />
+                      Remove customer
+                    </button>
+                    <button
+                      type="button"
+                      className="mb-2 inline-flex w-full items-center justify-center rounded-md border border-black bg-transparent py-2 font-medium text-black text-black hover:bg-opacity-90 "
+                    >
+                      View profile
+                    </button>
+                  </div>
+                </div>
+                {formik.values.services.length > 0 &&
+                  formik.values.services.map((detail: any, index: number) => (
+                    <div className="service relative mt-3 w-full" key={index}>
+                      <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
+                      <div className="flex flex-1 px-6.5 py-4">
+                        <div className="w-full xl:w-3/4">
+                          <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                            {detail?.title}
+                          </label>
+                          <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                            {detail?.name}
+                          </label>
+                          <div className="flex items-center">
+                            <span>{formatHoursMinute(detail?.start)}</span>
+                            <span className="m-1">・</span>
+                            <span>
+                              {detail?.time}
+                              min
+                            </span>
+                            <span className="m-1">・</span>
+                            <span>{detail?.assistant?.name}</span>
+                          </div>
+                        </div>
+                        <div className="w-full xl:w-1/4">
+                          <label className="mb-3 ml-3 block flex justify-end text-sm font-medium text-black dark:text-white">
+                            ${detail.price}
+                          </label>
+                          <div className="flex justify-end space-x-3.5">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleEditService(detail?.serviceOptionId)
+                              }
+                              className="hover:text-primary"
+                            >
+                              <FaRegPenToSquare
+                                size={25}
+                                className="text-black"
+                              />
+                            </button>
+                            <button
+                              className="hover:text-primary"
+                              onClick={() =>
+                                handleRemoveServiceOption(
+                                  detail.serviceOptionId,
+                                )
+                              }
+                            >
+                              <BsTrash size={25} className="text-black" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+              <div className="border-t border-stroke p-6.5">
+                {/* show info tips */}
+                {formik.values.tips.length > 0 && (
+                  <div className="flex justify-between">
+                    <h3 className="font-xl text-lg text-black">
+                      Tips for {assistant?.name}
+                    </h3>
+                    <span className="text-lg font-bold text-black">
+                      {formatPrice(formik.values.tips[0].fee)}
+                    </span>
+                  </div>
+                )}
+                {/* show total fee */}
+                <div className="flex justify-between">
+                  <h3 className="font-2xl text-lg font-bold text-black">
+                    Total
+                  </h3>
+                  <div className="flex gap-2">
+                    <span className="text-lg font-bold text-black">
+                      {formatPrice(formik.values.totalFee)}
+                    </span>
+                    <span className="text-md">
+                      {formatMinutesToHoursAndMinutes(formik.values.totalTime)}
+                    </span>
+                  </div>
+                </div>
+                {formik.values.paymentMethod !== "" && (
+                  <div className="flex justify-between">
+                    <h3 className="font-2xl text-lg font-bold text-black">
+                      {formik.values.paymentMethod}
+                    </h3>
+                    <div className="flex">
+                      <span className="text-lg font-bold text-black">
+                        {formatPrice(formik.values.payTotal)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {!isSelectPayment ? (
+                  <button
+                    disabled={isSubmit}
+                    type="button"
+                    onClick={handleConfirmTips}
+                    className="border-gray-300 inline-flex w-full items-center justify-center rounded-md border bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                  >
+                    {isSubmit && <Spinner />}
+                    Continue to payment
+                  </button>
+                ) : (
+                  <button
+                    disabled={isSubmit || formik.values.paymentMethod == ""}
+                    type="button"
+                    onClick={handlePay}
+                    className="border-gray-300 inline-flex w-full items-center justify-center rounded-md border bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 disabled:bg-gray lg:px-8 xl:px-10"
+                  >
+                    {isSubmit && <Spinner />}
+                    Pay now
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </Drawer.Items>
+      </Drawer>
+      {cashPaymentVisible && (
+        <CashPaymentDialog
+          isVisible={cashPaymentVisible}
+          onClose={handleCloseCashPayment}
+          onSave={(amount) => handleSaveCashPayment(amount)}
+          initialAmount={formik.values.totalFee}
+        />
+      )}
     </>
   );
 };

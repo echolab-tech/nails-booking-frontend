@@ -70,10 +70,15 @@ const ServiceList = () => {
 
   const onDelete = async () => {
     try {
-      await deleteService(idDel);
+      const { data } = await deleteService(idDel);
+      if (data?.data?.code != 200) {
+        setOpenModal(false);
+        toast.warning(data?.data?.message);
+        return;
+      }
       fetchService();
       setOpenModal(false);
-      toast.success("Delete Success !!!");
+      toast.success(data?.data?.message);
     } catch (error) {
       toast.warning("you cannot delete !!!");
     }
@@ -96,7 +101,7 @@ const ServiceList = () => {
             className="w-100 rounded bg-black px-4 py-2 text-white hover:bg-blue-600 xl:w-[120px]"
             onClick={() => router.push("form-new")}
           >
-            Add singe
+            Add single
           </button>
           <button
             className="w-100 rounded bg-black px-4 py-2 text-white hover:bg-blue-600 xl:w-[120px]"

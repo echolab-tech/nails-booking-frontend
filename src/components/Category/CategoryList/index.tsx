@@ -9,7 +9,7 @@ import { CATEGORY } from "@/types/Category";
 import PaginationCustom from "@/components/Pagination/Pagination";
 import DialogEdit from "../Dialog/Dialog";
 import { CATEGORYESHOW } from "@/types/CategoryEdit";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Button } from "flowbite-react";
 import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
@@ -176,7 +176,6 @@ const CategoryList = () => {
             ))}
           </tbody>
         </table>
-        <ToastContainer />
       </div>
       <DialogConfirm
         openModal={openModal}
