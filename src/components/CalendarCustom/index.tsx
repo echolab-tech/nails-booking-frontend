@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef, ChangeEvent } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import FullCalendar from "@fullcalendar/react";
 import { LuCalendar } from "react-icons/lu";
 import { LuCalendarX2 } from "react-icons/lu";
@@ -25,7 +25,7 @@ import {
   getServiceOptionShow,
   serviceOption,
 } from "@/services/serviceoption.service";
-import { Form, FormikProvider, useFormik } from "formik";
+import { Form, FormikProvider, useFormik, Field } from "formik";
 import {
   appointmentsPost,
   checkoutAppointment,
@@ -34,9 +34,36 @@ import {
   updateAppointment,
 } from "@/services/appointment.service";
 import { toast } from "react-toastify";
+import { BlockTimeType } from "@/types/BlockTime";
+import { addBlockedTime, getBlockType } from "@/services/blocktime.service";
 import TipButtonGrid from "../TipButtonGrid";
 import PaymentButtonGrid from "../PaymentButtonGrid";
 import CashPaymentDialog from "../CashPaymentDialog";
+
+const generateTimeOptions = () => {
+  const timeOptions = [];
+  for (let hour = 0; hour < 24; hour++) {
+    for (let minute = 0; minute < 60; minute += 5) {
+      const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+
+      const hour12 = hour % 12 || 12;
+      const period = hour < 12 ? "AM" : "PM";
+      const label = `${hour12}:${String(minute).padStart(2, "0")} ${period}`;
+
+      timeOptions.push({ value, label });
+    }
+  }
+  return timeOptions;
+};
+
+const timeOptions = generateTimeOptions();
+
+const frequencyOptions = [
+  { value: "1", label: "Don't Repeat" },
+  { value: "2", label: "Every Date" },
+  { value: "3", label: "Every Week" },
+  { value: "4", label: "Every Year" },
+];
 
 interface SearchServiceOptionValues {
   name_service_option: string;
@@ -45,10 +72,16 @@ interface SearchServiceOptionValues {
 const FullCalenDarCustom: React.FC<any> = () => {
   const [resources, setResources] = useState<ResourceType[]>([]);
   const [assistantId, setAssistantId] = useState<string>("");
+  const [dateTime, setDateTime] = useState<string>("");
   const [assistant, setAssistant] = useState<Assistant>();
   const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
+  const [blockType, setBlockType] = useState<
+    { id: number; name_block_type: string }[]
+  >([]);
   const [openSelect, setOpenSelect] = useState<boolean>(false);
   const [openBooking, setOpenBooking] = useState<boolean>(false);
+  const [openBlockTime, setOpenBlockTime] = useState<boolean>(false);
   const [isSelectService, setIsSelectService] = useState<boolean>(false);
   const [events, setEvents] = useState<EventType[]>([]);
   const [lastEventId, setLastEventId] = useState<string | null>(null);
@@ -72,6 +105,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     fetchService();
     fetchCustomer();
     fetchServiceOption();
+    fetchDataBlockType();
   }, []);
 
   const bookingStatus = [
@@ -97,7 +131,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     },
   ];
   const handleDateClick = (arg: any) => {
-    alert(arg.dateStr);
+    setDateTime(arg.dateStr);
   };
 
   const fetchService = async () => {
@@ -130,6 +164,16 @@ const FullCalenDarCustom: React.FC<any> = () => {
     }
   };
 
+  const fetchDataBlockType = async () => {
+    const blockType = await getBlockType();
+    // setBlockType(blockType.data.dataBlockType);
+    setBlockType([
+      { id: 1, name_block_type: "Lunch" },
+      { id: 2, name_block_type: "Meeting" },
+      { id: 3, name_block_type: "Training" },
+    ]);
+  };
+
   const handleEventClick = (arg: any) => {
     setStartTime(arg.event.startStr);
     getAppointmentById(arg?.event?.extendedProps?.booking_id).then((result) => {
@@ -145,7 +189,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
       const { totalFee } = calculateTotals(result?.data?.data?.bookingDetails);
       setOriginalTotalFee(totalFee);
     });
-
     setAssistantId(arg?.event?.extendedProps?.assistant?.id);
     setAssistant(arg?.event?.extendedProps?.assistant);
     setEventId(arg?.event?.extendedProps?.booking_id);
@@ -167,6 +210,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setEvents((prevEvents) => [...prevEvents, newEvent]);
     setOpenSelect(true);
     setStartTime(info.startStr);
+    setEndTime(info.endStr);
   };
 
   const handleResize = (info: any) => {
@@ -217,6 +261,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
     // Combine the formatted date and time parts
     return `${formattedDate} ${formattedTime}`;
   }
+
+  const formatDateTimeCustom = (dateTime: string) => {
+    const date = new Date(dateTime);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
   const onCloseModalSelect = () => {
     if (lastEventId) {
@@ -281,6 +333,16 @@ const FullCalenDarCustom: React.FC<any> = () => {
     formik.setFieldValue("paymentMethod", method);
   };
 
+  const onCloseModalBlockTime = () => {
+    if (lastEventId) {
+      setEvents((prevEvents) =>
+        prevEvents.filter((event) => event.id !== lastEventId),
+      );
+      setLastEventId(null);
+    }
+    setOpenBlockTime(false);
+  };
+
   const handleDrop = (info: any) => {
     console.log(info.event);
   };
@@ -292,6 +354,11 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const handleOpenBooking = () => {
     setOpenSelect(false);
     setOpenBooking(true);
+  };
+
+  const handleOpenBlockTime = () => {
+    setOpenSelect(false);
+    setOpenBlockTime(true);
   };
 
   const handleServiceOptionSelect = async (id: any) => {
@@ -508,6 +575,40 @@ const FullCalenDarCustom: React.FC<any> = () => {
     enableReinitialize: true,
   });
 
+  const formikBlockTime = useFormik<BlockTimeType>({
+    initialValues: {
+      assistant_id: assistantId,
+      reason: "",
+      block_type: "1",
+      date: formatDateTimeCustom(dateTime),
+      start_time: formatHoursMinute(startTime),
+      end_time: formatHoursMinute(endTime),
+      frequency: "1",
+      title: "",
+    },
+    onSubmit: async (values) => {
+      setIsSubmit(true);
+      addBlockedTime(values)
+        .then((data) => {
+          setIsSubmit(false);
+          setOpenBlockTime(false);
+          formikBlockTime.resetForm();
+          toast.success("Block time created");
+        })
+        .catch((e) => {
+          setIsSubmit(false);
+          toast.error(e);
+        });
+    },
+    enableReinitialize: true,
+  });
+
+  const handleBlockTypeChange = (
+    event: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    formikBlockTime.setFieldValue("block_type", event.target.value);
+  };
+
   const renderCustomer = (customer: any) => {
     const initials = customer?.name
       .split(" ")
@@ -560,6 +661,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
     );
   };
 
+  const businessHours = resources.flatMap((resource) =>
+    resource.businessHours.map((bh) => ({
+      daysOfWeek: bh.daysOfWeek,
+      startTime: bh.startTime,
+      endTime: bh.endTime,
+    })),
+  );
+
   return (
     <>
       <FullCalendar
@@ -583,12 +692,13 @@ const FullCalenDarCustom: React.FC<any> = () => {
         eventClick={handleEventClick}
         initialView="resourceTimeGridDay"
         resources={resources}
-        //dateClick={handleDateClick}
+        dateClick={handleDateClick}
         select={handleSelectDate}
         eventResize={handleResize}
         eventDrop={handleDrop}
         dayMinWidth={200}
         resourceLabelContent={renderResourceLabelContent}
+        businessHours={businessHours}
       />
       {openSelect && (
         <Modal size="sm" show={openSelect} onClose={onCloseModalSelect}>
@@ -610,6 +720,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
               Add group appointment
             </button>
             <button
+              onClick={handleOpenBlockTime}
               type="button"
               className="inline-flex w-full items-center justify-start rounded-md bg-transparent py-2 font-medium text-black hover:bg-opacity-90 "
             >
@@ -857,6 +968,139 @@ const FullCalenDarCustom: React.FC<any> = () => {
                         </>
                       )}
                     </div>
+                  </div>
+                </div>
+              </div>
+            </Form>
+          </FormikProvider>
+        </Drawer.Items>
+      </Drawer>
+      <Drawer
+        className="p- flex h-full w-[50%] flex-col p-6"
+        open={openBlockTime}
+        onClose={onCloseModalBlockTime}
+        position="right"
+        backdrop={false}
+      >
+        <Drawer.Header titleIcon={() => <></>} title="Add blocked time" />
+        <Drawer.Items>
+          <FormikProvider value={formikBlockTime}>
+            <Form>
+              <div className="flex h-screen">
+                <div className="w-full overflow-auto">
+                  <div className="mb-4">
+                    <label htmlFor="blockType">Block type</label>
+                    <Field
+                      as="select"
+                      type="text"
+                      name="block_type"
+                      onChange={handleBlockTypeChange}
+                      className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                    >
+                      {blockType.map((block) => (
+                        <option key={block.id} value={block.id}>
+                          {block.name_block_type}
+                        </option>
+                      ))}
+                    </Field>
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="title">Title</label>
+                    <Field
+                      type="text"
+                      name="title"
+                      className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="reason">Reason</label>
+                    <Field
+                      type="text"
+                      name="reason"
+                      className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="date">Date</label>
+                    <input
+                      id="date"
+                      name="date"
+                      type="date"
+                      value={formikBlockTime.values.date}
+                      onChange={(e) => {
+                        formikBlockTime.handleChange(e);
+                        setDateTime(e.target.value);
+                      }}
+                      className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                    />
+                  </div>
+                  <div className="mb-4 flex">
+                    <div className="w-1/2 pr-2">
+                      <label htmlFor="startTime">Start Time</label>
+                      <Field
+                        as="select"
+                        className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                        name="start_time"
+                      >
+                        {timeOptions.map((time) => (
+                          <option key={time.value} value={time.value}>
+                            {time.label}
+                          </option>
+                        ))}
+                      </Field>
+                    </div>
+                    <div className="w-1/2 pl-2">
+                      <label htmlFor="endTime">End Time</label>
+                      <Field
+                        as="select"
+                        className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                        name="end_time"
+                      >
+                        {timeOptions.map((time) => (
+                          <option key={time.value} value={time.value}>
+                            {time.label}
+                          </option>
+                        ))}
+                      </Field>
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="teamMember">Team Member</label>
+                    <Field
+                      as="select"
+                      className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                      name="assistant_id"
+                    >
+                      {resources.map((resource) => (
+                        <option key={resource.id} value={resource.id}>
+                          {resource?.title}
+                        </option>
+                      ))}
+                    </Field>
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="frequency">Frequency</label>
+                    <Field
+                      as="select"
+                      name="frequency"
+                      className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                    >
+                      {frequencyOptions.map((freq) => (
+                        <option key={freq.value} value={freq.value}>
+                          {freq.label}
+                        </option>
+                      ))}
+                    </Field>
+                  </div>
+                  <div className="flex justify-center p-4">
+                    <button
+                      disabled={isSubmit}
+                      type="submit"
+                      className="inline-flex items-center justify-center rounded-md bg-primary px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                    >
+                      Save
+                      {isSubmit && <Spinner />}{" "}
+                    </button>
                   </div>
                 </div>
               </div>
