@@ -4,11 +4,11 @@ import Image from "next/image";
 import { logout } from "@/services/logout.service";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-
+import { Assistant } from "@/types/assistant";
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
+  const [user, setUser] = useState<Assistant | null>(null);
   const trigger = useRef<any>(null);
   const dropdown = useRef<any>(null);
   const router = useRouter();
@@ -38,12 +38,20 @@ const DropdownUser = () => {
     return () => document.removeEventListener("keydown", keyHandler);
   });
 
+  useEffect(() => {
+    const userLogin = localStorage.getItem("userLogin");
+    if (userLogin) {
+      setUser(JSON.parse(userLogin));
+    }
+  }, []);
+
   const handleLogout = async () => {
-      logout().then((data)=>{
-        toast.success(data.message)
+    logout()
+      .then((data) => {
+        toast.success(data.message);
         router.push("/auth/signin");
       })
-      .catch((error)=> {
+      .catch((error) => {
         console.log(error);
       });
   };
@@ -57,9 +65,9 @@ const DropdownUser = () => {
       >
         <span className="hidden text-right lg:block">
           <span className="block text-sm font-medium text-black dark:text-white">
-            Thomas Anree
+            {user?.name}
           </span>
-          <span className="block text-xs">UX Designer</span>
+          <span className="block text-xs">{user?.email}</span>
         </span>
 
         <span className="h-12 w-12 rounded-full">
@@ -174,8 +182,10 @@ const DropdownUser = () => {
             </Link>
           </li>
         </ul>
-        <button className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
-                onClick={handleLogout}>
+        <button
+          className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
+          onClick={handleLogout}
+        >
           <svg
             className="fill-current"
             width="22"

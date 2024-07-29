@@ -78,7 +78,7 @@ const ServiceSingleNew = () => {
   };
   const fetchCategories = async () => {
     try {
-      const response = await getCategories();
+      const response = await getCategories(1, true);
       setCategoryData(response.data.data);
     } catch (error) {
       console.error("Error fetching categories:", error);

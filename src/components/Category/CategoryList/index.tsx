@@ -39,7 +39,7 @@ const CategoryList = () => {
 
   const fetchCategories = async (page: number) => {
     try {
-      const response = await getCategories(page);
+      const response = await getCategories(page, false);
       setCategoryData(response.data.data);
       setPaginationData(response.data.metadata);
     } catch (error) {
@@ -69,7 +69,7 @@ const CategoryList = () => {
 
   const updateCategoryList = async () => {
     try {
-      const response = await getCategories(paginationData.current_page);
+      const response = await getCategories(paginationData.current_page, false);
       setCategoryData(response.data.data);
       setPaginationData(response.data.metadata);
     } catch (error) {

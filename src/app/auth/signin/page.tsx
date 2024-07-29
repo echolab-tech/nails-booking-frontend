@@ -59,11 +59,13 @@ const SignIn: React.FC = () => {
                 onSubmit={(values: LoginType) => {
                   login(values)
                     .then((data) => {
-                      console.log(data);
-
                       localStorage.setItem(
                         "accessToken",
                         data?.data?.user?.token,
+                      );
+                      localStorage.setItem(
+                        "userLogin",
+                        JSON.stringify(data?.data?.user),
                       );
                       toast.success("You are successfully logged in.");
                       router.push("/");
