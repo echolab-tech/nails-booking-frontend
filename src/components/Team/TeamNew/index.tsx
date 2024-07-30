@@ -1,7 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Select from "react-tailwindcss-select";
-import { Field, Form, Formik } from "formik";
+import {
+  ErrorMessage,
+  Field,
+  FieldArray,
+  Form,
+  Formik,
+  FormikValues,
+} from "formik";
 import { AssistantAddForm } from "@/types/AssistantAddForm";
 import { assistants, getListService } from "@/services/assistants.service";
 import { toast } from "react-toastify";
@@ -9,6 +16,7 @@ import * as Yup from "yup";
 import "react-toastify/dist/ReactToastify.css";
 import "./style.scss";
 import { useRouter } from "next/navigation";
+import { getLocations } from "@/services/location.service";
 
 const AssistantNewSchema = Yup.object().shape({
   name: Yup.string()
@@ -24,14 +32,22 @@ const AssistantNewSchema = Yup.object().shape({
     .min(6, "Too Short!")
     .max(100, "Too Long!")
     .required("Required"),
+  locations: Yup.array()
+    .min(1, "You must select at least one item")
+    .required("This field is required"),
+  services: Yup.array()
+    .min(1, "You must select at least one item")
+    .required("This field is required"),
 });
 const TeamNew = () => {
   const [animal, setAnimal] = useState(null);
   const [services, setServices] = useState<{ id: number; name: string }[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
   const [selectedBirthday, setSelectedBirthday] = useState<string | null>(null);
   const router = useRouter();
   useEffect(() => {
     fetchDataServices();
+    fetchLocations();
   }, []);
 
   const fetchDataServices = async () => {
@@ -39,9 +55,15 @@ const TeamNew = () => {
     setServices(services.data.data);
   };
 
-  const handleChange = (value: any) => {
-    setAnimal(value);
+  const fetchLocations = async () => {
+    try {
+      const response = await getLocations();
+      setLocations(response?.data?.data);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+    }
   };
+
   const handleBirthdayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedBirthday(e.target.value);
   };
@@ -62,16 +84,17 @@ const TeamNew = () => {
               address: "",
               avatar: null,
               birthday: null,
-              services: null,
+              services: [],
+              locations: [],
             }}
             validationSchema={AssistantNewSchema}
             onSubmit={(values: AssistantAddForm, { resetForm }) => {
-              values.services = animal;
               values.birthday = selectedBirthday;
+
               assistants(values)
                 .then((data) => {
                   toast.success("you created it successfully.");
-                  resetForm();
+                  router.push("/assistants/list");
                 })
                 .catch((error) => {
                   toast.error("you failed to create a new one.");
@@ -153,7 +176,7 @@ const TeamNew = () => {
                   <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
                     <div className="w-full xl:w-1/2">
                       <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                        BirthDay
+                        Birthday
                       </label>
                       <input
                         type="date"
@@ -180,19 +203,120 @@ const TeamNew = () => {
                       <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                         Service <span className="text-meta-1">*</span>
                       </label>
-                      {services.length > 0 && (
-                        <Select
-                          value={animal}
-                          onChange={handleChange}
-                          options={services.map((service) => ({
-                            value: String(service.id),
-                            label: service.name,
-                          }))}
-                          primaryColor={""}
-                          isMultiple={true}
-                          isSearchable={true}
-                        />
-                      )}
+                      <FieldArray name="services">
+                        {({
+                          push,
+                          remove,
+                          form: { values },
+                        }: {
+                          push: (value: any) => void;
+                          remove: (index: number) => void;
+                          form: FormikValues;
+                        }) => (
+                          <>
+                            <div className="mb-4.5 flex flex-wrap	gap-6 xl:flex-row">
+                              {services.map((service: any, index: number) => {
+                                const isChecked = values.services.includes(
+                                  service.id,
+                                );
+                                return (
+                                  <div
+                                    key={index}
+                                    className="border-gray-1 w-full rounded border p-3"
+                                  >
+                                    <label className="checkbox-container">
+                                      {service?.name}
+                                      <Field
+                                        name="services"
+                                        type="checkbox"
+                                        value={service.id}
+                                        checked={isChecked}
+                                        onChange={(e: any) => {
+                                          if (e.target.checked) {
+                                            push(service.id);
+                                          } else {
+                                            const idx = values.services.indexOf(
+                                              service.id,
+                                            );
+                                            if (idx >= 0) remove(idx);
+                                          }
+                                        }}
+                                      />
+                                      <span className="checkmark"></span>
+                                    </label>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
+                      </FieldArray>
+                      <ErrorMessage
+                        name="locations"
+                        component="div"
+                        className="text-red"
+                      />
+                    </div>
+                  </div>
+                  <div className="mb-4.5">
+                    <div className="w-full">
+                      <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                        <b>Locations</b>
+                      </label>
+                      <FieldArray name="locations">
+                        {({
+                          push,
+                          remove,
+                          form: { values },
+                        }: {
+                          push: (value: any) => void;
+                          remove: (index: number) => void;
+                          form: FormikValues;
+                        }) => (
+                          <>
+                            <div className="mb-4.5 flex flex-wrap	gap-6 xl:flex-row">
+                              {locations.map((location: any, index: number) => {
+                                const isChecked = values.locations.includes(
+                                  location.id,
+                                );
+                                return (
+                                  <div
+                                    key={index}
+                                    className="border-gray-1 w-1/2 rounded border p-3 xl:w-1/2"
+                                  >
+                                    <label className="checkbox-container">
+                                      {location?.location_name}
+                                      <Field
+                                        name="locations"
+                                        type="checkbox"
+                                        value={location.id}
+                                        checked={isChecked}
+                                        onChange={(e: any) => {
+                                          if (e.target.checked) {
+                                            push(location.id);
+                                          } else {
+                                            const idx =
+                                              values.locations.indexOf(
+                                                location.id,
+                                              );
+                                            if (idx >= 0) remove(idx);
+                                          }
+                                        }}
+                                      />
+                                      <span className="checkmark"></span>
+                                    </label>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
+                      </FieldArray>
+                      <ErrorMessage
+                        name="locations"
+                        component="div"
+                        className="text-red"
+                      />
                     </div>
                   </div>
                   <div className="mb-4.5 flex justify-center">

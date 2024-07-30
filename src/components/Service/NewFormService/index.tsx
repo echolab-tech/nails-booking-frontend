@@ -4,7 +4,15 @@ import "./style.scss";
 import ToggleSwitch from "./ToggleSwitch";
 import AssistantList from "./AssistantCheckboxes";
 import ServiceOptions from "./ServiceOptions";
-import { FormikProvider, Field, Form, ErrorMessage, useFormik } from "formik";
+import {
+  FormikProvider,
+  Field,
+  Form,
+  ErrorMessage,
+  useFormik,
+  FieldArray,
+  FormikValues,
+} from "formik";
 import * as Yup from "yup";
 import { toast } from "react-toastify";
 import { getCategories } from "@/services/categories.service";
@@ -21,10 +29,12 @@ import {
 } from "@/services/service.service";
 import "react-toastify/dist/ReactToastify.css";
 import { serviceType } from "@/types/service";
+import { getLocations } from "@/services/location.service";
 
 const ServiceSingleNew = () => {
   const [categoryData, setCategoryData] = useState<CATEGORYESHOW[]>([]);
   const [assistantData, setAssistantData] = useState([]);
+  const [locations, setLocations] = useState([]);
   const router = useRouter();
   const [service, setService] = useState<serviceType>();
   const { id } = useParams<{ id: string }>();
@@ -61,6 +71,7 @@ const ServiceSingleNew = () => {
   useEffect(() => {
     fetchCategories();
     fetchAssistant(1);
+    fetchLocations();
     if (id) {
       getService(id).then((result) => {
         setService(result?.data?.data);
@@ -76,12 +87,22 @@ const ServiceSingleNew = () => {
       console.error("Error fetching assistant:", error);
     }
   };
+
   const fetchCategories = async () => {
     try {
       const response = await getCategories(1, true);
       setCategoryData(response.data.data);
     } catch (error) {
       console.error("Error fetching categories:", error);
+    }
+  };
+
+  const fetchLocations = async () => {
+    try {
+      const response = await getLocations();
+      setLocations(response?.data?.data);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
     }
   };
 
@@ -123,6 +144,9 @@ const ServiceSingleNew = () => {
         price: Yup.number().required("Price is required"),
       }),
     ),
+    serviceLocations: Yup.array()
+      .min(1, "You must select at least one item")
+      .required("This field is required"),
   });
 
   const formik = useFormik({
@@ -167,6 +191,7 @@ const ServiceSingleNew = () => {
           ),
         },
       ],
+      serviceLocations: [],
     },
     validationSchema: CreatedServiceSchema,
     onSubmit: async (values) => {
@@ -277,6 +302,65 @@ const ServiceSingleNew = () => {
                   <b>Assistant</b>
                 </label>
                 <AssistantList assistantData={assistantData} />
+              </div>
+              <div className="border-assistant p-6.5">
+                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                  <b>Locations</b>
+                </label>
+                <FieldArray name="serviceLocations">
+                  {({
+                    push,
+                    remove,
+                    form: { values },
+                  }: {
+                    push: (value: any) => void;
+                    remove: (index: number) => void;
+                    form: FormikValues;
+                  }) => (
+                    <>
+                      <div className="mb-4.5 flex flex-wrap	gap-6 xl:flex-row">
+                        {locations.map((location: any, index: number) => {
+                          const isChecked = values.serviceLocations.includes(
+                            location.id,
+                          );
+                          return (
+                            <div
+                              key={index}
+                              className="border-gray-1 w-1/3 rounded border p-3 xl:w-1/3"
+                            >
+                              <label className="checkbox-container">
+                                {location?.location_name}
+                                <Field
+                                  name="serviceLocations"
+                                  type="checkbox"
+                                  value={location.id}
+                                  checked={isChecked}
+                                  onChange={(e: any) => {
+                                    if (e.target.checked) {
+                                      push(location.id);
+                                    } else {
+                                      const idx =
+                                        values.serviceLocations.indexOf(
+                                          location.id,
+                                        );
+                                      if (idx >= 0) remove(idx);
+                                    }
+                                  }}
+                                />
+                                <span className="checkmark"></span>
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </FieldArray>
+                <ErrorMessage
+                  name="serviceLocations"
+                  component="div"
+                  className="text-red"
+                />
               </div>
               <div className="border-assistant p-6.5">
                 <label className="mb-3 block text-sm font-medium text-black dark:text-white">
