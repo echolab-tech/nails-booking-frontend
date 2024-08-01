@@ -28,7 +28,7 @@ import {
   updateService,
 } from "@/services/service.service";
 import "react-toastify/dist/ReactToastify.css";
-import { serviceType } from "@/types/service";
+import { ServiceLocationType, serviceType } from "@/types/service";
 import { getLocations } from "@/services/location.service";
 
 const ServiceSingleNew = () => {
@@ -191,7 +191,10 @@ const ServiceSingleNew = () => {
           ),
         },
       ],
-      serviceLocations: [],
+      serviceLocations:
+        service?.serviceLocations?.map(
+          (location: ServiceLocationType) => location.location_id,
+        ) || [],
     },
     validationSchema: CreatedServiceSchema,
     onSubmit: async (values) => {
