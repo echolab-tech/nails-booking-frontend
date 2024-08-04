@@ -5,6 +5,7 @@ import { serviceOption } from "@/services/serviceoption.service";
 import { AppointmentEditForm } from "@/types/AppointmentEditForm";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Skeleton from "@/components/common/Skeleton";
 
 interface PaginationData {
   current_page: number;
@@ -22,6 +23,7 @@ interface SearchValues {
 const ApointmentList = () => {
   const router = useRouter();
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [paginationData, setPaginationData] = useState<PaginationData>({
     current_page: 1,
     total_pages: 1,
@@ -38,9 +40,11 @@ const ApointmentList = () => {
   }, []);
   const fetchAppointments = async (page: number) => {
     try {
+      setIsLoading(true);
       const response = await getListAppointment(searchValues, page);
       setAppointments(response.data.appointMents);
       setPaginationData(response.data.paginationData);
+      setIsLoading(false);
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
@@ -120,97 +124,101 @@ const ApointmentList = () => {
             </div>
           </div> */}
       </div>
-      <div className="max-w-full overflow-x-auto">
-        <table className="w-full table-auto">
-          <thead>
-            <tr className="bg-gray-2 text-left dark:bg-meta-4">
-              <th className="min-w-[100px] px-4 py-4 font-medium text-black dark:text-white ">
-                ID
-              </th>
-              <th className="min-w-[200px] px-4 py-4 font-medium text-black dark:text-white ">
-                Client
-              </th>
-              <th className="min-w-[200px] px-4 py-4 font-medium text-black dark:text-white ">
-                Services
-              </th>
-              <th className="min-w-[200px] px-4 py-4 font-medium text-black dark:text-white ">
-                Created By
-              </th>
-              <th className="min-w-[200px] px-4 py-4 font-medium text-black dark:text-white ">
-                Scheduled date
-              </th>
-              <th className="min-w-[150px] px-4 py-4 font-medium text-black dark:text-white ">
-                Duration
-              </th>
-              <th className="min-w-[200px] px-4 py-4 font-medium text-black dark:text-white ">
-                Assistants
-              </th>
-              <th className="min-w-[200px] px-4 py-4 font-medium text-black dark:text-white ">
-                Price
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {appointments.map((appointment, index) => (
-              <tr key={index}>
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  <a href="#">
-                    <h5 className="font-medium text-blue-500 dark:text-white">
-                      {index + 1}
-                    </h5>
-                  </a>
-                </td>
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  <a href={`/customers/detail/${appointment.customer.id}`}>
-                    <h5 className="font-medium text-blue-500 dark:text-white">
-                      {appointment.customer.name}
-                    </h5>
-                  </a>
-                </td>
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  <h5 className="font-medium text-black dark:text-white">
-                    {appointment.bookingDetails
-                      .map(
-                        (serviceOption: any) =>
-                          serviceOption?.service_option?.title,
-                      )
-                      .join(", ")}
-                  </h5>
-                </td>
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  <h5 className="font-medium text-black dark:text-white">
-                    {appointment.booking_type === 1 ? "Admin" : ""}
-                  </h5>
-                </td>
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  <h5 className="font-medium text-black dark:text-white">
-                    {appointment.start_time.slice(0, 16)}
-                  </h5>
-                </td>
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  <h5 className="font-medium text-black dark:text-white">
-                    {appointment.total_time}
-                  </h5>
-                </td>
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  {/* <a href="#"> */}
-                  <h5 className="font-medium text-blue-500 dark:text-white">
-                    {appointment.bookingDetails
-                      .map((serviceOption: any) => serviceOption.resourceName)
-                      .join(", ")}
-                  </h5>
-                  {/* </a> */}
-                </td>
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  <h5 className="font-medium text-black dark:text-white">
-                    {appointment.total_fee}$
-                  </h5>
-                </td>
+      {isLoading ? (
+        <Skeleton />
+      ) : (
+        <div className="max-w-full overflow-x-auto">
+          <table className="w-full table-auto">
+            <thead>
+              <tr className="bg-gray-2 text-left dark:bg-meta-4">
+                <th className="min-w-[100px] px-4 py-4 font-medium text-black dark:text-white ">
+                  ID
+                </th>
+                <th className="min-w-[200px] px-4 py-4 font-medium text-black dark:text-white ">
+                  Client
+                </th>
+                <th className="min-w-[200px] px-4 py-4 font-medium text-black dark:text-white ">
+                  Services
+                </th>
+                <th className="min-w-[200px] px-4 py-4 font-medium text-black dark:text-white ">
+                  Created By
+                </th>
+                <th className="min-w-[200px] px-4 py-4 font-medium text-black dark:text-white ">
+                  Scheduled date
+                </th>
+                <th className="min-w-[150px] px-4 py-4 font-medium text-black dark:text-white ">
+                  Duration
+                </th>
+                <th className="min-w-[200px] px-4 py-4 font-medium text-black dark:text-white ">
+                  Assistants
+                </th>
+                <th className="min-w-[200px] px-4 py-4 font-medium text-black dark:text-white ">
+                  Price
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {appointments.map((appointment, index) => (
+                <tr key={index}>
+                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                    <a href="#">
+                      <h5 className="font-medium text-blue-500 dark:text-white">
+                        {index + 1}
+                      </h5>
+                    </a>
+                  </td>
+                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                    <a href={`/customers/detail/${appointment.customer.id}`}>
+                      <h5 className="font-medium text-blue-500 dark:text-white">
+                        {appointment.customer.name}
+                      </h5>
+                    </a>
+                  </td>
+                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                    <h5 className="font-medium text-black dark:text-white">
+                      {appointment.bookingDetails
+                        .map(
+                          (serviceOption: any) =>
+                            serviceOption?.service_option?.title,
+                        )
+                        .join(", ")}
+                    </h5>
+                  </td>
+                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                    <h5 className="font-medium text-black dark:text-white">
+                      {appointment.booking_type === 1 ? "Admin" : ""}
+                    </h5>
+                  </td>
+                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                    <h5 className="font-medium text-black dark:text-white">
+                      {appointment.start_time.slice(0, 16)}
+                    </h5>
+                  </td>
+                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                    <h5 className="font-medium text-black dark:text-white">
+                      {appointment.total_time}
+                    </h5>
+                  </td>
+                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                    {/* <a href="#"> */}
+                    <h5 className="font-medium text-blue-500 dark:text-white">
+                      {appointment.bookingDetails
+                        .map((serviceOption: any) => serviceOption.resourceName)
+                        .join(", ")}
+                    </h5>
+                    {/* </a> */}
+                  </td>
+                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                    <h5 className="font-medium text-black dark:text-white">
+                      {appointment.total_fee}$
+                    </h5>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       <PaginationCustom
         currentPage={paginationData.current_page}
         totalPages={paginationData.total_pages}
