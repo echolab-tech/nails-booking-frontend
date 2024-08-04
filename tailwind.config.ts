@@ -40,6 +40,11 @@ const config: Config = {
         stroke: "#E2E8F0",
         gray: "#EFF4FB",
         "gray-900": "#000000",
+        "gray-50": "#F9FAFB",
+        "gray-100": "#F3F4F6",
+        "gray-200": "#E5E7EB",
+        "gray-300": "#D1D5DB",
+        "gray-400": "#9CA3AF",
         graydark: "#333A48",
         "gray-2": "#F7F9FC",
         "gray-3": "#FAFAFA",
@@ -318,14 +323,14 @@ const config: Config = {
         },
         "fade-in-right": {
           "0%": {
-              opacity: '0',
-              transform: "translate3d(100%, 0, 0)",
+            opacity: "0",
+            transform: "translate3d(100%, 0, 0)",
           },
           "100%": {
-              opacity: '1',
-              transform: "translate3d(0, 0, 0)",
+            opacity: "1",
+            transform: "translate3d(0, 0, 0)",
           },
-      },
+        },
       },
       animation: {
         linspin: "linspin 1568.2353ms linear infinite",
@@ -344,11 +349,8 @@ const config: Config = {
         line1: "line 10s infinite linear",
         line2: "line-revert 8s infinite linear",
         line3: "line 7s infinite linear",
-        fadeInRight: 'fade-in-right 1s ease-in-out  1',
+        fadeInRight: "fade-in-right 1s ease-in-out  1",
       },
-      
-        
-      
     },
   },
   plugins: [flowbite.plugin()],
