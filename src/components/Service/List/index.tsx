@@ -27,7 +27,7 @@ const ServiceList = () => {
     current_page: 1,
     total_pages: 1,
     total_items: 0,
-    per_page: 10,
+    per_page: 15,
   });
   const [serviceData, setServiceData] = useState<serviceType[]>([]);
   const [openModal, setOpenModal] = useState<boolean>(false);
@@ -46,14 +46,22 @@ const ServiceList = () => {
       setPaginationData({
         ...paginationData,
         current_page: data.data.meta.current_page,
+        total_pages: data.data.meta.last_page,
       });
       setIsLoading(false);
     });
   };
 
   const handlePageChange = (page: number) => {
-    getListService(paginationData.current_page, "").then((data) => {
+    setIsLoading(true);
+    getListService(page, "").then((data) => {
       setServiceData(data.data.data);
+      setPaginationData({
+        ...paginationData,
+        current_page: data.data.meta.current_page,
+        total_pages: data.data.meta.last_page,
+      });
+      setIsLoading(false);
     });
   };
 
