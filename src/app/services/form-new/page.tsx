@@ -4,8 +4,7 @@ import ServiceSingleNew from "@/components/Service/NewFormService";
 
 export const metadata: Metadata = {
   title: "Service single New | NailsAdmin Template",
-  description:
-    "This is Service single New page for NailsAdmin Template",
+  description: "This is Service single New page for NailsAdmin Template",
 };
 
 const ServiceSingleNewPage = () => {
