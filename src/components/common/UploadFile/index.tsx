@@ -41,11 +41,9 @@ const UploadFile = ({ setFieldValue, srcDefault }: UploadFileProps) => {
     <div className="flex flex-col gap-4">
       <div className="relative inline">
         <img
-          className="rounded-full"
+          className="h-[150px] w-[150px] rounded-full object-cover"
           src={filePreview as string}
           alt="Preview"
-          width={150}
-          height={150}
         />
         <input
           id="file"

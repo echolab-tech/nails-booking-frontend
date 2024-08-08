@@ -645,6 +645,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
   const renderResourceLabelContent = (arg: any) => {
     const { resource } = arg;
+    console.log(resource);
+
     const initials = resource.title
       .split(" ")
       .map((name: string) => name[0])
@@ -653,9 +655,20 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
     return (
       <div className="flex flex-col items-center space-x-2">
-        <div className="flex h-15 w-15 items-center justify-center rounded-full border-2 border-white bg-blue-500 text-white">
-          {initials}
-        </div>
+        {resource?.extendedProps?.avatar ? (
+          <div className="flex items-center justify-center">
+            <img
+              src={resource?.extendedProps?.avatar}
+              alt="avatar"
+              className="h-[60px] w-[60px] rounded-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="flex h-15 w-15 items-center justify-center rounded-full border-2 border-white bg-blue-500 text-white">
+            {initials}
+          </div>
+        )}
+
         <div>{resource.title}</div>
       </div>
     );
@@ -759,7 +772,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                         <div className="relative">
                           <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3">
                             <svg
-                              className="text-gray-500 dark:text-gray-400 h-4 w-4"
+                              className="text-gray-500 h-4 w-4 dark:text-gray-400"
                               aria-hidden="true"
                               xmlns="http://www.w3.org/2000/svg"
                               fill="none"
@@ -778,7 +791,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                             type="search"
                             onChange={handleSearchCustomer}
                             id="default-search"
-                            className="border-gray-300 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 block w-full rounded-lg border p-4 ps-10 text-sm text-gray-900 dark:text-white"
+                            className="dark:bg-gray-700 dark:border-gray-600 block w-full rounded-lg border border-gray-300 bg-gray-50 p-4 ps-10 text-sm text-gray-900 dark:text-white dark:placeholder-gray-400"
                             placeholder="Search service name"
                           />
                         </div>
@@ -822,7 +835,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       {eventId && (
                         <select
                           id="status"
-                          className="bg-gray-50 border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 block w-[150px] rounded-lg border p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                          className="dark:bg-gray-700 dark:border-gray-600 block w-[150px] rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
                         >
                           {bookingStatus?.map((item, i) => (
                             <option value={item?.value} key={i}>
@@ -914,7 +927,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                         <button
                           onClick={handleShowService}
                           type="button"
-                          className="border-gray-300 hover:bg-gray-100 focus:ring-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 mb-2 me-2 rounded-full border bg-white px-5 py-2.5 text-sm font-medium text-gray-900 focus:outline-none focus:ring-4 dark:text-white"
+                          className="dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 mb-2 me-2 rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:text-white"
                         >
                           Add Service
                         </button>
@@ -941,7 +954,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       {eventStatus === 5 ? (
                         <button
                           type="button"
-                          className="border-gray-300 inline-flex w-full items-center justify-center rounded-md border bg-transparent px-10 py-2 text-center font-medium text-black hover:bg-opacity-90 lg:px-8 xl:px-10"
+                          className="inline-flex w-full items-center justify-center rounded-md border border-gray-300 bg-transparent px-10 py-2 text-center font-medium text-black hover:bg-opacity-90 lg:px-8 xl:px-10"
                         >
                           {isSubmit && <Spinner />}
                           View Payment
@@ -952,7 +965,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                             disabled={isSubmit}
                             type="button"
                             onClick={handleCheckout}
-                            className="border-gray-300 inline-flex w-1/2 items-center justify-center rounded-md border bg-transparent px-10 py-2 text-center font-medium text-black hover:bg-opacity-90 lg:px-8 xl:px-10"
+                            className="inline-flex w-1/2 items-center justify-center rounded-md border border-gray-300 bg-transparent px-10 py-2 text-center font-medium text-black hover:bg-opacity-90 lg:px-8 xl:px-10"
                           >
                             {isSubmit && <Spinner />}
                             Checkout
@@ -1317,7 +1330,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                     disabled={isSubmit}
                     type="button"
                     onClick={handleConfirmTips}
-                    className="border-gray-300 inline-flex w-full items-center justify-center rounded-md border bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                    className="inline-flex w-full items-center justify-center rounded-md border border-gray-300 bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
                   >
                     {isSubmit && <Spinner />}
                     Continue to payment
@@ -1327,7 +1340,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                     disabled={isSubmit || formik.values.paymentMethod == ""}
                     type="button"
                     onClick={handlePay}
-                    className="border-gray-300 inline-flex w-full items-center justify-center rounded-md border bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 disabled:bg-gray lg:px-8 xl:px-10"
+                    className="inline-flex w-full items-center justify-center rounded-md border border-gray-300 bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 disabled:bg-gray lg:px-8 xl:px-10"
                   >
                     {isSubmit && <Spinner />}
                     Pay now

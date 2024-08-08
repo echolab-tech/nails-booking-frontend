@@ -30,7 +30,7 @@ export default function RootLayout({
         <div className="bg-white dark:bg-boxdark-2 dark:text-bodydark">
           {loading ? <Loader /> : <AuthProvider>{children}</AuthProvider>}
         </div>
-        <ToastContainer />
+        <ToastContainer position="top-center" theme="dark" />
       </body>
     </html>
   );
