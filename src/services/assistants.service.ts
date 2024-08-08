@@ -3,7 +3,11 @@ import { http } from "../lib/http";
 import { AssistantEditForm } from "@/types/AssistantEditFrom";
 import { AssistantSearchForm } from "@/types/AssitantSearch";
 export const assistants = async (values: AssistantAddForm): Promise<any> => {
-  return await http.post<any>("/assistants", values);
+  return await http.post<any>("/assistants", values, {
+    headers: {
+      "Content-Type": "mumultipart/form-data",
+    },
+  });
 };
 export const getListService = async (): Promise<any> => {
   return await http.get<any>("/services");
@@ -24,7 +28,11 @@ export const assistantUpdate = async (
   values: AssistantEditForm,
   id: number,
 ): Promise<any> => {
-  return await http.put<any>(`/assistants/${id}`, values);
+  return await http.post<any>(`/assistants/${id}`, values, {
+    headers: {
+      "Content-Type": "mumultipart/form-data",
+    },
+  });
 };
 
 export const assistantDelete = async (id: number): Promise<any> => {

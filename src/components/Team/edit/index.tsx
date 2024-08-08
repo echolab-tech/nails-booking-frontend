@@ -13,6 +13,7 @@ import * as Yup from "yup";
 import { AssistantEditForm } from "@/types/AssistantEditFrom";
 import { useParams, useRouter } from "next/navigation";
 import "./style.scss";
+import UploadFile from "@/components/common/UploadFile";
 
 const AssistantEditSchema = Yup.object().shape({
   name: Yup.string()
@@ -84,6 +85,7 @@ const TeamEdit = () => {
               avatar: null,
               birthday: assistant?.birthday,
               services: assistant?.services,
+              _method: "PUT",
             }}
             validationSchema={AssistantEditSchema}
             onSubmit={(values: AssistantEditForm, { resetForm }) => {
@@ -111,6 +113,14 @@ const TeamEdit = () => {
             }) => (
               <Form action="#">
                 <div className="p-6.5">
+                  <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                    <div className="w-full xl:w-1/3">
+                      <UploadFile
+                        srcDefault={assistant?.avatar}
+                        setFieldValue={setFieldValue}
+                      />
+                    </div>
+                  </div>
                   <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
                     <div className="w-full xl:w-1/2">
                       <label className="mb-3 block text-sm font-medium text-black dark:text-white">

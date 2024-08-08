@@ -17,6 +17,7 @@ import "react-toastify/dist/ReactToastify.css";
 import "./style.scss";
 import { useRouter } from "next/navigation";
 import { getLocations } from "@/services/location.service";
+import UploadFile from "@/components/common/UploadFile";
 
 const AssistantNewSchema = Yup.object().shape({
   name: Yup.string()
@@ -27,6 +28,13 @@ const AssistantNewSchema = Yup.object().shape({
     .min(10, "Too Short!")
     .max(15, "Too Long!")
     .required("Required"),
+  avatar: Yup.mixed().test(
+    "fileSize",
+    "File size is too large. Maximum size is 5MB.",
+    (value) => {
+      return !value || (value && (value as File).size <= 5 * 1024 * 1024);
+    },
+  ),
   email: Yup.string().email("Invalid email").required("Required"),
   password: Yup.string()
     .min(6, "Too Short!")
@@ -90,7 +98,7 @@ const TeamNew = () => {
             validationSchema={AssistantNewSchema}
             onSubmit={(values: AssistantAddForm, { resetForm }) => {
               values.birthday = selectedBirthday;
-
+              console.log(values);
               assistants(values)
                 .then((data) => {
                   toast.success("you created it successfully.");
@@ -110,6 +118,14 @@ const TeamNew = () => {
             }) => (
               <Form action="#">
                 <div className="p-6.5">
+                  <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                    <div className="w-full xl:w-1/3">
+                      <UploadFile
+                        srcDefault="/images/no-avatar.jpg"
+                        setFieldValue={setFieldValue}
+                      />
+                    </div>
+                  </div>
                   <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
                     <div className="w-full xl:w-1/2">
                       <label className="mb-3 block text-sm font-medium text-black dark:text-white">
