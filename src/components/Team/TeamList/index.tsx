@@ -152,19 +152,16 @@ const TeamList = () => {
             <thead>
               <tr className="bg-gray-2 text-left dark:bg-meta-4">
                 <th className="min-w-[220px] px-4 py-4 font-medium text-black dark:text-white xl:pl-11">
-                  name
+                  Name
                 </th>
                 <th className="min-w-[150px] px-4 py-4 font-medium text-black dark:text-white">
-                  birthday
+                  Birthday
                 </th>
                 <th className="min-w-[120px] px-4 py-4 font-medium text-black dark:text-white">
-                  email
+                  Email
                 </th>
                 <th className="min-w-[120px] px-4 py-4 font-medium text-black dark:text-white">
-                  phone
-                </th>
-                <th className="min-w-[120px] px-4 py-4 font-medium text-black dark:text-white">
-                  service
+                  Phone
                 </th>
                 <th className="px-4 py-4 font-medium text-black dark:text-white">
                   Actions
@@ -175,9 +172,15 @@ const TeamList = () => {
               {assistantData.map((teamItem, key) => (
                 <tr key={key}>
                   <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
-                    <h5 className="font-medium text-black dark:text-white">
-                      {teamItem.name}
-                    </h5>
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={teamItem?.avatar}
+                        className="h-[50px] w-[50px] rounded-full object-cover"
+                      />
+                      <h5 className="font-medium text-black dark:text-white">
+                        {teamItem.name}
+                      </h5>
+                    </div>
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
                     <h5 className="font-medium text-black dark:text-white">
@@ -191,17 +194,6 @@ const TeamList = () => {
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                     <p>{teamItem.phone}</p>
-                  </td>
-                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                    <p>
-                      {teamItem.services &&
-                        teamItem.services.map((service: { name: string }) => (
-                          <span key={service.name}>
-                            - {service.name}
-                            <br />
-                          </span>
-                        ))}
-                    </p>
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                     <div className="flex items-center space-x-3.5">
