@@ -42,3 +42,13 @@ export const checkoutAppointment = async (
 ): Promise<any> => {
   return await http.post<any>(`/appointments/checkout/${id}`, values);
 };
+
+
+export const appointmentsUpdateStatus = async (
+  id:string|null,
+  values: any,
+): Promise<any> => {
+  return await http.post<any>(`/appointments/update-status/${id}`, {
+    status: values
+  });
+};
