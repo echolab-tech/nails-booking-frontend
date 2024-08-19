@@ -19,6 +19,7 @@ import PaginationCustom from "../Pagination/Pagination";
 import ModalEdit from "./ModalEdit";
 import { getLocations } from "@/services/location.service";
 import { serialize } from "v8";
+import { useSearchParams } from "next/navigation";
 
 interface SearchValues {
   name: string;
@@ -36,6 +37,7 @@ interface PaginationData {
 }
 
 export default function Scheduled() {
+  const searchParams = useSearchParams();
   const { visibleId, toggle } = useModal();
   const [startTime, setStarTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -170,7 +172,15 @@ export default function Scheduled() {
       });
   };
 
-  console.log(location);
+  const createQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set(name, value);
+
+      return params.toString();
+    },
+    [searchParams],
+  );
 
   return (
     <div>
@@ -182,8 +192,10 @@ export default function Scheduled() {
           value={location}
           onChange={(location) => setLocation(location.target.value)}
         >
-          {listLocations.map((location: any) => (
-            <option value={location.id}>{location.location_name}</option>
+          {listLocations.map((location: any, index: number) => (
+            <option key={index} value={location.id}>
+              {location.location_name}
+            </option>
           ))}
         </select>
       )}
@@ -225,7 +237,9 @@ export default function Scheduled() {
                           {`${totalHours(item.schedule)}h`}
                         </p>
                       </div>
-                      <Link href={`scheduled-shifts/edit/${item.id}`}>
+                      <Link
+                        href={`scheduled-shifts/edit/${item.id}?${createQueryString("location_id", location)}`}
+                      >
                         <Image
                           src="/images/scheduled/edit.svg"
                           width={30}
@@ -269,7 +283,9 @@ export default function Scheduled() {
                             >
                               Edit this day
                             </p>
-                            <Link href={`scheduled-shifts/edit/${item.id}`}>
+                            <Link
+                              href={`scheduled-shifts/edit/${item.id}?${createQueryString("location_id", location)}`}
+                            >
                               <p className="w-max cursor-pointer text-sm text-black dark:text-white">
                                 Edit regular shifts
                               </p>

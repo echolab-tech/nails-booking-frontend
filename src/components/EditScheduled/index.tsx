@@ -15,9 +15,11 @@ import { createSchedule } from "@/services/schedules.service";
 import { toast } from "react-toastify";
 
 export default function EditSchduled() {
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [dataAssistant, setDataAssistant] = useState<any>();
   const { id } = useParams<{ id: string }>();
+  const location_id = searchParams.get("location_id");
 
   const fetchDataAssistant = useCallback(async (userID: number) => {
     const schedules = await getAssistantShow(userID);
@@ -92,23 +94,24 @@ export default function EditSchduled() {
             ...item,
             time: [
               ...item.time,
-              item.time.length == 0 ? {
-                from: '8:00',
-                assistant_id: dataAssistant.data.id,
-                to: '18:00',
-                weekdays: item.days,
-                isDelete: false,
-                isNewInput: true,
-              }: {
-                from: "8:00",
-                to: "18:00",
-                date: item.time[0].date,
-                assistant_id: dataAssistant.data.id,
-                weekdays: item.days,
-                isDelete: false,
-                isNewInput: true,
-              },
-             
+              item.time.length == 0
+                ? {
+                    from: "8:00",
+                    assistant_id: dataAssistant.data.id,
+                    to: "18:00",
+                    weekdays: item.days,
+                    isDelete: false,
+                    isNewInput: true,
+                  }
+                : {
+                    from: "8:00",
+                    to: "18:00",
+                    date: item.time[0].date,
+                    assistant_id: dataAssistant.data.id,
+                    weekdays: item.days,
+                    isDelete: false,
+                    isNewInput: true,
+                  },
             ],
           }
         : item,
@@ -177,8 +180,6 @@ export default function EditSchduled() {
     setInputs(newInputs);
   };
 
-  console.log(inputs);
-
   const inputHandler2 = (
     text: string,
     day: string,
@@ -216,26 +217,24 @@ export default function EditSchduled() {
       if (item.isChecked) {
         item.time.map((time) => {
           if (time.isNewInput && !time.isDelete) {
-            dataCreateSchedule.schedules.push(
-              {
-                  start_time: time.from,
-                  assistant_id: dataAssistant.data.id,
-                  date: time.date,
-                  end_time: time.to,
-                  weekdays: item.days
-                },
-            );
+            dataCreateSchedule.schedules.push({
+              start_time: time.from,
+              assistant_id: dataAssistant.data.id,
+              date: time.date,
+              end_time: time.to,
+              weekdays: item.days,
+              location_id: location_id,
+            });
           }
-          if(!time.isNewInput){
-            dataCreateSchedule.schedules.push( 
-              {
-                  id: time.id,
-                  start_time: time.from,
-                  date: time.date,
-                  end_time: time.to,
-                  isDelete: time.isDelete
-                }
-              )
+          if (!time.isNewInput) {
+            dataCreateSchedule.schedules.push({
+              id: time.id,
+              start_time: time.from,
+              date: time.date,
+              end_time: time.to,
+              isDelete: time.isDelete,
+              location_id: location_id,
+            });
           }
         });
       }
@@ -277,51 +276,49 @@ export default function EditSchduled() {
             </div>
             <div className="flex w-[70%] flex-col gap-4">
               <div className="flex flex-col gap-8">
-              
-               {data.time.map((input, key) => (
-                 <React.Fragment key={key}>
-                  {!input.isDelete &&  <div
-                    className="flex w-full items-center gap-4"
-                  >
-                    <select
-                      className="w-[40%] rounded-xl border"
-                      name="whatever"
-                      id="frm-whatever"
-                      value={input.from}
-                      onChange={(text) =>
-                        inputHandler(
-                          text.target.value,
-                          data.days,
-                          key,
-                          input.id,
-                        )
-                      }
-                    >
-                      <option value="0:00">0:00</option>
-                      <option value="1:00">1:00</option>
-                      <option value="2:00">2:00</option>
-                      <option value="3:00">3:00</option>
-                      <option value="4:00">4:00</option>
-                      <option value="5:00">5:00</option>
-                      <option value="6:00">6:00</option>
-                      <option value="7:00">7:00</option>
-                      <option value="8:00">8:00</option>
-                      <option value="9:00">9:00</option>
-                      <option value="10:00">10:00</option>
-                      <option value="11:00">11:00</option>
-                      <option value="12:00">12:00</option>
-                      <option value="13:00">13:00</option>
-                      <option value="14:00">14:00</option>
-                      <option value="15:00">15:00</option>
-                      <option value="16:00">16:00</option>
-                      <option value="17:00">17:00</option>
-                      <option value="18:00">18:00</option>
-                      <option value="19:00">19:00</option>
-                      <option value="20:00">20:00</option>
-                      <option value="21:00">21:00</option>
-                      <option value="22:00">22:00</option>
-                      <option value="23:00">23:00</option>
-                    </select>
+                {data.time.map((input, key) => (
+                  <React.Fragment key={key}>
+                    {!input.isDelete && (
+                      <div className="flex w-full items-center gap-4">
+                        <select
+                          className="w-[40%] rounded-xl border"
+                          name="whatever"
+                          id="frm-whatever"
+                          value={input.from}
+                          onChange={(text) =>
+                            inputHandler(
+                              text.target.value,
+                              data.days,
+                              key,
+                              input.id,
+                            )
+                          }
+                        >
+                          <option value="0:00">0:00</option>
+                          <option value="1:00">1:00</option>
+                          <option value="2:00">2:00</option>
+                          <option value="3:00">3:00</option>
+                          <option value="4:00">4:00</option>
+                          <option value="5:00">5:00</option>
+                          <option value="6:00">6:00</option>
+                          <option value="7:00">7:00</option>
+                          <option value="8:00">8:00</option>
+                          <option value="9:00">9:00</option>
+                          <option value="10:00">10:00</option>
+                          <option value="11:00">11:00</option>
+                          <option value="12:00">12:00</option>
+                          <option value="13:00">13:00</option>
+                          <option value="14:00">14:00</option>
+                          <option value="15:00">15:00</option>
+                          <option value="16:00">16:00</option>
+                          <option value="17:00">17:00</option>
+                          <option value="18:00">18:00</option>
+                          <option value="19:00">19:00</option>
+                          <option value="20:00">20:00</option>
+                          <option value="21:00">21:00</option>
+                          <option value="22:00">22:00</option>
+                          <option value="23:00">23:00</option>
+                        </select>
 
                         <span className="text-xl font-semibold ">-</span>
                         <select
@@ -374,12 +371,13 @@ export default function EditSchduled() {
                           width={20}
                           height={20}
                         />
-                      </div>}
-                 </React.Fragment>
-                ))}              
+                      </div>
+                    )}
+                  </React.Fragment>
+                ))}
               </div>
               <span
-                className="text-blue2 cursor-pointer font-semibold"
+                className="cursor-pointer font-semibold text-blue2"
                 onClick={() => addHandler(data.days)}
               >
                 Add a shifts
@@ -389,14 +387,14 @@ export default function EditSchduled() {
         ))}
       </div>
       <div className=" flex items-center justify-center rounded-b  p-6">
-      <button
+        <button
           onClick={() => router.back()}
           className="mb-1 mr-10 rounded bg-bodydark px-6 py-3 text-sm font-bold uppercase text-white outline-none transition-all duration-150 ease-linear focus:outline-none"
           type="button"
         >
           Cancel
         </button>
-        
+
         <button
           className="mb-1 ml-10 rounded bg-primary px-6 py-3 text-sm font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-lg focus:outline-none active:bg-primary"
           onClick={handleCreateSchedule}
