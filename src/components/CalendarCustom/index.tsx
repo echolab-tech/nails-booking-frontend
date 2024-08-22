@@ -28,6 +28,7 @@ import {
 import { Form, FormikProvider, useFormik, Field } from "formik";
 import {
   appointmentsPost,
+  appointmentsUpdateStatus,
   checkoutAppointment,
   getAppointmentByDate,
   getAppointmentById,
@@ -109,6 +110,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [selectedAssistant, setSelectedAssistant] = useState<
     string | undefined
   >(undefined);
+  const [status, setStatus] = useState<string>("");
   useEffect(() => {
     fetchAppointments();
     fetchService();
@@ -203,6 +205,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setEventId(arg?.event?.extendedProps?.booking_id);
     setOpenBooking(true);
     setIsSelectService(false);
+    // setStatus()
   };
 
   const handleSelectDate = (info: any) => {
@@ -716,7 +719,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
   const renderResourceLabelContent = (arg: any) => {
     const { resource } = arg;
-    console.log(resource);
 
     const initials = resource.title
       .split(" ")
@@ -752,6 +754,16 @@ const FullCalenDarCustom: React.FC<any> = () => {
       endTime: bh.endTime,
     })),
   );
+
+  const handleChangeStatus = async (event: any) => {
+    const { value } = event.target;
+    try {
+      await appointmentsUpdateStatus(eventId, value);
+      toast.success("status appointment updated successfully.");
+    } catch (error) {
+      toast.error("Failed to update status appointment.");
+    }
+  };
   return (
     <>
       <FullCalendar
@@ -905,6 +917,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       {eventId && (
                         <select
                           id="status"
+                          name="status"
+                          value={eventStatus}
+                          onChange={handleChangeStatus}
                           className="dark:bg-gray-700 dark:border-gray-600 block w-[150px] rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
                         >
                           {bookingStatus?.map((item, i) => (

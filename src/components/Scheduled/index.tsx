@@ -12,17 +12,21 @@ import { table, time } from "console";
 import { Form, Formik } from "formik";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 
 import PaginationCustom from "../Pagination/Pagination";
 import ModalEdit from "./ModalEdit";
+import { getLocations } from "@/services/location.service";
+import { serialize } from "v8";
+import { useSearchParams } from "next/navigation";
 
 interface SearchValues {
   name: string;
   email: string;
   phone: number | null;
   address: string;
+  location_id: string;
 }
 
 interface PaginationData {
@@ -33,6 +37,7 @@ interface PaginationData {
 }
 
 export default function Scheduled() {
+  const searchParams = useSearchParams();
   const { visibleId, toggle } = useModal();
   const [startTime, setStarTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -46,7 +51,10 @@ export default function Scheduled() {
     total_items: 0,
     per_page: 10,
   });
-  const [assistantData, setAssistantData] = useState<ScheduledOfUser[]>([]);
+
+  const [listLocations, setListLocations] = useState<any | undefined>();
+  const [location, setLocation] = useState<any | undefined>();
+
   const onPageChange = (page: number) => {
     fetchDataAssistantList(page);
   };
@@ -56,11 +64,42 @@ export default function Scheduled() {
     email: "",
     phone: null,
     address: "",
+    location_id: "",
   });
 
   useEffect(() => {
-    fetchDataAssistantList(1);
+    fetchLocations();
   }, []);
+
+  const fetchLocations = async () => {
+    try {
+      const response = await getLocations();
+      setListLocations(response?.data?.data);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (listLocations) {
+      setLocation(listLocations[0].id);
+    }
+  }, [listLocations]);
+
+  useEffect(() => {
+    if (location) {
+      setSearchValues((prev) => ({
+        ...prev,
+        location_id: location,
+      }));
+    }
+  }, [location]);
+
+  useEffect(() => {
+    if (searchValues.location_id) {
+      fetchDataAssistantList(1);
+    }
+  }, [searchValues.location_id]);
 
   useEffect(() => {
     if (isEditSuccess) {
@@ -77,17 +116,15 @@ export default function Scheduled() {
     }
   };
 
-  const fetchDataAssistantList = async (page: number) => {
-    const assistants = await getListAssistant(searchValues, page);
-    setAssistantData(assistants.data.assistants);
-    setPaginationData(assistants.data.paginationData);
+  const fetchDataAssistantList = useCallback(
+    async (page: number) => {
+      const assistants = await getListAssistant(searchValues, page);
+      setPaginationData(assistants.data.paginationData);
 
-    setAssistantList(assistants.data.assistants);
-  };
-
-  useEffect(() => {
-    fetchDataAssistantList(1);
-  }, []);
+      setAssistantList(assistants.data.assistants);
+    },
+    [searchValues],
+  );
 
   const HEADERSTABLE = [
     "",
@@ -135,130 +172,163 @@ export default function Scheduled() {
       });
   };
 
+  const createQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set(name, value);
+
+      return params.toString();
+    },
+    [searchParams],
+  );
+
   return (
-    <div className="h-[700px] w-full rounded-2xl border-2  border-stroke pb-2.5  pt-6 dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
-      <div className="relative h-full overflow-x-auto sm:rounded-lg">
-        <table className="text-gray-500 dark:text-gray-400 w-full text-left text-sm rtl:text-right">
-          <thead>
-            <tr>
-              {HEADERSTABLE.map((header) => (
-                <th scope="row" key={header} className="pl-10 pr-10">
-                  <h5 className="text-lg font-semibold text-black">{header}</h5>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {assistantLists.map((item, index) => (
-              <tr
-                key={index}
-                className=" even:bg-gray-50 even:dark:bg-gray-800"
-              >
-                <td scope="row" className="px-6 py-4">
-                  <div className="flex w-max items-center gap-2">
-                    <Image
-                      src={item.avatar ?? "/images/scheduled/avatar.png"}
-                      alt={item.userName}
-                      width={40}
-                      height={40}
-                      className="w-[40px]' h-[40px]"
-                    />
-
-                    <div className="">
-                      <p className="flex text-lg font-medium text-black dark:text-white ">
-                        {item.name}
-                      </p>
-                      <p className="w-max text-sm text-black dark:text-white ">
-                        {`${totalHours(item.schedule)}h`}
-                      </p>
-                    </div>
-                    <Link href={`scheduled-shifts/edit/${item.id}`}>
-                      <Image
-                        src="/images/scheduled/edit.svg"
-                        width={30}
-                        height={30}
-                        alt="edit"
-                      />
-                    </Link>
-                  </div>
-                </td>
-                {HEADERSTABLE.slice(1).map((headerDay, idx) => (
-                  <td
-                    scope="row"
-                    className="relative px-6 py-4"
-                    key={headerDay}
-                  >
-                    <td key={headerDay}>
-                      {checkScheduleOfDays(headerDay, item.id).map(
-                        (time: any, id: number) => (
-                          <div
-                            key={time.id}
-                            className=" bg-gray-4 mt-2 w-max cursor-pointer items-center rounded-2xl pb-1.5 pl-1.5 pr-1.5 pt-1.5 lg:pl-5 lg:pr-5"
-                            onClick={() => {
-                              toggle(`${index}-${idx}-${time.id}`);
-                              setVisibleModalId(`${index}-${idx}`);
-                              setStarTime(time.start_time);
-                              setEndTime(time.end_time);
-                              setId(time.id);
-                            }}
-                          >
-                            <p className="w-max text-sm text-black dark:text-white">
-                              {`${time.start_time} - ${time.end_time}`}
-                            </p>
-                          </div>
-                        ),
-                      )}
-                      {visibleId === `${index}-${idx}-${id}` && (
-                        <div className="absolute  -bottom-20 right-0 z-9 w-40 rounded-md border-[1px] border-black bg-white p-2">
-                          <p
-                            className="w-max cursor-pointer text-sm text-black dark:text-white"
-                            onClick={() => toggle("Editthisday")}
-                          >
-                            Edit this day
-                          </p>
-                          <Link href={`scheduled-shifts/edit/${item.id}`}>
-                            <p className="w-max cursor-pointer text-sm text-black dark:text-white">
-                              Edit regular shifts
-                            </p>
-                          </Link>
-
-                          <p className="w-max text-sm text-black dark:text-white ">
-                            Add time off
-                          </p>
-
-                          {/* <p className="w-max text-sm text-red"> */}
-                          <p
-                            className="w-max cursor-pointer text-sm text-black dark:text-white"
-                            onClick={() => handleButtonDelete(id)}
-                          >
-                            {" "}
-                            Delete this shifts
-                          </p>
-                        </div>
-                      )}
-                      {visibleId === "Editthisday" && (
-                        <ModalEdit
-                          setStartTime={setStarTime}
-                          setEndTime={setEndTime}
-                          startTime={startTime}
-                          endTime={endTime}
-                          toggle={toggle}
-                          handleSaveEdit={handleSaveEdit}
-                        />
-                      )}
-                    </td>
-                  </td>
+    <div>
+      {listLocations && (
+        <select
+          className="mb-4 w-[20%] rounded-xl border"
+          name="whatever"
+          id="frm-whatever"
+          value={location}
+          onChange={(location) => setLocation(location.target.value)}
+        >
+          {listLocations.map((location: any, index: number) => (
+            <option key={index} value={location.id}>
+              {location.location_name}
+            </option>
+          ))}
+        </select>
+      )}
+      <div className="h-[700px] w-full rounded-2xl border-2  border-stroke pb-2.5  pt-6 dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+        <div className="relative h-full overflow-x-auto sm:rounded-lg">
+          <table className="text-gray-500 dark:text-gray-400 w-full text-left text-sm rtl:text-right">
+            <thead>
+              <tr>
+                {HEADERSTABLE.map((header) => (
+                  <th scope="row" key={header} className="pl-10 pr-10">
+                    <h5 className="text-lg font-semibold text-black">
+                      {header}
+                    </h5>
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {assistantLists.map((item, index) => (
+                <tr
+                  key={index}
+                  className=" even:bg-gray-50 even:dark:bg-gray-800"
+                >
+                  <td scope="row" className="px-6 py-4">
+                    <div className="flex w-max items-center gap-2">
+                      <Image
+                        src={item.avatar ?? "/images/scheduled/avatar.png"}
+                        alt={item.userName}
+                        width={40}
+                        height={40}
+                        className="w-[40px]' h-[40px]"
+                      />
+
+                      <div className="">
+                        <p className="flex text-lg font-medium text-black dark:text-white ">
+                          {item.name}
+                        </p>
+                        <p className="w-max text-sm text-black dark:text-white ">
+                          {`${totalHours(item.schedule)}h`}
+                        </p>
+                      </div>
+                      <Link
+                        href={`scheduled-shifts/edit/${item.id}?${createQueryString("location_id", location)}`}
+                      >
+                        <Image
+                          src="/images/scheduled/edit.svg"
+                          width={30}
+                          height={30}
+                          alt="edit"
+                        />
+                      </Link>
+                    </div>
+                  </td>
+                  {HEADERSTABLE.slice(1).map((headerDay, idx) => (
+                    <td
+                      scope="row"
+                      className="relative px-6 py-4"
+                      key={headerDay}
+                    >
+                      <td key={headerDay}>
+                        {checkScheduleOfDays(headerDay, item.id).map(
+                          (time: any, id: number) => (
+                            <div
+                              key={time.id}
+                              className=" mt-2 w-max cursor-pointer items-center rounded-2xl bg-gray-4 pb-1.5 pl-1.5 pr-1.5 pt-1.5 lg:pl-5 lg:pr-5"
+                              onClick={() => {
+                                toggle(`${index}-${idx}-${time.id}`);
+                                setVisibleModalId(`${index}-${idx}`);
+                                setStarTime(time.start_time);
+                                setEndTime(time.end_time);
+                                setId(time.id);
+                              }}
+                            >
+                              <p className="w-max text-sm text-black dark:text-white">
+                                {`${time.start_time} - ${time.end_time}`}
+                              </p>
+                            </div>
+                          ),
+                        )}
+                        {visibleId === `${index}-${idx}-${id}` && (
+                          <div className="absolute  -bottom-20 right-0 z-9 w-40 rounded-md border-[1px] border-black bg-white p-2">
+                            <p
+                              className="w-max cursor-pointer text-sm text-black dark:text-white"
+                              onClick={() => toggle("Editthisday")}
+                            >
+                              Edit this day
+                            </p>
+                            <Link
+                              href={`scheduled-shifts/edit/${item.id}?${createQueryString("location_id", location)}`}
+                            >
+                              <p className="w-max cursor-pointer text-sm text-black dark:text-white">
+                                Edit regular shifts
+                              </p>
+                            </Link>
+
+                            <p className="w-max text-sm text-black dark:text-white ">
+                              Add time off
+                            </p>
+
+                            {/* <p className="w-max text-sm text-red"> */}
+                            <p
+                              className="w-max cursor-pointer text-sm text-black dark:text-white"
+                              onClick={() => handleButtonDelete(id)}
+                            >
+                              {" "}
+                              Delete this shifts
+                            </p>
+                          </div>
+                        )}
+                        {visibleId === "Editthisday" && (
+                          <ModalEdit
+                            setStartTime={setStarTime}
+                            setEndTime={setEndTime}
+                            startTime={startTime}
+                            endTime={endTime}
+                            toggle={toggle}
+                            handleSaveEdit={handleSaveEdit}
+                          />
+                        )}
+                      </td>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <PaginationCustom
+          currentPage={paginationData.current_page}
+          totalPages={paginationData.total_pages}
+          onPageChange={onPageChange}
+        />
       </div>
-      <PaginationCustom
-        currentPage={paginationData.current_page}
-        totalPages={paginationData.total_pages}
-        onPageChange={onPageChange}
-      />
     </div>
   );
 }
