@@ -100,6 +100,15 @@ const FullCalenDarCustom: React.FC<any> = () => {
     useState<SearchServiceOptionValues>({
       name_service_option: "",
     });
+
+  const [bookingDetail, setBookingDetail] = useState<any | null>(null);
+  const [isUpdateAssistant, setIsUpdateAssistant] = useState<boolean>(false);
+  const [serviceOptionUpdateId, setServiceOptionUpdateId] = useState<
+    any | null
+  >(null);
+  const [selectedAssistant, setSelectedAssistant] = useState<
+    string | undefined
+  >(undefined);
   useEffect(() => {
     fetchAppointments();
     fetchService();
@@ -468,7 +477,69 @@ const FullCalenDarCustom: React.FC<any> = () => {
     formik.setFieldValue("totalFee", totalFee);
   };
 
-  const handleEditService = (id: string) => {};
+  const handleEditService = async (id: number, serviceOptionUpdateId: any) => {
+    setIsUpdateAssistant(true);
+    setServiceOptionUpdateId(serviceOptionUpdateId);
+    const existingOption = formik.values.services.find(
+      (option) => option.serviceOptionId === serviceOptionUpdateId,
+    );
+    setSelectedAssistant(existingOption?.assistant.id);
+    setBookingDetail(existingOption);
+  };
+  const handleInputChange = (e: any) => {
+    const { name, value } = e.target;
+    setBookingDetail((prevDetail: any) => ({
+      ...prevDetail,
+      [name]: value,
+    }));
+  };
+
+  const handleAssistantChange = async (e: any) => {
+    const selectedAssistant = e.target.value;
+    const result = await getServiceOptionShow(
+      serviceOptionUpdateId,
+      selectedAssistant,
+    );
+    const { serviceOptionId, title, price, time, assistant } = result.data.data;
+    setBookingDetail((prevDetail: any) => ({
+      ...prevDetail,
+      price: price,
+      assistant: {
+        id: selectedAssistant,
+        name: e.target.options[e.target.selectedIndex].text,
+      },
+    }));
+  };
+
+  const handleUpdateAssistant = () =>{
+    const { serviceOption, title, price, time, assistant } = bookingDetail;
+    const existingOption = formik.values.services.find(
+      (option) => option.serviceOptionId === serviceOptionUpdateId,
+    );
+    if (existingOption) {
+      // Cập nhật các giá trị của existingOption với newService
+      existingOption.serviceOptionId = serviceOptionUpdateId;
+      existingOption.price = price;
+      existingOption.assistant = {
+        id: assistant.id,
+        name: assistant.name,
+      };
+
+      // Cập nhật lại giá trị trong Formik
+       formik.setFieldValue("services", [...formik.values.services]);
+
+       // Tính toán sau khi đã cập nhật danh sách dịch vụ
+       const { totalTime, totalFee } = calculateTotals(formik.values.services);
+       formik.setFieldValue("totalTime", totalTime);
+       formik.setFieldValue("totalFee", totalFee);
+       setOriginalTotalFee(totalFee);
+       setIsUpdateAssistant(false);
+    }
+  }
+
+  const onCloseEditService = () => {
+    setIsUpdateAssistant(false);
+  };
 
   const handleSelectCustomer = (customer: CustomerType) => {
     formik.setValues({
@@ -681,7 +752,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
       endTime: bh.endTime,
     })),
   );
-
   return (
     <>
       <FullCalendar
@@ -886,7 +956,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
                                     <button
                                       type="button"
                                       onClick={() =>
-                                        handleEditService(detail?.id)
+                                        handleEditService(
+                                          detail?.id,
+                                          detail?.serviceOptionId,
+                                        )
                                       }
                                       className="hover:text-primary"
                                     >
@@ -1261,9 +1334,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
                           <div className="flex justify-end space-x-3.5">
                             <button
                               type="button"
-                              onClick={() =>
-                                handleEditService(detail?.serviceOptionId)
-                              }
+                              // onClick={() =>
+                              //   handleEditService(detail?.serviceOptionId)
+                              // }
                               className="hover:text-primary"
                             >
                               <FaRegPenToSquare
@@ -1349,6 +1422,61 @@ const FullCalenDarCustom: React.FC<any> = () => {
               </div>
             </div>
           </div>
+        </Drawer.Items>
+      </Drawer>
+      <Drawer
+        className="w-[30%]"
+        open={isUpdateAssistant}
+        onClose={onCloseEditService}
+        position="right"
+        backdrop={false}
+      >
+        <Drawer.Header titleIcon={() => <></>} closeIcon={FaArrowRight} />
+        <Drawer.Items>
+          {isUpdateAssistant && (
+            <div className="px-6.5">
+              <div className="mb-4">
+                <label className="text-gray-700 block text-sm font-medium">
+                  Giá tiền:
+                </label>
+                <input
+                  type="number"
+                  name="price"
+                  value={bookingDetail?.price}
+                  onChange={handleInputChange}
+                  className="mt-1 w-full rounded border border-gray-300 p-2"
+                  placeholder="Nhập giá tiền"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="text-gray-700 block text-sm font-medium">
+                  Chọn Assistant:
+                </label>
+                <select
+                  value={bookingDetail?.assistant?.id}
+                  onChange={handleAssistantChange}
+                  className="mt-1 w-full rounded border border-gray-300 p-2"
+                >
+                  <option value="">Chọn...</option>
+                  {resources.map((resource) => (
+                    <option key={resource.id} value={resource.id}>
+                      {resource.title}
+                    </option>
+                  ))}
+                  {/* Thêm các tùy chọn khác ở đây */}
+                </select>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleUpdateAssistant}
+                  className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-700"
+                >
+                  Lưu
+                </button>
+              </div>
+            </div>
+          )}
         </Drawer.Items>
       </Drawer>
       {cashPaymentVisible && (
