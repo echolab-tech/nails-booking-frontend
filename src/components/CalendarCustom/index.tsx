@@ -107,10 +107,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [serviceOptionUpdateId, setServiceOptionUpdateId] = useState<
     any | null
   >(null);
-  const [selectedAssistant, setSelectedAssistant] = useState<
-    string | undefined
-  >(undefined);
-  const [status, setStatus] = useState<string>("");
   useEffect(() => {
     fetchAppointments();
     fetchService();
@@ -480,13 +476,27 @@ const FullCalenDarCustom: React.FC<any> = () => {
     formik.setFieldValue("totalFee", totalFee);
   };
 
-  const handleEditService = async (id: number, serviceOptionUpdateId: any) => {
-    setIsUpdateAssistant(true);
-    setServiceOptionUpdateId(serviceOptionUpdateId);
-    const existingOption = formik.values.services.find(
-      (option) => option.serviceOptionId === serviceOptionUpdateId,
+  const handleRemoveServiceOptionDetail = (id: string) => {
+    const updatedServiceOptions = formik.values.services.filter(
+      (option) => option.serviceOptionId !== id,
     );
-    setSelectedAssistant(existingOption?.assistant.id);
+    // Tính lại tổng thời gian và giá sau khi xóa
+    const { totalTime, totalFee } = calculateTotals(updatedServiceOptions);
+
+    setOriginalTotalFee(totalFee);
+    // Cập nhật giá trị totalTime và totalFee trong formik
+    formik.setFieldValue("services", updatedServiceOptions);
+    formik.setFieldValue("totalTime", totalTime);
+    formik.setFieldValue("totalFee", totalFee);
+    setIsUpdateAssistant(false);
+  };
+
+  const handleEditService = async (id: any) => {
+    setIsUpdateAssistant(true);
+    setServiceOptionUpdateId(id);
+    const existingOption = formik.values.services.find(
+      (option) => option.serviceOptionId === id,
+    );
     setBookingDetail(existingOption);
   };
   const handleInputChange = (e: any) => {
@@ -503,19 +513,19 @@ const FullCalenDarCustom: React.FC<any> = () => {
       serviceOptionUpdateId,
       selectedAssistant,
     );
-    const { serviceOptionId, title, price, time, assistant } = result.data.data;
+    const { price, assistant } = result.data.data;
     setBookingDetail((prevDetail: any) => ({
       ...prevDetail,
       price: price,
       assistant: {
-        id: selectedAssistant,
-        name: e.target.options[e.target.selectedIndex].text,
+        id: assistant?.id,
+        name: assistant?.name,
       },
     }));
   };
 
-  const handleUpdateAssistant = () =>{
-    const { serviceOption, title, price, time, assistant } = bookingDetail;
+  const handleUpdateAssistant = () => {
+    const { price, assistant } = bookingDetail;
     const existingOption = formik.values.services.find(
       (option) => option.serviceOptionId === serviceOptionUpdateId,
     );
@@ -529,16 +539,16 @@ const FullCalenDarCustom: React.FC<any> = () => {
       };
 
       // Cập nhật lại giá trị trong Formik
-       formik.setFieldValue("services", [...formik.values.services]);
+      formik.setFieldValue("services", [...formik.values.services]);
 
-       // Tính toán sau khi đã cập nhật danh sách dịch vụ
-       const { totalTime, totalFee } = calculateTotals(formik.values.services);
-       formik.setFieldValue("totalTime", totalTime);
-       formik.setFieldValue("totalFee", totalFee);
-       setOriginalTotalFee(totalFee);
-       setIsUpdateAssistant(false);
+      // Tính toán sau khi đã cập nhật danh sách dịch vụ
+      const { totalTime, totalFee } = calculateTotals(formik.values.services);
+      formik.setFieldValue("totalTime", totalTime);
+      formik.setFieldValue("totalFee", totalFee);
+      setOriginalTotalFee(totalFee);
+      setIsUpdateAssistant(false);
     }
-  }
+  };
 
   const onCloseEditService = () => {
     setIsUpdateAssistant(false);
@@ -972,7 +982,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
                                       type="button"
                                       onClick={() =>
                                         handleEditService(
-                                          detail?.id,
                                           detail?.serviceOptionId,
                                         )
                                       }
@@ -1448,50 +1457,63 @@ const FullCalenDarCustom: React.FC<any> = () => {
       >
         <Drawer.Header titleIcon={() => <></>} closeIcon={FaArrowRight} />
         <Drawer.Items>
-          {isUpdateAssistant && (
-            <div className="px-6.5">
-              <div className="mb-4">
-                <label className="text-gray-700 block text-sm font-medium">
-                  Giá tiền:
-                </label>
-                <input
-                  type="number"
-                  name="price"
-                  value={bookingDetail?.price}
-                  onChange={handleInputChange}
-                  className="mt-1 w-full rounded border border-gray-300 p-2"
-                  placeholder="Nhập giá tiền"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="text-gray-700 block text-sm font-medium">
-                  Chọn Assistant:
-                </label>
-                <select
-                  value={bookingDetail?.assistant?.id}
-                  onChange={handleAssistantChange}
-                  className="mt-1 w-full rounded border border-gray-300 p-2"
+          <div className="px-6.5">
+            <h3 className="mb-4 text-2xl font-bold	text-black">Edit service</h3>
+            <div className="mb-4">
+              <label className="text-md mb-3 block font-medium text-black dark:text-white">
+                Price
+              </label>
+              <input
+                type="text"
+                name="price"
+                value={bookingDetail?.price}
+                onChange={handleInputChange}
+                className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-1.5 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                placeholder="Nhập giá tiền"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="text-md mb-3 block font-medium text-black dark:text-white">
+                Team member
+              </label>
+              <select
+                value={bookingDetail?.assistant?.id}
+                onChange={handleAssistantChange}
+                className="mt-1 w-full rounded border border-gray-300 p-2"
+              >
+                {resources.map((resource) => (
+                  <option key={resource.id} value={resource.id}>
+                    {resource.title}
+                  </option>
+                ))}
+                {/* Thêm các tùy chọn khác ở đây */}
+              </select>
+            </div>
+            <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+              <div className="w-full xl:w-1/5">
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleRemoveServiceOptionDetail(
+                      bookingDetail?.serviceOptionId,
+                    )
+                  }
+                  className="inline-flex w-full justify-center rounded border border-gray-300 bg-transparent px-4 py-2 text-white hover:bg-gray"
                 >
-                  <option value="">Chọn...</option>
-                  {resources.map((resource) => (
-                    <option key={resource.id} value={resource.id}>
-                      {resource.title}
-                    </option>
-                  ))}
-                  {/* Thêm các tùy chọn khác ở đây */}
-                </select>
+                  <BsTrash size={25} className="text-red" />
+                </button>
               </div>
-              <div className="flex justify-end">
+              <div className="w-full xl:w-4/5">
                 <button
                   type="button"
                   onClick={handleUpdateAssistant}
-                  className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-700"
+                  className="w-full rounded bg-black px-4 py-2 text-white hover:bg-blue-700"
                 >
-                  Lưu
+                  Apply
                 </button>
               </div>
             </div>
-          )}
+          </div>
         </Drawer.Items>
       </Drawer>
       {cashPaymentVisible && (
