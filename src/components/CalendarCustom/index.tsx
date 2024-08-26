@@ -36,7 +36,11 @@ import {
 } from "@/services/appointment.service";
 import { toast } from "react-toastify";
 import { BlockTimeType } from "@/types/BlockTime";
-import { addBlockedTime, getBlockType } from "@/services/blocktime.service";
+import {
+  addBlockedTime,
+  getBlockTimes,
+  getBlockType,
+} from "@/services/blocktime.service";
 import TipButtonGrid from "../TipButtonGrid";
 import PaymentButtonGrid from "../PaymentButtonGrid";
 import CashPaymentDialog from "../CashPaymentDialog";
@@ -61,9 +65,9 @@ const timeOptions = generateTimeOptions();
 
 const frequencyOptions = [
   { value: "1", label: "Don't Repeat" },
-  { value: "2", label: "Every Date" },
+  { value: "2", label: "Every Day" },
   { value: "3", label: "Every Week" },
-  { value: "4", label: "Every Year" },
+  { value: "4", label: "Every Month" },
 ];
 
 interface SearchServiceOptionValues {
@@ -107,8 +111,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [serviceOptionUpdateId, setServiceOptionUpdateId] = useState<
     any | null
   >(null);
+  const [showEndOptions, setShowEndOptions] = useState<boolean>(false);
+  const [showSpecialEndDate, setShowSpecialEndDate] = useState<boolean>(false);
+  const [showCustomTitle, setShowCustomTitle] = useState<boolean>(false);
+
   useEffect(() => {
-    fetchAppointments();
+    fetchAllData();
     fetchService();
     fetchCustomer();
     fetchServiceOption();
@@ -147,10 +155,43 @@ const FullCalenDarCustom: React.FC<any> = () => {
     });
   };
 
-  const fetchAppointments = async () => {
-    getAppointmentByDate().then((data) => {
-      setEvents(data?.data?.data);
-    });
+  // const fetchAppointments = async () => {
+  //   getAppointmentByDate().then((data) => {
+  //     setEvents(data?.data?.data);
+  //   });
+  // };
+
+  const fetchAllData = async () => {
+    try {
+      // Đợi cả hai API call hoàn thành
+      const [appointmentsResponse, blockTimesResponse] = await Promise.all([
+        getAppointmentByDate(),
+        getBlockTimes(),
+      ]);
+
+      // Xử lý dữ liệu từ cả hai API
+      const appointments = appointmentsResponse?.data?.data.map(
+        (appointment: any) => ({
+          ...appointment,
+          type: "appointment",
+        }),
+      );
+
+      const blockTimes = blockTimesResponse?.data?.data.map(
+        (blockTime: any) => ({
+          ...blockTime,
+          type: "blocktime",
+        }),
+      );
+
+      // Gộp hai mảng thành một mảng events
+      const combinedEvents = [...appointments, ...blockTimes];
+
+      // Cập nhật lại events
+      setEvents(combinedEvents);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
   };
 
   const fetchCustomer = async () => {
@@ -172,17 +213,32 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const fetchDataBlockType = async () => {
-    const blockType = await getBlockType();
+    //const blockType = await getBlockType();
     // setBlockType(blockType.data.dataBlockType);
     setBlockType([
       { id: 1, name_block_type: "Lunch" },
       { id: 2, name_block_type: "Meeting" },
       { id: 3, name_block_type: "Training" },
+      { id: 4, name_block_type: "Custom" },
     ]);
   };
 
+  // const fetchBlockTimes = async () => {
+  //   try {
+  //     const response = await getBlockTimes();
+  //     setBlockTimes(response.data.data);
+  //   } catch (error) {
+  //     console.error("Error fetching categories:", error);
+  //   }
+  // };
+
   const handleEventClick = (arg: any) => {
+    const eventType = arg?.event?.extendedProps?.type;
     setStartTime(arg.event.startStr);
+    if (eventType == "blocktime") {
+      setOpenBlockTime(true);
+      return;
+    }
     getAppointmentById(arg?.event?.extendedProps?.booking_id).then((result) => {
       formik.setValues({
         ...formik.values,
@@ -348,6 +404,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
       );
       setLastEventId(null);
     }
+    setShowEndOptions(false);
+    setShowSpecialEndDate(false);
     setOpenBlockTime(false);
   };
 
@@ -616,12 +674,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
     const { data } = await checkoutAppointment(eventId, formik.values);
     setOpenTips(false);
     toast.success(data.message);
-    fetchAppointments();
+    fetchAllData();
   };
   const handleSuccess = (message: string) => {
     setIsSubmit(false);
     setOpenBooking(false);
-    fetchAppointments();
+    fetchAllData();
     setSelectedCustomer(false);
     formik.resetForm();
     toast.success(message);
@@ -669,14 +727,17 @@ const FullCalenDarCustom: React.FC<any> = () => {
       end_time: formatHoursMinute(endTime),
       frequency: "1",
       title: "",
+      end: "never",
+      special_end_date: "",
     },
     onSubmit: async (values) => {
       setIsSubmit(true);
       addBlockedTime(values)
         .then((data) => {
           setIsSubmit(false);
-          setOpenBlockTime(false);
+          onCloseModalBlockTime();
           formikBlockTime.resetForm();
+          fetchAllData();
           toast.success("Block time created");
         })
         .catch((e) => {
@@ -686,12 +747,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
     },
     enableReinitialize: true,
   });
-
-  const handleBlockTypeChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    formikBlockTime.setFieldValue("block_type", event.target.value);
-  };
 
   const renderCustomer = (customer: any) => {
     const initials = customer?.name
@@ -757,14 +812,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
     );
   };
 
-  const businessHours = resources.flatMap((resource) =>
-    resource.businessHours.map((bh) => ({
-      daysOfWeek: bh.daysOfWeek,
-      startTime: bh.startTime,
-      endTime: bh.endTime,
-    })),
-  );
-
   const handleChangeStatus = async (event: any) => {
     const { value } = event.target;
     try {
@@ -803,7 +850,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
         eventDrop={handleDrop}
         dayMinWidth={200}
         resourceLabelContent={renderResourceLabelContent}
-        businessHours={businessHours}
       />
       {openSelect && (
         <Modal size="sm" show={openSelect} onClose={onCloseModalSelect}>
@@ -1086,25 +1132,31 @@ const FullCalenDarCustom: React.FC<any> = () => {
         </Drawer.Items>
       </Drawer>
       <Drawer
-        className="p- flex h-full w-[50%] flex-col p-6"
+        className="flex h-full w-[30%] flex-col p-6"
         open={openBlockTime}
         onClose={onCloseModalBlockTime}
         position="right"
         backdrop={false}
       >
-        <Drawer.Header titleIcon={() => <></>} title="Add blocked time" />
+        <Drawer.Header titleIcon={() => <></>} />
         <Drawer.Items>
           <FormikProvider value={formikBlockTime}>
             <Form>
               <div className="flex h-screen">
                 <div className="w-full overflow-auto">
                   <div className="mb-4">
-                    <label htmlFor="blockType">Block type</label>
+                    <h3 className="mb-4 text-2xl font-bold	text-black">
+                      {" "}
+                      Add blocked time
+                    </h3>
                     <Field
                       as="select"
                       type="text"
                       name="block_type"
-                      onChange={handleBlockTypeChange}
+                      onChange={(e: any) => {
+                        formikBlockTime.handleChange(e);
+                        setShowCustomTitle(e.target.value === "4");
+                      }}
                       className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                     >
                       {blockType.map((block) => (
@@ -1114,17 +1166,20 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       ))}
                     </Field>
                   </div>
+                  {showCustomTitle && (
+                    <div className="mb-4">
+                      <label htmlFor="title">Title</label>
+                      <Field
+                        type="text"
+                        name="title"
+                        className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                      />
+                    </div>
+                  )}
                   <div className="mb-4">
-                    <label htmlFor="title">Title</label>
+                    <label htmlFor="reason">Description</label>
                     <Field
-                      type="text"
-                      name="title"
-                      className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label htmlFor="reason">Reason</label>
-                    <Field
+                      as="textarea"
                       type="text"
                       name="reason"
                       className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
@@ -1193,6 +1248,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
                     <Field
                       as="select"
                       name="frequency"
+                      onChange={(e: any) => {
+                        formikBlockTime.handleChange(e);
+                        setShowEndOptions(e.target.value !== "1");
+                      }}
                       className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                     >
                       {frequencyOptions.map((freq) => (
@@ -1202,6 +1261,34 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       ))}
                     </Field>
                   </div>
+                  {showEndOptions && (
+                    <>
+                      <div className="mb-4">
+                        <label htmlFor="end">End</label>
+                        <Field
+                          as="select"
+                          name="end"
+                          onChange={(e: any) => {
+                            formikBlockTime.handleChange(e);
+                            setShowSpecialEndDate(e.target.value === "special");
+                          }}
+                          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                        >
+                          <option value="never">Never</option>
+                          <option value="special">On specific date</option>
+                        </Field>
+                      </div>
+                      {showSpecialEndDate && (
+                        <div className="mb-4">
+                          <Field
+                            type="date"
+                            name="special_end_date"
+                            className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
                   <div className="flex justify-center p-4">
                     <button
                       disabled={isSubmit}
