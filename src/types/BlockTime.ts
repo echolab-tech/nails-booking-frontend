@@ -7,4 +7,6 @@ export interface BlockTimeType {
   end_time: string;
   frequency: string;
   title: string;
+  end: string;
+  special_end_date: string;
 }
