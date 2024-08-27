@@ -9,6 +9,11 @@ export const getBlockType = async (): Promise<any> => {
   return await http.get<any>("/block-type");
 };
 
-export const getBlockTimes = async (): Promise<any> => {
-  return await http.get<any>("/block-times");
+export const getBlockTimes = async (
+  start: string,
+  end: string,
+): Promise<any> => {
+  return await http.get<any>(
+    `/block-times?start_date=${start}&end_date=${end}`,
+  );
 };
