@@ -19,7 +19,7 @@ import { BsTrash } from "react-icons/bs";
 import { GoInbox } from "react-icons/go";
 import { CustomerType } from "@/types/customer";
 import { getAllCustomer } from "@/services/customer.service";
-import { addMinutes } from "date-fns";
+import { addMinutes, format } from "date-fns";
 import { toZonedTime, formatInTimeZone } from "date-fns-tz";
 import {
   getServiceOptionShow,
@@ -116,7 +116,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [showCustomTitle, setShowCustomTitle] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchAllData();
     fetchService();
     fetchCustomer();
     fetchServiceOption();
@@ -161,12 +160,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
   //   });
   // };
 
-  const fetchAllData = async () => {
+  const fetchAllData = async (start: string, end: string) => {
     try {
       // Đợi cả hai API call hoàn thành
       const [appointmentsResponse, blockTimesResponse] = await Promise.all([
         getAppointmentByDate(),
-        getBlockTimes(),
+        getBlockTimes(start, end),
       ]);
 
       // Xử lý dữ liệu từ cả hai API
@@ -674,12 +673,18 @@ const FullCalenDarCustom: React.FC<any> = () => {
     const { data } = await checkoutAppointment(eventId, formik.values);
     setOpenTips(false);
     toast.success(data.message);
-    fetchAllData();
+    fetchAllData(
+      format(new Date(), "dd-MM-yyyy"),
+      format(new Date(), "dd-MM-yyyy"),
+    );
   };
   const handleSuccess = (message: string) => {
     setIsSubmit(false);
     setOpenBooking(false);
-    fetchAllData();
+    fetchAllData(
+      format(new Date(), "dd-MM-yyyy"),
+      format(new Date(), "dd-MM-yyyy"),
+    );
     setSelectedCustomer(false);
     formik.resetForm();
     toast.success(message);
@@ -737,7 +742,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
           setIsSubmit(false);
           onCloseModalBlockTime();
           formikBlockTime.resetForm();
-          fetchAllData();
+          fetchAllData(
+            format(new Date(), "dd-MM-yyyy"),
+            format(new Date(), "dd-MM-yyyy"),
+          );
           toast.success("Block time created");
         })
         .catch((e) => {
@@ -821,6 +829,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
       toast.error("Failed to update status appointment.");
     }
   };
+
+  const handleDatesSet = (dateInfo: any) => {
+    const { start, end } = dateInfo;
+    fetchAllData(format(start, "dd-MM-yyyy"), format(end, "dd-MM-yyyy"));
+  };
+
   return (
     <>
       <FullCalendar
@@ -850,6 +864,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
         eventDrop={handleDrop}
         dayMinWidth={200}
         resourceLabelContent={renderResourceLabelContent}
+        datesSet={handleDatesSet}
       />
       {openSelect && (
         <Modal size="sm" show={openSelect} onClose={onCloseModalSelect}>
