@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, ChangeEvent } from "react";
+import React, { useState, useEffect, ChangeEvent, useRef } from "react";
 import FullCalendar from "@fullcalendar/react";
 import { LuCalendar } from "react-icons/lu";
 import { LuCalendarX2 } from "react-icons/lu";
@@ -13,7 +13,7 @@ import bootstrap5Plugin from "@fullcalendar/bootstrap5";
 import { getAllAssistants } from "@/services/assistants.service";
 import { Assistant, ResourceType } from "@/types/assistant";
 import { BookingFormType, EventType } from "@/types/event";
-import { Drawer, Modal, Spinner } from "flowbite-react";
+import { Datepicker, Drawer, Modal, Spinner } from "flowbite-react";
 import { FaRegPenToSquare } from "react-icons/fa6";
 import { BsTrash } from "react-icons/bs";
 import { GoInbox } from "react-icons/go";
@@ -114,6 +114,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [showEndOptions, setShowEndOptions] = useState<boolean>(false);
   const [showSpecialEndDate, setShowSpecialEndDate] = useState<boolean>(false);
   const [showCustomTitle, setShowCustomTitle] = useState<boolean>(false);
+  const [date, setDate] = useState<Date | null>(new Date());
+  const calendarRef = useRef<FullCalendar>(null);
 
   useEffect(() => {
     fetchService();
@@ -835,6 +837,13 @@ const FullCalenDarCustom: React.FC<any> = () => {
     fetchAllData(format(start, "dd-MM-yyyy"), format(end, "dd-MM-yyyy"));
   };
 
+  const handleDateChange = (newDate: Date | null) => {
+    if (newDate) {
+      setDate(newDate);
+      calendarRef.current?.getApi().gotoDate(newDate); // Điều hướng đến ngày đã chọn
+    }
+  };
+
   return (
     <>
       <FullCalendar
@@ -865,6 +874,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
         dayMinWidth={200}
         resourceLabelContent={renderResourceLabelContent}
         datesSet={handleDatesSet}
+        slotMinTime="08:00:00" // Start time at 8 AM
+        slotMaxTime="22:00:00" // End time at 10 PM
+        headerToolbar={{
+          right: "today prev,next,resourceTimeGridDay,resourceTimeGridWeek",
+          left: "title",
+        }}
       />
       {openSelect && (
         <Modal size="sm" show={openSelect} onClose={onCloseModalSelect}>
