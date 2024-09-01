@@ -14,13 +14,12 @@ import { parseISO } from "date-fns";
 import { toast } from "react-toastify";
 import Select from "react-tailwindcss-select";
 import SelectStatus from "@/components/Customer/SelectStatus";
+import { useRouter } from "next/navigation";
 
 const CustomerNewSchema = Yup.object().shape({
-  name: Yup.string().required("Please enter name"),
   phone: Yup.string()
     .matches(/^\d{10}$/, "Phone number must be exactly 10 digits")
     .required("Please enter phone"),
-  email: Yup.string().email("Invalid email").required("Please enter email"),
   status: Yup.string().required("Please select status"),
 });
 
@@ -35,6 +34,7 @@ const CustomeNewForm = () => {
   const [status, setStatus] = useState<
     { id: number; name_status: string; color_code: string }[]
   >([]);
+  const router = useRouter();
 
   useEffect(() => {
     fetchDataCountry();
@@ -111,6 +111,7 @@ const CustomeNewForm = () => {
                 .then((data) => {
                   toast.success("Customer created successfully.");
                   resetForm();
+                  router.push("/customers/list");
                 })
                 .catch((error) => {
                   toast.error("Failed to create customer.");
@@ -130,7 +131,7 @@ const CustomeNewForm = () => {
                     <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
                       <div className="w-full xl:w-1/2">
                         <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                          Name <span className="text-meta-1">*</span>
+                          Name
                         </label>
                         <Field
                           type="text"
@@ -144,7 +145,7 @@ const CustomeNewForm = () => {
                       </div>
                       <div className="w-full xl:w-1/2">
                         <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                          Address <span className="text-meta-1">*</span>
+                          Address
                         </label>
                         <Field
                           type="text"
@@ -157,7 +158,7 @@ const CustomeNewForm = () => {
                     <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
                       <div className="xl:w-1/2">
                         <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                          Avatar <span className="text-meta-1">*</span>
+                          Avatar
                         </label>
                         <div>
                           <FileInput
@@ -188,7 +189,7 @@ const CustomeNewForm = () => {
                           htmlFor="status"
                           className="block text-sm font-medium text-black"
                         >
-                          Status
+                          Status <span className="text-meta-1">*</span>
                         </label>
                         <SelectStatus
                           name="status"
@@ -210,7 +211,7 @@ const CustomeNewForm = () => {
                     <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
                       <div className="w-full xl:w-1/2">
                         <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                          Email <span className="text-meta-1">*</span>
+                          Email
                         </label>
                         <Field
                           type="email"
