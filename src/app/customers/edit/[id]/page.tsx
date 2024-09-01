@@ -17,7 +17,7 @@ import { format, parseISO } from "date-fns";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { CustomerEditForm } from "@/types/customerEditForm";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { formatDate } from "@fullcalendar/core";
 import SelectStatus from "@/components/Customer/SelectStatus";
 
@@ -28,15 +28,10 @@ import SelectStatus from "@/components/Customer/SelectStatus";
 // };
 
 const CustomerEditSchema = Yup.object().shape({
-  name: Yup.string()
-    .min(2, "Too Short!")
-    .max(50, "Too Long!")
-    .required("Required"),
   phone: Yup.string()
     .min(10, "Too Short!")
     .max(15, "Too Long!")
     .required("Required"),
-  email: Yup.string().email("Invalid email").required("Required"),
 });
 
 const CustomeEditForm = () => {
@@ -50,6 +45,7 @@ const CustomeEditForm = () => {
     { id: number; name_status: string; color_code: string }[]
   >([]);
   const [avatarImage, setAvatar] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     // Init flatpickr
@@ -132,6 +128,7 @@ const CustomeEditForm = () => {
               getCustomerUpdate(values, customerId)
                 .then((data) => {
                   toast.success("Customer update successfully.");
+                  router.push("/customers/list");
                 })
                 .catch((error) => {
                   toast.error("Failed to update customer.");
