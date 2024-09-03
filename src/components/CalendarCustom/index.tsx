@@ -760,10 +760,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
   const renderCustomer = (customer: any) => {
     const initials = customer?.name
-      .split(" ")
-      .map((name: string) => name[0])
-      .join("")
-      .slice(0, 2);
+      ? customer?.name
+          .split(" ")
+          .map((name: string) => name[0])
+          .join("")
+          .slice(0, 2)
+      : "N/A";
 
     return (
       <div
@@ -879,6 +881,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
         headerToolbar={{
           right: "today prev,next,resourceTimeGridDay,resourceTimeGridWeek",
           left: "title",
+        }}
+        titleFormat={{
+          weekday: "long", // Display the full day of the week
+          year: "numeric", // Display the year
+          month: "long", // Display the full month name
+          day: "numeric", // Display the day number
         }}
       />
       {openSelect && (
