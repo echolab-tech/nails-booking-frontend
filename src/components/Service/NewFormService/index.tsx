@@ -30,6 +30,7 @@ import {
 import "react-toastify/dist/ReactToastify.css";
 import { ServiceLocationType, serviceType } from "@/types/service";
 import { getLocations } from "@/services/location.service";
+import SubServices from "./SubServices";
 
 const ServiceSingleNew = () => {
   const [categoryData, setCategoryData] = useState<CATEGORYESHOW[]>([]);
@@ -113,6 +114,17 @@ const ServiceSingleNew = () => {
     setValues({ ...values, serviceOptions: updatedServiceOptions });
   };
 
+  const handleRemoveSubService = (
+    index: number,
+    values: any,
+    setValues: any,
+  ) => {
+    const updateSubService = values.subServices.filter(
+      (_: any, i: number) => i !== index,
+    );
+    setValues({ ...values, subServices: updateSubService });
+  };
+
   const handleAddOption = (values: any, setValues: any) => {
     const newServiceOptions = {
       name: null,
@@ -132,6 +144,19 @@ const ServiceSingleNew = () => {
     });
   };
 
+  const handleAddSubService = (values: any, setValues: any) => {
+    const newSubService = {
+      name: null,
+      time: "60",
+      price: null,
+      description: null,
+    };
+    setValues({
+      ...values,
+      subServices: [...values.subServices, newSubService],
+    });
+  };
+
   const handleToogleSwitch = () => {
     formik.setFieldValue("is_booking_online", !formik.values.is_booking_online);
   };
@@ -142,6 +167,13 @@ const ServiceSingleNew = () => {
     serviceOptions: Yup.array().of(
       Yup.object().shape({
         price: Yup.number().required("Price is required"),
+      }),
+    ),
+    subServices: Yup.array().of(
+      Yup.object().shape({
+        price: Yup.number().required("Sub service price is required"),
+        name: Yup.string().required("Sub service name is required"),
+        time: Yup.number().required("Sub service time is required"),
       }),
     ),
     serviceLocations: Yup.array()
@@ -191,6 +223,7 @@ const ServiceSingleNew = () => {
           ),
         },
       ],
+      subServices: service?.subServices || [],
       serviceLocations:
         service?.serviceLocations?.map(
           (location: ServiceLocationType) => location.location_id,
@@ -393,6 +426,31 @@ const ServiceSingleNew = () => {
                   <AiFillPlusCircle />
                 </button>
               </div>
+              {/* sub service */}
+              <div className="border-assistant p-6.5">
+                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                  <div className="flex flex-col">
+                    <b>Sub service</b>
+                  </div>
+                </label>
+                <SubServices
+                  formik={formik}
+                  optionTime={optionTime}
+                  optionPriceType={optionPriceType}
+                  handleRemove={handleRemoveSubService}
+                />
+                <button
+                  className="text-md flex items-center font-medium text-blue-500 dark:text-blue-500"
+                  type="button"
+                  onClick={() =>
+                    handleAddSubService(formik.values, formik.setValues)
+                  }
+                >
+                  Add sub service
+                  <AiFillPlusCircle />
+                </button>
+              </div>
+
               <div className="flex justify-center p-6.5">
                 <button
                   type="button"
