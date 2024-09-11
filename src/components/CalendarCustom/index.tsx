@@ -419,7 +419,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleDrop = (info: any) => {
-    console.log(info.event._def.extendedProps.booking_id);
+    const timeZone = "Asia/Ho_Chi_Minh";
+
     getAppointmentById(info.event._def.extendedProps?.booking_id).then(
       (result) => {
         formik.setValues({
@@ -437,62 +438,59 @@ const FullCalenDarCustom: React.FC<any> = () => {
         setOriginalTotalFee(totalFee);
         const originalServices = result?.data?.data?.bookingDetails;
         const selectedAssistant = info.event._def.resourceIds[0];
-        setServiceOptionUpdateId(
-          info.event._def.extendedProps?.serviceOptionId,
-        );
 
-        const serviceUpdateDrop = { ...info.event._def.extendedProps };
-        getServiceOptionShow(serviceOptionUpdateId, selectedAssistant).then(
+        getServiceOptionShow(info.event._def.extendedProps?.serviceOptionId, selectedAssistant).then(
           (service) => {
-            setServiceOptionUpdateIdNew(service.data.data.serviceOptionId);
             const { price, assistant, time } = service.data.data;
-            // serviceUpdateDrop.price = price;
-            // serviceUpdateDrop.time = time;
-
-            // if (assistant) {
-            //   serviceUpdateDrop.assistant = {
-            //     id: assistant.id,
-            //     name: assistant.name,
-            //   };
-            // }
-            // serviceUpdateDrop.serviceOptionId = serviceOptionUpdateIdNew;
-            // Lưu lại danh sách services ban đầu trước khi thay đổi
 
             // Tìm kiếm service option
             const existingOption = originalServices.find(
-              (option: any) => option.serviceOptionId === serviceOptionUpdateId,
+              (option: any) => option.serviceOptionId === info.event._def.extendedProps?.serviceOptionId,
             );
 
+
+
             if (existingOption) {
+              const lastServiceEndTime = new Date(info.event.startStr);
+
+              const newStartTime = toZonedTime(lastServiceEndTime, timeZone);
+              const newEndTime = addMinutes(newStartTime, time);
               // Nếu tìm thấy serviceOption, cập nhật các giá trị
-              existingOption.serviceOptionId = serviceOptionUpdateIdNew;
+              existingOption.serviceOptionId = service.data.data.serviceOptionId;
               existingOption.price = price;
               existingOption.time = time;
               existingOption.assistant = {
                 id: assistant.id,
                 name: assistant.name,
               };
+              existingOption.end = formatInTimeZone(
+                newEndTime,
+                timeZone,
+                "yyyy-MM-dd HH:mm:ssXXX",
+              );
+              existingOption.start = formatInTimeZone(
+                newStartTime,
+                timeZone,
+                "yyyy-MM-dd HH:mm:ssXXX",
+              );
 
-              // Cập nhật lại danh sách services sau khi update
-              formik.setFieldValue("services", [...originalServices]);
-            } else {
-              // Nếu không tìm thấy, set lại giá trị cũ
-              // formik.setFieldValue("services", originalServices);
             }
 
-            // Tính toán sau khi đã cập nhật hoặc reset danh sách dịch vụ
             const { totalTime, totalFee } = calculateTotals(originalServices);
-
-            // Cập nhật lại các giá trị totalTime và totalFee sau khi tính toán
-            formik.setFieldValue("totalTime", totalTime);
-            formik.setFieldValue("totalFee", totalFee);
-
-            // Cập nhật giá trị fee ban đầu
-            setOriginalTotalFee(totalFee);
-
+            let values = {
+              customer: result?.data?.data?.customer,
+              services: [
+                ...originalServices,
+              ],
+              tips: [],
+              paymentMethod: "",
+              payTotal: 0,
+              totalFee: totalFee,
+              totalTime: totalTime,
+            }
             updateAppointment(
               info.event._def.extendedProps.booking_id,
-              originalServices,
+              values,
             ).then((result) => {
               handleSuccess("Appointment updated");
             });
