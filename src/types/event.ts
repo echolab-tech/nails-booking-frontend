@@ -26,6 +26,7 @@ type serviceSelectType = {
   price: number | null;
   start: string;
   end: string;
+  time: string;
   assistant: {
     id: string;
     name: string;

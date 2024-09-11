@@ -116,6 +116,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [showCustomTitle, setShowCustomTitle] = useState<boolean>(false);
   const [date, setDate] = useState<Date | null>(new Date());
   const calendarRef = useRef<FullCalendar>(null);
+  
+  // const [serviceOptionParentId, setServiceOptionParentId] = useState<
+  //   any | null
+  // >(null);
+
+  const [serviceOptionUpdateIdNew, setServiceOptionUpdateIdNew] = useState<
+    any | null
+  >(null);
 
   useEffect(() => {
     fetchService();
@@ -411,7 +419,87 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleDrop = (info: any) => {
-    console.log(info.event);
+    console.log(info.event._def.extendedProps.booking_id);
+    getAppointmentById(info.event._def.extendedProps?.booking_id).then(
+      (result) => {
+        formik.setValues({
+          ...formik.values,
+          customer: result?.data?.data?.customer,
+          services: result?.data?.data?.bookingDetails,
+          totalFee: Number(result?.data?.data?.total_fee),
+          totalTime: result?.data?.data?.total_time,
+        });
+        setEventStatus(result?.data?.data?.status);
+        setSelectedCustomer(true);
+        const { totalFee } = calculateTotals(
+          result?.data?.data?.bookingDetails,
+        );
+        setOriginalTotalFee(totalFee);
+        const originalServices = result?.data?.data?.bookingDetails;
+        const selectedAssistant = info.event._def.resourceIds[0];
+        setServiceOptionUpdateId(
+          info.event._def.extendedProps?.serviceOptionId,
+        );
+
+        const serviceUpdateDrop = { ...info.event._def.extendedProps };
+        getServiceOptionShow(serviceOptionUpdateId, selectedAssistant).then(
+          (service) => {
+            setServiceOptionUpdateIdNew(service.data.data.serviceOptionId);
+            const { price, assistant, time } = service.data.data;
+            // serviceUpdateDrop.price = price;
+            // serviceUpdateDrop.time = time;
+
+            // if (assistant) {
+            //   serviceUpdateDrop.assistant = {
+            //     id: assistant.id,
+            //     name: assistant.name,
+            //   };
+            // }
+            // serviceUpdateDrop.serviceOptionId = serviceOptionUpdateIdNew;
+            // Lưu lại danh sách services ban đầu trước khi thay đổi
+
+            // Tìm kiếm service option
+            const existingOption = originalServices.find(
+              (option: any) => option.serviceOptionId === serviceOptionUpdateId,
+            );
+
+            if (existingOption) {
+              // Nếu tìm thấy serviceOption, cập nhật các giá trị
+              existingOption.serviceOptionId = serviceOptionUpdateIdNew;
+              existingOption.price = price;
+              existingOption.time = time;
+              existingOption.assistant = {
+                id: assistant.id,
+                name: assistant.name,
+              };
+
+              // Cập nhật lại danh sách services sau khi update
+              formik.setFieldValue("services", [...originalServices]);
+            } else {
+              // Nếu không tìm thấy, set lại giá trị cũ
+              // formik.setFieldValue("services", originalServices);
+            }
+
+            // Tính toán sau khi đã cập nhật hoặc reset danh sách dịch vụ
+            const { totalTime, totalFee } = calculateTotals(originalServices);
+
+            // Cập nhật lại các giá trị totalTime và totalFee sau khi tính toán
+            formik.setFieldValue("totalTime", totalTime);
+            formik.setFieldValue("totalFee", totalFee);
+
+            // Cập nhật giá trị fee ban đầu
+            setOriginalTotalFee(totalFee);
+
+            updateAppointment(
+              info.event._def.extendedProps.booking_id,
+              originalServices,
+            ).then((result) => {
+              handleSuccess("Appointment updated");
+            });
+          },
+        );
+      },
+    );
   };
 
   const handleShowService = () => {
@@ -572,10 +660,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
       serviceOptionUpdateId,
       selectedAssistant,
     );
-    const { price, assistant } = result.data.data;
+    setServiceOptionUpdateIdNew(result.data.data.serviceOptionId);
+    const { price, assistant, time } = result.data.data;
     setBookingDetail((prevDetail: any) => ({
       ...prevDetail,
       price: price,
+      time: time,
       assistant: {
         id: assistant?.id,
         name: assistant?.name,
@@ -584,18 +674,27 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleUpdateAssistant = () => {
-    const { price, assistant } = bookingDetail;
+    const timeZone = "Asia/Ho_Chi_Minh";
+    const { price, assistant, time } = bookingDetail;
     const existingOption = formik.values.services.find(
       (option) => option.serviceOptionId === serviceOptionUpdateId,
     );
+    const newStartTime = toZonedTime(bookingDetail.start, timeZone);
+    const newEndTime = addMinutes(newStartTime, time);
     if (existingOption) {
       // Cập nhật các giá trị của existingOption với newService
-      existingOption.serviceOptionId = serviceOptionUpdateId;
+      existingOption.serviceOptionId = serviceOptionUpdateIdNew;
       existingOption.price = price;
-      existingOption.assistant = {
-        id: assistant.id,
-        name: assistant.name,
-      };
+      existingOption.time = time;
+      existingOption.end = formatInTimeZone(
+        newEndTime,
+        timeZone,
+        "yyyy-MM-dd HH:mm:ssXXX",
+      ),
+        (existingOption.assistant = {
+          id: assistant.id,
+          name: assistant.name,
+        });
 
       // Cập nhật lại giá trị trong Formik
       formik.setFieldValue("services", [...formik.values.services]);
