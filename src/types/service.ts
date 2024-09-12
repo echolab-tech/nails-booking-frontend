@@ -8,7 +8,6 @@ export type serviceType = {
   serviceOptions: Array<serviceOptionType>;
   serviceCombos: Array<any>;
   serviceLocations: Array<ServiceLocationType>;
-  subServices: Array<SubServiceType>;
 };
 
 type assistantServiceType = {
@@ -49,10 +48,14 @@ export type ServiceLocationType = {
 
 export type SubServiceType = {
   id: number;
-  service_id: string;
+  name: string;
   time: string;
   price: number;
   discription: string | null;
+  assistantServices: Array<assistantServiceType>;
+  subServiceAdvancePrices: Array<serviceOptionAssistantType>;
+  serviceLocations: Array<ServiceLocationType>;
+  services: string[];
 };
 
 export type ServicePackageForm = {

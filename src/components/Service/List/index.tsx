@@ -43,11 +43,11 @@ const ServiceList = () => {
     setIsLoading(true);
     getListService(paginationData.current_page, null).then((data) => {
       setServiceData(data.data.data);
-      setPaginationData({
-        ...paginationData,
-        current_page: data.data.meta.current_page,
-        total_pages: data.data.meta.last_page,
-      });
+      // setPaginationData({
+      //   ...paginationData,
+      //   current_page: data.data.meta.current_page,
+      //   total_pages: data.data.meta.last_page,
+      // });
       setIsLoading(false);
     });
   };
@@ -76,8 +76,18 @@ const ServiceList = () => {
     setOpenModal(false);
   };
 
-  const handleEdit = (id: number) => {
-    router.push(`edit/${id}`);
+  const handleEdit = (id: number, type: string) => {
+    if (type == "service") {
+      router.push(`edit/${id}`);
+    }
+
+    if (type == "combo") {
+      router.push(`/services/package/edit/${id}`);
+    }
+
+    if (type == "sub_service") {
+      router.push(`/sub-service/edit/${id}`);
+    }
   };
 
   const onDelete = async () => {
@@ -96,14 +106,16 @@ const ServiceList = () => {
     }
   };
 
-  const handleDelete = (serviceId: number) => {
-    setIdDel(serviceId);
-    setOpenModal(true);
+  const handleDelete = (serviceId: number, type: string) => {
+    if (type == "service") {
+      setIdDel(serviceId);
+      setOpenModal(true);
+    }
   };
 
   return (
     <>
-      <div className="flex flex-col xl:flex-row">
+      <div className="flex flex-col justify-between xl:flex-row">
         <Search
           placeholder="search"
           handleSearch={(value) => handleSearch(value)}
@@ -121,6 +133,12 @@ const ServiceList = () => {
           >
             Add pakage
           </button>
+          <button
+            className="w-100 rounded bg-black px-4 py-2 text-white hover:bg-blue-600 xl:w-[150px]"
+            onClick={() => router.push("/sub-service/add")}
+          >
+            Add sub service
+          </button>
         </div>
       </div>
       {isLoading ? (
@@ -135,13 +153,7 @@ const ServiceList = () => {
                     Service Name
                   </th>
                   <th className="min-w-[150px] px-4 py-4 font-medium text-black dark:text-white">
-                    Service Option
-                  </th>
-                  <th className="min-w-[150px] px-4 py-4 font-medium text-black dark:text-white">
-                    Price
-                  </th>
-                  <th className="min-w-[120px] px-4 py-4 font-medium text-black dark:text-white">
-                    Category
+                    Option
                   </th>
                   <th className="px-4 py-4 font-medium text-black dark:text-white">
                     Type
@@ -152,52 +164,74 @@ const ServiceList = () => {
                 </tr>
               </thead>
               <tbody>
-                {serviceData?.map((serviceItem, index) => (
+                {serviceData?.map((serviceItem: any, index) => (
                   <tr key={index}>
                     <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
                       <h5 className="font-medium text-black dark:text-white">
                         {serviceItem?.name}
                       </h5>
                     </td>
-                    <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                      {serviceItem?.serviceOptions?.map((optionItem, j) => (
-                        <div key={j} className="flex">
-                          <span>{optionItem?.name}</span>
-                          <span>{optionItem?.time}min</span>
-                        </div>
-                      ))}
-                    </td>
-                    <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                      <p>
-                        {serviceItem?.serviceOptions?.map((option, index) => (
-                          <div className="flex dark:text-white" key={index}>
-                            {formatPrice(option.price)}
-                          </div>
-                        ))}
-                      </p>
-                    </td>
-                    <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+
+                    {/* Conditional rendering based on type */}
+                    {serviceItem.type === "service" && (
+                      <>
+                        <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                          {serviceItem?.serviceOptions?.map(
+                            (optionItem: any, j) => (
+                              <div key={j} className="flex">
+                                <span>{optionItem?.name}</span>
+                                <span>
+                                  {optionItem?.time}min {"- "}
+                                  {formatPrice(optionItem.price)}
+                                </span>
+                              </div>
+                            ),
+                          )}
+                        </td>
+                      </>
+                    )}
+
+                    {serviceItem.type === "combo" && (
+                      <>
+                        <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                          <p>{serviceItem?.count} services</p>
+                        </td>
+                      </>
+                    )}
+
+                    {serviceItem.type === "sub_service" && (
+                      <>
+                        <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                          <p>
+                            {serviceItem?.time} min {"- "}
+                            {formatPrice(serviceItem?.price)}
+                          </p>
+                        </td>
+                      </>
+                    )}
+
+                    {/* Common columns (Category, Type, Actions) */}
+                    {/* <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                       <p>{serviceItem?.category?.name}</p>
-                    </td>
+                    </td> */}
                     <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                      <p>
-                        {serviceItem.serviceCombos &&
-                        serviceItem.serviceCombos.length > 0
-                          ? "Combo"
-                          : "simple"}
-                      </p>
+                      <p>{serviceItem.type}</p>
                     </td>
                     <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                       <div className="flex items-center space-x-3.5">
                         <button
                           className="hover:text-primary"
-                          onClick={() => handleDelete(serviceItem?.id)}
+                          onClick={() =>
+                            handleDelete(serviceItem?.id, serviceItem?.type)
+                          }
                         >
                           <BsTrash size={25} className="text-red" />
                         </button>
                         <button
                           className="hover:text-primary"
-                          onClick={() => handleEdit(serviceItem?.id)}
+                          onClick={() =>
+                            handleEdit(serviceItem?.id, serviceItem?.type)
+                          }
                         >
                           <FaRegPenToSquare
                             size={25}
@@ -211,13 +245,13 @@ const ServiceList = () => {
               </tbody>
             </table>
           </div>
-          <div className="mt-4 flex justify-center">
+          {/* <div className="mt-4 flex justify-center">
             <PaginationCustom
               currentPage={paginationData?.current_page}
               totalPages={paginationData?.total_pages}
               onPageChange={handlePageChange}
             />
-          </div>
+          </div> */}
         </div>
       )}
       <DialogConfirm
