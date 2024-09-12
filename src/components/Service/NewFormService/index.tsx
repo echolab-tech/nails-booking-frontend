@@ -144,19 +144,6 @@ const ServiceSingleNew = () => {
     });
   };
 
-  const handleAddSubService = (values: any, setValues: any) => {
-    const newSubService = {
-      name: null,
-      time: "60",
-      price: null,
-      description: null,
-    };
-    setValues({
-      ...values,
-      subServices: [...values.subServices, newSubService],
-    });
-  };
-
   const handleToogleSwitch = () => {
     formik.setFieldValue("is_booking_online", !formik.values.is_booking_online);
   };
@@ -223,7 +210,6 @@ const ServiceSingleNew = () => {
           ),
         },
       ],
-      subServices: service?.subServices || [],
       serviceLocations:
         service?.serviceLocations?.map(
           (location: ServiceLocationType) => location.location_id,
@@ -427,29 +413,6 @@ const ServiceSingleNew = () => {
                 </button>
               </div>
               {/* sub service */}
-              <div className="border-assistant p-6.5">
-                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                  <div className="flex flex-col">
-                    <b>Sub service</b>
-                  </div>
-                </label>
-                <SubServices
-                  formik={formik}
-                  optionTime={optionTime}
-                  optionPriceType={optionPriceType}
-                  handleRemove={handleRemoveSubService}
-                />
-                <button
-                  className="text-md flex items-center font-medium text-blue-500 dark:text-blue-500"
-                  type="button"
-                  onClick={() =>
-                    handleAddSubService(formik.values, formik.setValues)
-                  }
-                >
-                  Add sub service
-                  <AiFillPlusCircle />
-                </button>
-              </div>
 
               <div className="flex justify-center p-6.5">
                 <button
