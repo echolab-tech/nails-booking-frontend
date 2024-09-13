@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-// import { deleteCustomer, getListCustomers } from "@/services/customer.service";
 
 
 interface SearchProps {
@@ -36,7 +35,6 @@ const Search: React.FC<SearchProps> = ({ handleSearch, handleInputChange }) => {
           id="searchText"
           value={searchText}
           onChange={handleTextChange}
-          // onChange={(e) => setSearchText(e.target.value)}
           placeholder="Search by name, email or mobile number"
           className="text-gray-700 focus:shadow-outline w-full appearance-none rounded border px-3 py-2 leading-tight shadow focus:outline-none"
         />
