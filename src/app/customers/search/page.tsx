@@ -2,17 +2,26 @@
 
 import React, { useState } from "react";
 
+
 interface SearchProps {
   handleSearch: (birthday: string, searchText: string) => void;
+  handleInputChange: (value: string) => void;
 }
 
-const Search: React.FC<SearchProps> = ({ handleSearch }) => {
+
+const Search: React.FC<SearchProps> = ({ handleSearch, handleInputChange }) => {
   const [birthday, setBirthday] = useState<string>("");
   const [searchText, setSearchText] = useState<string>("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSearch(birthday, searchText);
+  };
+  
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchText(value); // Cập nhật state trong component con
+    handleInputChange(value); // Gọi hàm từ lớp cha để truyền dữ liệu lên, không truyền sự kiện mà là giá trị
   };
 
   return (
@@ -25,7 +34,7 @@ const Search: React.FC<SearchProps> = ({ handleSearch }) => {
           type="text"
           id="searchText"
           value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
+          onChange={handleTextChange}
           placeholder="Search by name, email or mobile number"
           className="text-gray-700 focus:shadow-outline w-full appearance-none rounded border px-3 py-2 leading-tight shadow focus:outline-none"
         />

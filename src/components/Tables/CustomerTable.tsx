@@ -76,7 +76,8 @@ const CustomerTable = () => {
     }
   };
 
-  const handleSearch = async (values: SearchValues) => {
+  const handleSearch = async (birthday: string, searchText: string) => {
+    const values = { birthday, searchText };
     setSearchValues(values);
     fetchCustomerData(1);
   };
@@ -103,9 +104,22 @@ const CustomerTable = () => {
     fetchCustomerData(page);
   };
 
+  const handleInputChangeText = async (value: string) => {
+    // console.log("Updated search text from child:", searchText);
+    // Xử lý dữ liệu searchText tại đây
+    const page = 1;
+    const result = await getListCustomers({ ...searchValues, searchText: value }, page);
+    setCustomerData(result.data.data.data);
+      setPaginationData({
+        ...paginationData,
+        current_page: result.data.data.metadata.current_page,
+        total_pages: result.data.data.metadata.total_pages,
+      });
+  };
+
   return (
     <div className="rounded-sm border border-stroke bg-white px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
-      <Search handleSearch={handleSearch} />
+      <Search handleSearch={handleSearch} handleInputChange={handleInputChangeText}/>
       {isLoading ? (
         <Skeleton />
       ) : (
