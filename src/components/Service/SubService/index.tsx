@@ -169,7 +169,7 @@ const SubServiceNew = () => {
   };
 
   const CreatedServiceSchema = Yup.object().shape({
-    name: Yup.string().min(2).max(50).required(),
+    name: Yup.string().min(2).max(255).required(),
     price: Yup.string().required(),
     services: Yup.array()
       .of(Yup.string().required("Please select service"))

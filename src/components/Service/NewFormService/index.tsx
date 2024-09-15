@@ -185,7 +185,7 @@ const ServiceSingleNew = () => {
   };
 
   const CreatedServiceSchema = Yup.object().shape({
-    name: Yup.string().min(2).max(50).required(),
+    name: Yup.string().min(2).max(255).required(),
     service_category_id: Yup.string().required("Category is required"),
     serviceOptions: Yup.array().of(
       Yup.object().shape({
