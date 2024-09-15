@@ -34,3 +34,7 @@ export const addServicePackage = async (
 export const getListPackages = async (page: number): Promise<any> => {
   return await http.get<any>(`/combos?page=${page}`);
 };
+
+export const deletePackage = async (id: string | null): Promise<any> => {
+  return await http.delete<any>(`/combos/${id}`);
+};

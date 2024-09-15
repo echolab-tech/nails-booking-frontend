@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { deleteService, getListService } from "@/services/service.service";
+import {
+  deletePackage,
+  deleteService,
+  getListService,
+} from "@/services/service.service";
 import { formatPrice } from "@/components/common/format_currency";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { BsTrash } from "react-icons/bs";
@@ -12,6 +16,7 @@ import PaginationCustom from "@/components/Pagination/Pagination";
 import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
 import { toast } from "react-toastify";
 import Skeleton from "@/components/common/Skeleton";
+import { deleteSubService } from "@/services/sub-service.service";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -33,6 +38,7 @@ const ServiceList = () => {
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [idDel, setIdDel] = useState<number | null>(null);
+  const [serviceType, setServiceType] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -92,25 +98,36 @@ const ServiceList = () => {
 
   const onDelete = async () => {
     try {
-      const { data } = await deleteService(idDel);
-      if (data?.data?.code != 200) {
-        setOpenModal(false);
-        toast.warning(data?.data?.message);
-        return;
+      let data; // Declare 'data' variable outside the conditionals
+
+      if (serviceType === "service") {
+        const response = await deleteService(idDel);
+      } else if (serviceType === "sub_service") {
+        const response = await deleteSubService(idDel);
+      } else {
+        const response = await deletePackage(idDel);
       }
+      // Fetch the updated list after deletion
       fetchService();
       setOpenModal(false);
-      toast.success(data?.data?.message);
+      toast.success("Successfully deleted");
     } catch (error) {
-      toast.warning("you cannot delete !!!");
+      toast.warning("You cannot delete this item!");
     }
   };
 
   const handleDelete = (serviceId: number, type: string) => {
     if (type == "service") {
-      setIdDel(serviceId);
-      setOpenModal(true);
+      setServiceType("service");
     }
+    if (type == "sub_service") {
+      setServiceType("sub_service");
+    }
+    if (type == "combo") {
+      setServiceType("combo");
+    }
+    setIdDel(serviceId);
+    setOpenModal(true);
   };
 
   return (
