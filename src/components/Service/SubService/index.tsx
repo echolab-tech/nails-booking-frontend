@@ -144,37 +144,39 @@ const SubServiceNew = () => {
       price: subservice?.price || null,
       subServiceLocations:
         subservice?.serviceLocations?.map(
-          (location: ServiceLocationType) => location.location_id,
+          (location: any) => location.location_id,
         ) || [],
       services: subservice?.services?.map((service: any) => service.id) || [],
       assistantServices:
         subservice?.assistantServices?.map((assistant: any) => assistant?.id) ||
         assistantData?.map((assistant: Assistant) => assistant?.id),
       subServiceAdvancePrices:
-        subservice?.subServiceAdvancePrices?.map((option: any) => ({
-          assistant_id: option?.id,
-          time: option?.time,
-          price: option?.price,
-        })) ||
-        assistantData?.map((assistant: Assistant) => ({
-          assistant_id: assistant?.id,
-          time: optionTime[0]?.value || null,
-          price: null,
-        })),
+        Array.isArray(subservice?.subServiceAdvancePrices) &&
+        subservice?.subServiceAdvancePrices?.length > 0
+          ? subservice.subServiceAdvancePrices.map((option: any) => ({
+              assistant_id: option?.assistant_id,
+              time: option?.time,
+              price: option?.price,
+            }))
+          : assistantData?.map((assistant: Assistant) => ({
+              assistant_id: assistant?.id,
+              time: optionTime[0]?.value || null,
+              price: null,
+            })),
     },
     validationSchema: CreatedServiceSchema,
     onSubmit: async (values) => {
       try {
         if (id) {
           const response = await updateSubService(id, values);
-          // if (!response.statusText) {
-          //   throw new Error("Network response was not ok");
-          // }
+          if (!response.statusText) {
+            throw new Error("Network response was not ok");
+          }
         } else {
           const response = await addSubService(values);
-          // if (!response.statusText) {
-          //   throw new Error("Network response was not ok");
-          // }
+          if (!response.statusText) {
+            throw new Error("Network response was not ok");
+          }
         }
         toast.success("Form submitted successfully!");
         router.push("/services/list");
@@ -376,7 +378,7 @@ const SubServiceNew = () => {
                 <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                   <b>Locations</b>
                 </label>
-                <FieldArray name="serviceLocations">
+                <FieldArray name="subServiceLocations">
                   {({
                     push,
                     remove,
@@ -400,7 +402,7 @@ const SubServiceNew = () => {
                               <label className="checkbox-container">
                                 {location?.location_name}
                                 <Field
-                                  name="serviceLocations"
+                                  name="subServiceLocations"
                                   type="checkbox"
                                   value={location.id}
                                   checked={isChecked}
@@ -409,7 +411,7 @@ const SubServiceNew = () => {
                                       push(location.id);
                                     } else {
                                       const idx =
-                                        values.serviceLocations.indexOf(
+                                        values.subServiceLocations.indexOf(
                                           location.id,
                                         );
                                       if (idx >= 0) remove(idx);
