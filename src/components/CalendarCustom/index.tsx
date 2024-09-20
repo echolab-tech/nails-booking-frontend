@@ -18,7 +18,7 @@ import { FaRegPenToSquare } from "react-icons/fa6";
 import { BsTrash } from "react-icons/bs";
 import { GoInbox } from "react-icons/go";
 import { CustomerType } from "@/types/customer";
-import { getAllCustomer } from "@/services/customer.service";
+import { getAllCustomer, getStatus } from "@/services/customer.service";
 import { addMinutes, format } from "date-fns";
 import { toZonedTime, formatInTimeZone } from "date-fns-tz";
 import {
@@ -124,12 +124,16 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [serviceOptionUpdateIdNew, setServiceOptionUpdateIdNew] = useState<
     any | null
   >(null);
+  const [status, setStatus] = useState<
+    { id: number; name_status: string; color_code: string }[]
+  >([]);
 
   useEffect(() => {
     fetchService();
     fetchCustomer();
     fetchServiceOption();
     fetchDataBlockType();
+    fetchDataStatus();
   }, []);
 
   const bookingStatus = [
@@ -210,6 +214,11 @@ const FullCalenDarCustom: React.FC<any> = () => {
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
+  };
+  const fetchDataStatus = async () => {
+    const response = await  getStatus();
+    const dataStatus = response.data.dataStatus;
+    setStatus(dataStatus);
   };
 
   const fetchServiceOption = async () => {
@@ -504,9 +513,27 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setIsSelectService(true);
   };
 
+  // const handleOpenBooking = () => {
+    
+  //   setOpenSelect(false);
+  //   setOpenBooking(true);
+  // };
+
   const handleOpenBooking = () => {
     setOpenSelect(false);
     setOpenBooking(true);
+    
+    // Tìm kiếm và cập nhật customerData
+    const updatedCustomerData = customerData.map((customer) => {
+      const statusFound = status.find((s) => s.id === customer.status);
+      if (statusFound) {
+        return { ...customer, color_status: statusFound.color_code };
+      }
+      return customer;
+    });
+    
+    // Cập nhật customerData
+    setCustomerData(updatedCustomerData);
   };
 
   const handleOpenBlockTime = () => {
@@ -866,7 +893,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
     return (
       <div
-        className="flex cursor-pointer items-center space-x-2"
+        className="flex w-full cursor-pointer relative items-center space-x-2"
         onClick={() => handleSelectCustomer(customer)}
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-blue-500 text-white">
@@ -876,6 +903,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
           <h3 className="text-md font-medium">{customer?.name}</h3>
           <div>{customer?.phone}</div>
         </div>
+        <div className="inline-flex absolute right-0 top-[40%] h-6 w-6 items-center justify-center rounded-full border text-sm font-medium" style={{ backgroundColor: customer?.color_status }}></div>
       </div>
     );
   };
