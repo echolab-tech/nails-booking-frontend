@@ -116,7 +116,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [showCustomTitle, setShowCustomTitle] = useState<boolean>(false);
   const [date, setDate] = useState<Date | null>(new Date());
   const calendarRef = useRef<FullCalendar>(null);
-  
+
   // const [serviceOptionParentId, setServiceOptionParentId] = useState<
   //   any | null
   // >(null);
@@ -216,7 +216,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     }
   };
   const fetchDataStatus = async () => {
-    const response = await  getStatus();
+    const response = await getStatus();
     const dataStatus = response.data.dataStatus;
     setStatus(dataStatus);
   };
@@ -448,63 +448,61 @@ const FullCalenDarCustom: React.FC<any> = () => {
         const originalServices = result?.data?.data?.bookingDetails;
         const selectedAssistant = info.event._def.resourceIds[0];
 
-        getServiceOptionShow(info.event._def.extendedProps?.serviceOptionId, selectedAssistant).then(
-          (service) => {
-            const { price, assistant, time } = service.data.data;
+        getServiceOptionShow(
+          info.event._def.extendedProps?.serviceOptionId,
+          selectedAssistant,
+        ).then((service) => {
+          const { price, assistant, time } = service.data.data;
 
-            // Tìm kiếm service option
-            const existingOption = originalServices.find(
-              (option: any) => option.serviceOptionId === info.event._def.extendedProps?.serviceOptionId,
+          // Tìm kiếm service option
+          const existingOption = originalServices.find(
+            (option: any) =>
+              option.serviceOptionId ===
+              info.event._def.extendedProps?.serviceOptionId,
+          );
+
+          if (existingOption) {
+            const lastServiceEndTime = new Date(info.event.startStr);
+
+            const newStartTime = toZonedTime(lastServiceEndTime, timeZone);
+            const newEndTime = addMinutes(newStartTime, time);
+            // Nếu tìm thấy serviceOption, cập nhật các giá trị
+            existingOption.serviceOptionId = service.data.data.serviceOptionId;
+            existingOption.price = price;
+            existingOption.time = time;
+            existingOption.assistant = {
+              id: assistant.id,
+              name: assistant.name,
+            };
+            existingOption.end = formatInTimeZone(
+              newEndTime,
+              timeZone,
+              "yyyy-MM-dd HH:mm:ssXXX",
             );
+            existingOption.start = formatInTimeZone(
+              newStartTime,
+              timeZone,
+              "yyyy-MM-dd HH:mm:ssXXX",
+            );
+          }
 
-
-
-            if (existingOption) {
-              const lastServiceEndTime = new Date(info.event.startStr);
-
-              const newStartTime = toZonedTime(lastServiceEndTime, timeZone);
-              const newEndTime = addMinutes(newStartTime, time);
-              // Nếu tìm thấy serviceOption, cập nhật các giá trị
-              existingOption.serviceOptionId = service.data.data.serviceOptionId;
-              existingOption.price = price;
-              existingOption.time = time;
-              existingOption.assistant = {
-                id: assistant.id,
-                name: assistant.name,
-              };
-              existingOption.end = formatInTimeZone(
-                newEndTime,
-                timeZone,
-                "yyyy-MM-dd HH:mm:ssXXX",
-              );
-              existingOption.start = formatInTimeZone(
-                newStartTime,
-                timeZone,
-                "yyyy-MM-dd HH:mm:ssXXX",
-              );
-
-            }
-
-            const { totalTime, totalFee } = calculateTotals(originalServices);
-            let values = {
-              customer: result?.data?.data?.customer,
-              services: [
-                ...originalServices,
-              ],
-              tips: [],
-              paymentMethod: "",
-              payTotal: 0,
-              totalFee: totalFee,
-              totalTime: totalTime,
-            }
-            updateAppointment(
-              info.event._def.extendedProps.booking_id,
-              values,
-            ).then((result) => {
-              handleSuccess("Appointment updated");
-            });
-          },
-        );
+          const { totalTime, totalFee } = calculateTotals(originalServices);
+          let values = {
+            customer: result?.data?.data?.customer,
+            services: [...originalServices],
+            tips: [],
+            paymentMethod: "",
+            payTotal: 0,
+            totalFee: totalFee,
+            totalTime: totalTime,
+          };
+          updateAppointment(
+            info.event._def.extendedProps.booking_id,
+            values,
+          ).then((result) => {
+            handleSuccess("Appointment updated");
+          });
+        });
       },
     );
   };
@@ -513,27 +511,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setIsSelectService(true);
   };
 
-  // const handleOpenBooking = () => {
-    
-  //   setOpenSelect(false);
-  //   setOpenBooking(true);
-  // };
-
   const handleOpenBooking = () => {
     setOpenSelect(false);
     setOpenBooking(true);
-    
-    // Tìm kiếm và cập nhật customerData
-    const updatedCustomerData = customerData.map((customer) => {
-      const statusFound = status.find((s) => s.id === customer.status);
-      if (statusFound) {
-        return { ...customer, color_status: statusFound.color_code };
-      }
-      return customer;
-    });
-    
-    // Cập nhật customerData
-    setCustomerData(updatedCustomerData);
+  };
+
+  const getCustomerColor = (stt: number) => {
+    const statusFound = status.find((s: any) => s.id === stt);
+    return statusFound?.color_code;
   };
 
   const handleOpenBlockTime = () => {
@@ -711,11 +696,11 @@ const FullCalenDarCustom: React.FC<any> = () => {
       existingOption.serviceOptionId = serviceOptionUpdateIdNew;
       existingOption.price = price;
       existingOption.time = time;
-      existingOption.end = formatInTimeZone(
+      (existingOption.end = formatInTimeZone(
         newEndTime,
         timeZone,
         "yyyy-MM-dd HH:mm:ssXXX",
-      ),
+      )),
         (existingOption.assistant = {
           id: assistant.id,
           name: assistant.name,
@@ -893,7 +878,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
     return (
       <div
-        className="flex w-full cursor-pointer relative items-center space-x-2"
+        className="relative flex w-full cursor-pointer items-center space-x-2"
         onClick={() => handleSelectCustomer(customer)}
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-blue-500 text-white">
@@ -903,7 +888,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
           <h3 className="text-md font-medium">{customer?.name}</h3>
           <div>{customer?.phone}</div>
         </div>
-        <div className="inline-flex absolute right-0 top-[40%] h-6 w-6 items-center justify-center rounded-full border text-sm font-medium" style={{ backgroundColor: customer?.color_status }}></div>
+        <div
+          className={`absolute right-0 top-[40%] inline-flex h-6 w-6 items-center justify-center rounded-full border text-sm font-medium`}
+          style={{
+            backgroundColor: `${getCustomerColor(customer?.status)}`,
+          }}
+        ></div>
       </div>
     );
   };
