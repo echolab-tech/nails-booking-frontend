@@ -1,3 +1,5 @@
-export type CATEGORY = {
-    name: string
+export type CategoryType = {
+  id: string;
+  name: string;
+  color: string;
 };
