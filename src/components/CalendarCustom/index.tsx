@@ -1035,7 +1035,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
         </Modal>
       )}
       <Drawer
-        className="max-h-dvh w-[50%] shadow-2xl"
+        className="max-h-dvh w-full shadow-2xl lg:w-[50%] xl:w-[50%]"
         open={openBooking}
         onClose={onCloseModalBooking}
         position="right"
