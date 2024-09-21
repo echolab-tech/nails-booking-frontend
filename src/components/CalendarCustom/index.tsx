@@ -1035,17 +1035,17 @@ const FullCalenDarCustom: React.FC<any> = () => {
         </Modal>
       )}
       <Drawer
-        className="w-[50%] shadow-2xl"
+        className="max-h-dvh w-[50%] shadow-2xl"
         open={openBooking}
         onClose={onCloseModalBooking}
         position="right"
         backdrop={false}
       >
         <Drawer.Header titleIcon={() => <></>} />
-        <Drawer.Items>
+        <Drawer.Items className="h-[95%]">
           <FormikProvider value={formik}>
-            <Form>
-              <div className="flex h-screen">
+            <Form className="h-full">
+              <div className="flex h-full">
                 <div className="w-[40%] overflow-auto border-r border-stroke p-6.5">
                   {/* start show info customer */}
                   {!selectedCustomer && (
@@ -1119,8 +1119,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       </div>
                     ))}
                 </div>
-                <div className="flex w-[60%] flex-col justify-between">
-                  <div>
+                <div className="flex h-full w-[60%] flex-col justify-between">
+                  <div className="h-full">
                     <div className="flex justify-between px-6.5">
                       <h3 className="text-2xl font-bold	text-black">{`${startTime && formatDateTime(startTime)}`}</h3>
                       {eventId && (
@@ -1139,7 +1139,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                         </select>
                       )}
                     </div>
-                    <div className="px-6.5">
+                    <div className="max-h-[85%] overflow-y-auto px-6.5">
                       <h3 className="font-medium text-black dark:text-white">
                         Services
                       </h3>
@@ -1212,23 +1212,23 @@ const FullCalenDarCustom: React.FC<any> = () => {
                           ),
                         )
                       ) : (
-                        <div className="flex min-h-[200px] flex-col items-center">
+                        <div className="flex min-h-[100px] flex-col items-center">
                           <GoInbox size={50} />
                           <p>Add a service to save the appointment</p>
                         </div>
                       )}
+                      {eventStatus !== 5 && (
+                        <div className="flex justify-center px-6.5 py-4">
+                          <button
+                            onClick={handleShowService}
+                            type="button"
+                            className="dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 mb-2 me-2 rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:text-white"
+                          >
+                            Add Service
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    {eventStatus !== 5 && (
-                      <div className="flex justify-center px-6.5 py-4">
-                        <button
-                          onClick={handleShowService}
-                          type="button"
-                          className="dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 mb-2 me-2 rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:text-white"
-                        >
-                          Add Service
-                        </button>
-                      </div>
-                    )}
                   </div>
                   <div className="flex flex-col px-6.5">
                     <div className="flex justify-between">
