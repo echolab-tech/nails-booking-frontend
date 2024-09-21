@@ -4,9 +4,8 @@ import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { getCategoryUpdate } from "@/services/categories.service";
-import { CATEGORYESHOW } from "@/types/CategoryEdit";
-import { CATEGORY } from "@/types/Category";
+import { updateCategory } from "@/services/categories.service";
+import { CategoryType } from "@/types/Category";
 
 const UpdateCategorySchema = Yup.object().shape({
   name: Yup.string()
@@ -18,29 +17,34 @@ const UpdateCategorySchema = Yup.object().shape({
 interface DialogEditProps {
   onClose: () => void;
   show: boolean;
-  category: CATEGORYESHOW | null;
+  category: CategoryType | null;
   updateCategoryList: () => void;
 }
 
-const DialogEdit: React.FC<DialogEditProps> = (props) => {
-  const [id, setId] = useState<number | null>(null);
+const DialogEdit: React.FC<DialogEditProps> = ({
+  show,
+  category,
+  updateCategoryList,
+  onClose,
+}) => {
+  const [id, setId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (props.category) {
-      setId(props.category.id);
+    if (category) {
+      setId(category?.id);
     }
-  }, [props.category]);
+  }, [category]);
 
-  if (!props.category) return null;
+  if (!category) return null;
 
-  const handleSubmit = async (values: CATEGORY) => {
+  const handleSubmit = async (values: CategoryType) => {
     if (id === null) return;
 
     try {
-      await getCategoryUpdate(values, id);
+      await updateCategory(values, id);
       toast.success("Category updated successfully.");
-      props.onClose();
-      props.updateCategoryList();
+      onClose();
+      updateCategoryList();
     } catch (error) {
       toast.error("Failed to update category.");
     }
@@ -48,10 +52,10 @@ const DialogEdit: React.FC<DialogEditProps> = (props) => {
 
   return (
     <Modal
-      show={props.show}
+      show={show}
       size="md"
       popup
-      onClose={props.onClose}
+      onClose={onClose}
       className="z-1"
       style={{
         display: "flex",
@@ -68,7 +72,11 @@ const DialogEdit: React.FC<DialogEditProps> = (props) => {
       </Modal.Header>
       <Modal.Body>
         <Formik
-          initialValues={{ id: props.category.id, name: props.category.name }}
+          initialValues={{
+            id: category?.id,
+            name: category?.name,
+            color: category?.color,
+          }}
           validationSchema={UpdateCategorySchema}
           onSubmit={handleSubmit}
         >

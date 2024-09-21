@@ -1,6 +1,6 @@
-import { CATEGORY } from "@/types/Category";
+import { CategoryType } from "@/types/Category";
 import { http } from "../lib/http";
-export const categories = async (values: CATEGORY): Promise<any> => {
+export const categories = async (values: CategoryType): Promise<any> => {
   return await http.post<any>("/categories", values);
 };
 
@@ -11,16 +11,16 @@ export const getCategories = async (
   return await http.get<any>(`/categories?page=${page}&all=${isAll}`);
 };
 
-export const getCategoryShow = async (id: number): Promise<any> => {
+export const getCategoryById = async (id: string): Promise<any> => {
   return await http.get<any>(`/categories/${id}`);
 };
 
-export const getCategoryUpdate = async (
-  values: CATEGORY,
-  id: number,
+export const updateCategory = async (
+  values: CategoryType,
+  id: string,
 ): Promise<any> => {
   return await http.put<any>(`/categories/${id}`, values);
 };
-export const deleteCategory = async (id: number | null): Promise<any> => {
+export const deleteCategory = async (id: string | null): Promise<any> => {
   return await http.delete<any>(`/categories/${id}`);
 };
