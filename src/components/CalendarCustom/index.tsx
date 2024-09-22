@@ -114,12 +114,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [showEndOptions, setShowEndOptions] = useState<boolean>(false);
   const [showSpecialEndDate, setShowSpecialEndDate] = useState<boolean>(false);
   const [showCustomTitle, setShowCustomTitle] = useState<boolean>(false);
-  const [date, setDate] = useState<Date | null>(new Date());
-  const calendarRef = useRef<FullCalendar>(null);
-
-  // const [serviceOptionParentId, setServiceOptionParentId] = useState<
-  //   any | null
-  // >(null);
+  const [calendarStartDate, setCalendarStartDate] = useState<string>("");
+  const [calendarEndDate, setCalendarEndDate] = useState<string>("");
 
   const [serviceOptionUpdateIdNew, setServiceOptionUpdateIdNew] = useState<
     any | null
@@ -134,7 +130,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     fetchServiceOption();
     fetchDataBlockType();
     fetchDataStatus();
-  }, []);
+  }, [calendarStartDate, calendarEndDate]);
 
   const bookingStatus = [
     {
@@ -151,10 +147,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
     },
     {
       value: 3,
-      name: "Start",
+      name: "Started",
     },
     {
       value: 4,
+      name: "No-show",
+    },
+    {
+      value: 5,
       name: "Cancel",
     },
   ];
@@ -178,7 +178,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     try {
       // Đợi cả hai API call hoàn thành
       const [appointmentsResponse, blockTimesResponse] = await Promise.all([
-        getAppointmentByDate(),
+        getAppointmentByDate(start, end),
         getBlockTimes(start, end),
       ]);
 
@@ -943,7 +943,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
     const { value } = event.target;
     try {
       await appointmentsUpdateStatus(eventId, value);
-      toast.success("status appointment updated successfully.");
+      fetchAllData(calendarStartDate, calendarEndDate);
+      setOpenBooking(false);
+      toast.success("Status appointment updated successfully.");
     } catch (error) {
       toast.error("Failed to update status appointment.");
     }
@@ -951,15 +953,17 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
   const handleDatesSet = (dateInfo: any) => {
     const { start, end } = dateInfo;
+    setCalendarStartDate(format(start, "dd-MM-yyyy"));
+    setCalendarEndDate(format(end, "dd-MM-yyyy"));
     fetchAllData(format(start, "dd-MM-yyyy"), format(end, "dd-MM-yyyy"));
   };
 
-  const handleDateChange = (newDate: Date | null) => {
-    if (newDate) {
-      setDate(newDate);
-      calendarRef.current?.getApi().gotoDate(newDate); // Điều hướng đến ngày đã chọn
-    }
-  };
+  // const handleDateChange = (newDate: Date | null) => {
+  //   if (newDate) {
+  //     setDate(newDate);
+  //     calendarRef.current?.getApi().gotoDate(newDate); // Điều hướng đến ngày đã chọn
+  //   }
+  // };
 
   return (
     <>
