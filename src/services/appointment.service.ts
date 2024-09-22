@@ -15,8 +15,13 @@ export const updateAppointment = async (
   return await http.put<any>(`/appointments/${id}`, values);
 };
 
-export const getAppointmentByDate = async (): Promise<any> => {
-  return await http.get<any>(`/appointments/list`);
+export const getAppointmentByDate = async (
+  start: string,
+  end: string,
+): Promise<any> => {
+  return await http.get<any>(
+    `/appointments/list?start_date=${start}&end_date=${end}`,
+  );
 };
 
 export const getListAppointmentCustomer = async (
@@ -43,12 +48,11 @@ export const checkoutAppointment = async (
   return await http.post<any>(`/appointments/checkout/${id}`, values);
 };
 
-
 export const appointmentsUpdateStatus = async (
-  id:string|null,
+  id: string | null,
   values: any,
 ): Promise<any> => {
   return await http.post<any>(`/appointments/update-status/${id}`, {
-    status: values
+    status: values,
   });
 };
