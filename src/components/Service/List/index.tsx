@@ -101,7 +101,15 @@ const ServiceList = () => {
   const handleDelete = async (serviceId: number, type: string) => {
     try {
       const response = await checkServiceHasBooking(serviceId);
-      setServiceType(type);
+      if (type == "service") {
+        setServiceType("service");
+      }
+      if (type == "sub_service") {
+        setServiceType("sub_service");
+      }
+      if (type == "combo") {
+        setServiceType("combo");
+      }
       setIdDel(serviceId);
       setConfirmMessage(response.data.message);
       setOpenModal(true);
@@ -114,10 +122,13 @@ const ServiceList = () => {
     try {
       const confirm = true;
       if (serviceType === "service") {
-        await deleteService(idDel, { confirm });
+        const response = await deleteService(idDel, { confirm });
+      } else if (serviceType === "sub_service") {
+        const response = await deleteSubService(idDel);
       } else if (serviceType === "combo") {
-        await deletePackage(idDel);
+        const response = await deletePackage(idDel);
       }
+      // Fetch the updated list after deletion
       fetchService();
       setOpenModal(false);
       toast.success("Successfully deleted service and related data");
