@@ -838,33 +838,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
     toast.error(error);
   };
 
-  // const formik = useFormik<BookingFormType>({
-  //   initialValues: {
-  //     customer: null,
-  //     services: [],
-  //     tips: [],
-  //     paymentMethod: "",
-  //     description: null,
-  //     payTotal: 0,
-  //     totalFee: 0,
-  //     totalTime: 0,
-  //   },
-  //   onSubmit: async (values) => {
-  //     setIsSubmit(true);
-  //     try {
-  //       if (eventId) {
-  //         await updateAppointment(eventId, values);
-  //         handleSuccess("Appointment updated");
-  //       } else {
-  //         await appointmentsPost(values);
-  //         handleSuccess("Appointment created");
-  //       }
-  //     } catch (e) {
-  //       handleError(e);
-  //     }
-  //   },
-  //   enableReinitialize: true,
-  // });
 
   const formikBlockTime = useFormik<BlockTimeType>({
     initialValues: {
