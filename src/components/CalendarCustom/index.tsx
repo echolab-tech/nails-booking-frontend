@@ -160,6 +160,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     fetchServiceOption();
     fetchDataBlockType();
     fetchDataStatus();
+    checkCustomerAppointment(formik.values.customer?.id);
   }, [calendarStartDate, calendarEndDate, formik.values.customer?.id]);
 
   const bookingStatus = [
