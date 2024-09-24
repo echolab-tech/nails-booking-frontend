@@ -5,6 +5,7 @@ import {
   deletePackage,
   deleteService,
   getListService,
+  checkServiceHasBooking,
 } from "@/services/service.service";
 import { formatPrice } from "@/components/common/format_currency";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
@@ -39,6 +40,7 @@ const ServiceList = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [idDel, setIdDel] = useState<number | null>(null);
   const [serviceType, setServiceType] = useState<string | null>(null);
+  const [confirmMessage, setConfirmMessage] = useState<string>("");
   const router = useRouter();
 
   useEffect(() => {
@@ -96,38 +98,43 @@ const ServiceList = () => {
     }
   };
 
+  const handleDelete = async (serviceId: number, type: string) => {
+    try {
+      const response = await checkServiceHasBooking(serviceId);
+      if (type == "service") {
+        setServiceType("service");
+      }
+      if (type == "sub_service") {
+        setServiceType("sub_service");
+      }
+      if (type == "combo") {
+        setServiceType("combo");
+      }
+      setIdDel(serviceId);
+      setConfirmMessage(response.data.message);
+      setOpenModal(true);
+    } catch (error) {
+      toast.warning("Failed to check service booking status");
+    }
+  };
+
   const onDelete = async () => {
     try {
-      let data; // Declare 'data' variable outside the conditionals
-
+      const confirm = true;
       if (serviceType === "service") {
-        const response = await deleteService(idDel);
+        const response = await deleteService(idDel, { confirm });
       } else if (serviceType === "sub_service") {
         const response = await deleteSubService(idDel);
-      } else {
+      } else if (serviceType === "combo") {
         const response = await deletePackage(idDel);
       }
       // Fetch the updated list after deletion
       fetchService();
       setOpenModal(false);
-      toast.success("Successfully deleted");
+      toast.success("Successfully deleted service and related data");
     } catch (error) {
-      toast.warning("You cannot delete this item!");
+      toast.error("Error deleting service or related data");
     }
-  };
-
-  const handleDelete = (serviceId: number, type: string) => {
-    if (type == "service") {
-      setServiceType("service");
-    }
-    if (type == "sub_service") {
-      setServiceType("sub_service");
-    }
-    if (type == "combo") {
-      setServiceType("combo");
-    }
-    setIdDel(serviceId);
-    setOpenModal(true);
   };
 
   return (
@@ -273,7 +280,7 @@ const ServiceList = () => {
       )}
       <DialogConfirm
         openModal={openModal}
-        message=" Are you sure you want to delete this service ?"
+        message={confirmMessage} // Use the dynamic message here
         onClose={onClose}
       >
         <button
@@ -284,7 +291,7 @@ const ServiceList = () => {
         </button>
         <button
           onClick={onClose}
-          className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
+          className="justify-center rounded bg-zinc-800 p-3 font-medium text-gray hover:bg-opacity-90"
         >
           No, cancel
         </button>
