@@ -29,7 +29,6 @@ import { Form, FormikProvider, useFormik, Field } from "formik";
 import {
   appointmentsPost,
   appointmentsUpdateStatus,
-  checkCustomerBooking,
   checkoutAppointment,
   getAppointmentByDate,
   getAppointmentById,
@@ -124,35 +123,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [status, setStatus] = useState<
     { id: number; name_status: string; color_code: string }[]
   >([]);
-  const [showNote, setShowNote] = useState(false);
 
-  const formik = useFormik<BookingFormType>({
-    initialValues: {
-      customer: null,
-      services: [],
-      tips: [],
-      paymentMethod: "",
-      description: null,
-      payTotal: 0,
-      totalFee: 0,
-      totalTime: 0,
-    },
-    onSubmit: async (values) => {
-      setIsSubmit(true);
-      try {
-        if (eventId) {
-          await updateAppointment(eventId, values);
-          handleSuccess("Appointment updated");
-        } else {
-          await appointmentsPost(values);
-          handleSuccess("Appointment created");
-        }
-      } catch (e) {
-        handleError(e);
-      }
-    },
-    enableReinitialize: true,
-  });
 
   useEffect(() => {
     fetchService();
@@ -160,8 +131,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     fetchServiceOption();
     fetchDataBlockType();
     fetchDataStatus();
-    checkCustomerAppointment(formik.values.customer?.id);
-  }, [calendarStartDate, calendarEndDate, formik.values.customer?.id]);
+  }, [calendarStartDate, calendarEndDate]);
 
   const bookingStatus = [
     {
@@ -295,6 +265,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
         services: result?.data?.data?.bookingDetails,
         totalFee: Number(result?.data?.data?.total_fee),
         totalTime: result?.data?.data?.total_time,
+        description: result?.data?.data?.description,
       });
       setEventStatus(result?.data?.data?.status);
       setSelectedCustomer(true);
@@ -838,6 +809,33 @@ const FullCalenDarCustom: React.FC<any> = () => {
     toast.error(error);
   };
 
+  const formik = useFormik<BookingFormType>({
+    initialValues: {
+      customer: null,
+      services: [],
+      tips: [],
+      paymentMethod: "",
+      description: null,
+      payTotal: 0,
+      totalFee: 0,
+      totalTime: 0,
+    },
+    onSubmit: async (values) => {
+      setIsSubmit(true);
+      try {
+        if (eventId) {
+          await updateAppointment(eventId, values);
+          handleSuccess("Appointment updated");
+        } else {
+          await appointmentsPost(values);
+          handleSuccess("Appointment created");
+        }
+      } catch (e) {
+        handleError(e);
+      }
+    },
+    enableReinitialize: true,
+  });
 
   const formikBlockTime = useFormik<BlockTimeType>({
     initialValues: {
@@ -973,14 +971,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
   //     calendarRef.current?.getApi().gotoDate(newDate); // Điều hướng đến ngày đã chọn
   //   }
   // };
-
-  const checkCustomerAppointment = (id: any) => {
-    checkCustomerBooking(id).then(
-      (result) => {
-        setShowNote(result.data.hasBooking);
-      },);
-  };
-
   
   return (
     <>
@@ -1252,16 +1242,15 @@ const FullCalenDarCustom: React.FC<any> = () => {
                     </div>
                   </div>
                   <div className="flex flex-col px-6.5">
-                    {!showNote && (
-                      <div className="mb-4">
-                        <label htmlFor="title"> Note</label>
-                        <Field
-                          type="text"
-                          name="description"
-                          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                        />
-                      </div>
-                    )}
+                    <div className="mb-4">
+                      <label htmlFor="title"> Note</label>
+                      <Field
+                        type="text"
+                        name="description"
+                        value={formik.values.description}
+                        className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                      />
+                    </div>
                     <div className="flex justify-between">
                       <h3 className="font-2xl text-lg font-bold text-black">
                         Total

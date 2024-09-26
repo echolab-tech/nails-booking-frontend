@@ -57,7 +57,3 @@ export const appointmentsUpdateStatus = async (
   });
 };
 
-
-export const checkCustomerBooking = async (id: number): Promise<any> => {
-  return await http.get<any>(`/appointments/check-customer-appointment/${id}`);
-};
