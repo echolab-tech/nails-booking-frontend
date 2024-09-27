@@ -8,6 +8,7 @@ export type CustomerType = {
   language: number | null;
   source: number | null;
   occupation: string;
+  description: string | null;
   country: number | null;
   avatar: any | null;
   address: string;

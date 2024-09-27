@@ -13,7 +13,7 @@ import bootstrap5Plugin from "@fullcalendar/bootstrap5";
 import { getAllAssistants } from "@/services/assistants.service";
 import { Assistant, ResourceType } from "@/types/assistant";
 import { BookingFormType, EventType } from "@/types/event";
-import { Datepicker, Drawer, Modal, Spinner } from "flowbite-react";
+import { Datepicker, Drawer, FileInput, Modal, Spinner } from "flowbite-react";
 import { FaRegPenToSquare } from "react-icons/fa6";
 import { BsTrash } from "react-icons/bs";
 import { GoInbox } from "react-icons/go";
@@ -123,6 +123,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [status, setStatus] = useState<
     { id: number; name_status: string; color_code: string }[]
   >([]);
+
 
   useEffect(() => {
     fetchService();
@@ -264,6 +265,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
         services: result?.data?.data?.bookingDetails,
         totalFee: Number(result?.data?.data?.total_fee),
         totalTime: result?.data?.data?.total_time,
+        description: result?.data?.data?.description,
       });
       setEventStatus(result?.data?.data?.status);
       setSelectedCustomer(true);
@@ -492,6 +494,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
             services: [...originalServices],
             tips: [],
             paymentMethod: "",
+            description: "",
             payTotal: 0,
             totalFee: totalFee,
             totalTime: totalTime,
@@ -812,6 +815,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       services: [],
       tips: [],
       paymentMethod: "",
+      description: null,
       payTotal: 0,
       totalFee: 0,
       totalTime: 0,
@@ -905,6 +909,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
           {eventInfo.timeText} {eventInfo?.event?.extendedProps?.customerName}
         </b>
         <i className="block">{eventInfo.event.title}</i>
+        {eventInfo?.event?.extendedProps?.booking?.description != null && (
+          <i className="block">Note: {eventInfo.event.extendedProps.booking.description}</i>
+        )}  
       </>
     );
   };
@@ -964,7 +971,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   //     calendarRef.current?.getApi().gotoDate(newDate); // Điều hướng đến ngày đã chọn
   //   }
   // };
-
+  
   return (
     <>
       <FullCalendar
@@ -1235,6 +1242,15 @@ const FullCalenDarCustom: React.FC<any> = () => {
                     </div>
                   </div>
                   <div className="flex flex-col px-6.5">
+                    <div className="mb-4">
+                      <label htmlFor="title"> Note</label>
+                      <Field
+                        type="text"
+                        name="description"
+                        value={formik.values.description}
+                        className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                      />
+                    </div>
                     <div className="flex justify-between">
                       <h3 className="font-2xl text-lg font-bold text-black">
                         Total

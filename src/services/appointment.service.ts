@@ -56,3 +56,4 @@ export const appointmentsUpdateStatus = async (
     status: values,
   });
 };
+

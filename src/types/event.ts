@@ -12,6 +12,7 @@ export type BookingFormType = {
   customer: CustomerType | null;
   services: Array<serviceSelectType> | [];
   tips: Array<tipsType> | [];
+  description: string | null;
   paymentMethod: string;
   totalFee: number;
   totalTime: number;
