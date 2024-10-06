@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Select from "react-tailwindcss-select";
-import { Field, Form, Formik } from "formik";
+import { Field, Form, Formik, ErrorMessage } from "formik";
 import {
   assistantUpdate,
   getAssistantShow,
@@ -26,6 +26,7 @@ const AssistantEditSchema = Yup.object().shape({
     .required("Required"),
   email: Yup.string().email("Invalid email").required("Required"),
 });
+
 const TeamEdit = () => {
   const [animal, setAnimal] = useState(null);
   const [services, setServices] = useState<{ id: number; name: string }[]>([]);
@@ -34,6 +35,7 @@ const TeamEdit = () => {
   const router = useRouter();
   const [assistant, setAssistant] = useState<any | null>(null);
   const customerId = parseInt(params.id);
+  const [selectedOption, setSelectedOption] = useState(''); // State để theo dõi tùy chọn đã chọn
   useEffect(() => {
     fetchAssistant(customerId);
     fetchDataServices();
@@ -85,19 +87,32 @@ const TeamEdit = () => {
               avatar: null,
               birthday: assistant?.birthday,
               services: assistant?.services,
+              increase: assistant?.increase,
+              increaseCustom: '',
+              reduce:  assistant?.reduce,
+              reduceCustom: '',
               _method: "PUT",
-            }}
+            }}  
             validationSchema={AssistantEditSchema}
             onSubmit={(values: AssistantEditForm, { resetForm }) => {
-              values.services = animal;
+              values.services = animal; 
               values.birthday = selectedBirthday;
+
+              if (values.reduce === "custom" && values.reduceCustom) {
+                values.reduce = parseFloat(values.reduceCustom); 
+              }
+              if (values.increase === "custom" && values.increaseCustom) {
+                values.increase = parseFloat(values.increaseCustom);
+              }
+
+              // Gửi yêu cầu cập nhật
               assistantUpdate(values, customerId)
                 .then((data) => {
-                  toast.success("you update it successfully.");
+                  toast.success("You updated it successfully.");
                   resetForm();
                 })
                 .catch((error) => {
-                  toast.error("you failed to update it.");
+                  toast.error("You failed to update it.");
                 });
             }}
           >
@@ -228,6 +243,65 @@ const TeamEdit = () => {
                       )}
                     </div>
                   </div>
+                  <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                    <div className="w-full xl:w-1/2">
+                      <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                      Increase 
+                      </label>
+                      <Field
+                        type="text"
+                        name="increase"
+                        placeholder="Enter your increase"
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        value={values?.increase}
+                        className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                      />
+                      {errors.increase && touched.increase && (
+                        <div className="text-rose-500">{errors.increase}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                    <div className="w-full xl:w-1/2">
+                      <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                        Reduce
+                      </label>
+                      <select
+                        name="reduce"
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setSelectedOption(value); 
+                          setFieldValue("reduce", value === "custom" ? '' : parseFloat(value)); 
+                          if (value !== "custom") {
+                            setFieldValue("reduceCustom", ""); 
+                          }
+                        }}
+                        onBlur={handleBlur}
+                        value={selectedOption}
+                        className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                      >
+                        <option value="" disabled>Select an option</option>
+                        <option value="10">10%</option>
+                        <option value="20">20%</option>
+                        <option value="30">30%</option>
+                        <option value="40">40%</option>
+                        <option value="custom">Custom</option>
+                      </select>
+                      {selectedOption === 'custom' && (
+                        <Field
+                          type="number" // Đặt type là number để chỉ cho phép nhập số
+                          name="reduceCustom"
+                          placeholder="Enter custom value"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values.reduceCustom}
+                          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                        />
+                      )}
+                      <ErrorMessage name="reduce" component="div" className="text-rose-500" />
+                    </div>
+                  </div> 
                   <div className="mb-4.5 flex justify-center">
                     <div className="flex w-full justify-center gap-10">
                       <button
