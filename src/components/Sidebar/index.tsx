@@ -10,6 +10,7 @@ import { GoArchive } from "react-icons/go";
 import { GrCatalogOption } from "react-icons/gr";
 import { LuUsers } from "react-icons/lu";
 import { BsTags } from "react-icons/bs";
+import { TbShoppingCartDiscount } from "react-icons/tb";
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -576,6 +577,22 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
               </SidebarLinkGroup>
 
               {/* <!-- End Menu Appointments --> */}
+
+              {/* <!-- Menu Item Discount --> */}
+              <li>
+                <Link
+                  href="/discounts/list"
+                  className={`group relative flex items-center gap-2.5 rounded-sm px-4 py-2 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
+                    pathname.includes("discounts/list") &&
+                    "bg-graydark dark:bg-meta-4"
+                  }`}
+                >
+                  <TbShoppingCartDiscount />
+                  Discounts
+                </Link>
+              </li>
+
+              {/* <!-- Menu Item service --> */}
 
               {/* <!-- Menu Item Forms --> */}
               {/* <SidebarLinkGroup
