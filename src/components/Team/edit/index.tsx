@@ -35,7 +35,8 @@ const TeamEdit = () => {
   const router = useRouter();
   const [assistant, setAssistant] = useState<any | null>(null);
   const customerId = parseInt(params.id);
-  const [selectedOption, setSelectedOption] = useState(''); // State để theo dõi tùy chọn đã chọn
+  const [selectedOption, setSelectedOption] = useState('');
+  const [selectedOptionIncrese, setSelectedOptionIncrese] = useState(''); 
   useEffect(() => {
     fetchAssistant(customerId);
     fetchDataServices();
@@ -98,14 +99,7 @@ const TeamEdit = () => {
               values.services = animal; 
               values.birthday = selectedBirthday;
 
-              if (values.reduce === "custom" && values.reduceCustom) {
-                values.reduce = parseFloat(values.reduceCustom); 
-              }
-              if (values.increase === "custom" && values.increaseCustom) {
-                values.increase = parseFloat(values.increaseCustom);
-              }
 
-              // Gửi yêu cầu cập nhật
               assistantUpdate(values, customerId)
                 .then((data) => {
                   toast.success("You updated it successfully.");
@@ -248,18 +242,26 @@ const TeamEdit = () => {
                       <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                       Increase 
                       </label>
-                      <Field
-                        type="text"
+                      <select
                         name="increase"
-                        placeholder="Enter your increase"
-                        onChange={handleChange}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setSelectedOptionIncrese(value); 
+                          setFieldValue("increase", value === "custom" ? '' : parseFloat(value)); 
+                        }}
                         onBlur={handleBlur}
-                        value={values?.increase}
+                        value={selectedOptionIncrese}
                         className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                      />
-                      {errors.increase && touched.increase && (
-                        <div className="text-rose-500">{errors.increase}</div>
-                      )}
+                      >
+                         <option value="" disabled>{values?.increase ? `${Math.floor(values.increase)}%` : 'Select value'}</option>
+                        <option value="0">0%</option>
+                        <option value="10">10%</option>
+                        <option value="20">20%</option>
+                        <option value="30">30%</option>
+                        <option value="40">40%</option>
+                        <option value="50">50%</option>
+                      </select>
+                      <ErrorMessage name="increase" component="div" className="text-rose-500" />
                     </div>
                   </div>
                   <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
@@ -281,24 +283,14 @@ const TeamEdit = () => {
                         value={selectedOption}
                         className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                       >
-                        <option value="" disabled>Select an option</option>
+                        <option value="" disabled>{values?.reduce ? `${Math.floor(values.reduce)}%` : 'Select value'}</option>
+                        <option value="0">0%</option>
                         <option value="10">10%</option>
                         <option value="20">20%</option>
                         <option value="30">30%</option>
                         <option value="40">40%</option>
-                        <option value="custom">Custom</option>
+                        <option value="50">50%</option>
                       </select>
-                      {selectedOption === 'custom' && (
-                        <Field
-                          type="number" // Đặt type là number để chỉ cho phép nhập số
-                          name="reduceCustom"
-                          placeholder="Enter custom value"
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          value={values.reduceCustom}
-                          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                        />
-                      )}
                       <ErrorMessage name="reduce" component="div" className="text-rose-500" />
                     </div>
                   </div> 
