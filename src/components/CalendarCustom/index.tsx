@@ -28,6 +28,7 @@ import {
 import { Form, FormikProvider, useFormik, Field } from "formik";
 import {
   appointmentsPost,
+  appointmentsSendMail,
   appointmentsUpdateStatus,
   checkoutAppointment,
   getAppointmentByDate,
@@ -123,6 +124,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [status, setStatus] = useState<
     { id: number; name_status: string; color_code: string }[]
   >([]);
+  const [valueTimeSchedule, setValueTimeSchedule] = useState<number | undefined>();
 
 
   useEffect(() => {
@@ -200,6 +202,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
       // Gộp hai mảng thành một mảng events
       const combinedEvents = [...appointments, ...blockTimes];
+  console.log(appointmentsResponse);
+
 
       // Cập nhật lại events
       setEvents(combinedEvents);
@@ -207,6 +211,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       console.error("Error fetching data:", error);
     }
   };
+
 
   const fetchCustomer = async () => {
     try {
@@ -279,6 +284,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setIsSelectService(false);
     // setStatus()
   };
+  console.log(eventId);
 
   const handleSelectDate = (info: any) => {
     const newEvent = {
@@ -910,8 +916,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
         </b>
         <i className="block">{eventInfo.event.title}</i>
         {eventInfo?.event?.extendedProps?.booking?.description != null && (
-          <i className="block">Note: {eventInfo.event.extendedProps.booking.description}</i>
-        )}  
+          <i className="block">
+            Note: {eventInfo.event.extendedProps.booking.description}
+          </i>
+        )}
       </>
     );
   };
@@ -971,7 +979,20 @@ const FullCalenDarCustom: React.FC<any> = () => {
   //     calendarRef.current?.getApi().gotoDate(newDate); // Điều hướng đến ngày đã chọn
   //   }
   // };
-  
+
+  const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setValueTimeSchedule(Number(event.target.value)); 
+  };
+
+  const handleSendMail = async () => {
+    try {
+      await appointmentsSendMail(eventId, valueTimeSchedule);
+      toast.success("Status appointment updated successfully.");
+    } catch (error) {
+      toast.error("Failed to update status appointment.");
+    }
+  }
+
   return (
     <>
       <FullCalendar
@@ -1150,7 +1171,37 @@ const FullCalenDarCustom: React.FC<any> = () => {
                         </select>
                       )}
                     </div>
-                    <div className="max-h-[85%] overflow-y-auto px-6.5">
+                    {eventId && (
+                      <>
+                        <div className="mt-5 w-full flex items-center justify-between px-4">
+                          <p className="font-semibold font-size-10">
+                            Email to reschedule appointment
+                          </p>
+                        </div>
+                        <div className="mt-5 w-full flex items-center justify-between px-4">
+                          <Field
+                            as="select"
+                            name="time-schedule"
+                            value={valueTimeSchedule}
+                            onChange={handleSelectChange}
+                            className="w-1/2 rounded border-[1.5px] border-stroke bg-transparent px-4 py-2 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                          >
+                            <option value="30">30</option>
+                            <option value="45">45</option>
+                            <option value="60">60</option>
+                          </Field>
+                          <p className="font-semibold font-size-10 m-3">minutes</p>
+                          <button
+                            type="button"
+                            onClick={handleSendMail}
+                            className="inline-flex w-1/3 items-center justify-center rounded-md bg-black ml-1 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
+                          >
+                            Send mail
+                          </button>
+                        </div>
+                      </>
+                    )}
+                    <div className="max-h-[85%] overflow-y-auto px-6 mt-5">
                       <h3 className="font-medium text-black dark:text-white">
                         Services
                       </h3>

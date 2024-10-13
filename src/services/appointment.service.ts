@@ -57,3 +57,12 @@ export const appointmentsUpdateStatus = async (
   });
 };
 
+export const appointmentsSendMail = async (
+  id: string | null,
+  values: any,
+): Promise<any> => {
+  return await http.post<any>(`/appointments/schedule/send-mail/${id}`, {
+    timeSchedule: values,
+  });
+};
+
