@@ -124,7 +124,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [status, setStatus] = useState<
     { id: number; name_status: string; color_code: string }[]
   >([]);
-  const [valueTimeSchedule, setValueTimeSchedule] = useState<number | undefined>();
+  const [valueTimeSchedule, setValueTimeSchedule] = useState<number>(30);
 
 
   useEffect(() => {
@@ -987,9 +987,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const handleSendMail = async () => {
     try {
       await appointmentsSendMail(eventId, valueTimeSchedule);
-      toast.success("Status appointment updated successfully.");
+      toast.success("semail sent successfully.");
     } catch (error) {
-      toast.error("Failed to update status appointment.");
+      toast.error("Sending email failed.");
     }
   }
 
