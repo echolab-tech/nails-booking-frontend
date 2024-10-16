@@ -5,14 +5,11 @@ import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { Formik, Field, Form } from "formik";
 import { CustomerForm } from "@/types/customerForm";
-import flatpickr from "flatpickr";
 import * as Yup from "yup";
 import { useEffect, useState } from "react";
 import { customers, getCountry, getStatus } from "@/services/customer.service";
 import { FileInput } from "flowbite-react";
-import { parseISO } from "date-fns";
 import { toast } from "react-toastify";
-import Select from "react-tailwindcss-select";
 import SelectStatus from "@/components/Customer/SelectStatus";
 import { useRouter } from "next/navigation";
 
