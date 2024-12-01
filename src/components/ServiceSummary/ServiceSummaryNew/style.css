@@ -1,0 +1,7 @@
+.toggle-checkbox:checked + .toggle-label {
+  background-color: #4caf50;
+}
+
+.toggle-checkbox:checked + .toggle-label .toggle-handle {
+  transform: translateX(1.25rem);
+}
