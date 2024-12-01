@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
-import CategoryList from "@/components/Category/CategoryList";
+import CategoryList from "@/components/ServiceSummary/ServiceSummaryList";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 
 export const metadata: Metadata = {
