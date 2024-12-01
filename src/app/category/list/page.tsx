@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
-import CategoryList from "@/components/ServiceSummary/ServiceSummaryList";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
+import CategoryList from "@/components/Category/CategoryList";
 
 export const metadata: Metadata = {
   title: "Category List | NailsAdmin Template",
