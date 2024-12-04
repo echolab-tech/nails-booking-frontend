@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { deleteCategory, getCategories } from "@/services/categories.service";
+import { deleteCategory, deleteServiceSummary, getCategories } from "@/services/categories.service";
 import { CategoryType } from "@/types/Category";
 import PaginationCustom from "@/components/Pagination/Pagination";
 import { CATEGORYESHOW } from "@/types/CategoryEdit";
@@ -11,6 +11,7 @@ import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
 import Skeleton from "@/components/common/Skeleton";
 import { useRouter } from "next/navigation";
 import { getServiceSummaries } from "@/services/service-summary.service";
+import { ServiceSummaryType } from "@/types/ServiceSummary";
 // const ITEMS_PER_PAGE = 5;
 interface PaginationData {
   current_page: number;
@@ -19,7 +20,7 @@ interface PaginationData {
   per_page: number;
 }
 const ServiceSummaryList = () => {
-  const [serviceSummaryData, setServiceSummaryData] = useState<CategoryType[]>([]);
+  const [serviceSummaryData, setServiceSummaryData] = useState<ServiceSummaryType[]>([]);
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [idDel, setIdDel] = useState<string | null>(null);
@@ -35,10 +36,10 @@ const ServiceSummaryList = () => {
   );
 
   useEffect(() => {
-    fetchCategories(1);
+    fetchServiceSummary(1);
   }, []);
 
-  const fetchCategories = async (page: number) => {
+  const fetchServiceSummary = async (page: number) => {
     try {
       setIsLoading(true);
       const response = await getServiceSummaries(page, false);
@@ -49,9 +50,6 @@ const ServiceSummaryList = () => {
       console.error("Error fetching categories:", error);
     }
   };
-  const onPageChange = (page: number) => {
-    fetchCategories(page);
-  };
 
   const onClose = () => {
     setIdDel(null);
@@ -60,27 +58,29 @@ const ServiceSummaryList = () => {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const updateCategoryList = async () => {
-    try {
-      const response = await getCategories(paginationData.current_page, false);
-      setServiceSummaryData(response.data.data);
-      setPaginationData(response.data.metadata);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-    }
-  };
+  // const fetchServiceSummary = async () => {
+  //   try {
+  //     const response = await getServiceSummaries(paginationData.current_page, false);
+  //     setServiceSummaryData(response.data.data);
+  //     setPaginationData(response.data.metadata);
+  //   } catch (error) {
+  //     console.error("Error fetching categories:", error);
+  //   }
+  // };
 
-  const handleButtonDelete = (categoryId: string) => {
+  const handleButtonDelete = (serviceSummaryID: string) => {
     setOpenModal(true);
-    setIdDel(categoryId);
+    setIdDel(serviceSummaryID);
   };
 
   const onDelete = async () => {
     try {
-      await deleteCategory(idDel);
-      updateCategoryList();
-      setOpenModal(false);
-      toast.success("Delete Success !!!");
+      deleteServiceSummary(idDel).then(() => {
+        setOpenModal(false);
+        fetchServiceSummary(1);
+        
+        toast.success("Delete Success !!!");
+      });
     } catch (error) {
       toast.warning("you cannot delete !!!");
     }
@@ -98,9 +98,9 @@ const ServiceSummaryList = () => {
                 <th className="min-w-[220px] px-4 py-4 font-medium text-black dark:text-white xl:pl-11">
                   Category Name
                 </th>
-                {/* <th className="px-4 py-4 font-medium text-black dark:text-white">
-                  Color
-                </th> */}
+                <th className="px-4 py-4 font-medium text-black dark:text-white">
+                  Status
+                </th>
                 <th className="px-4 py-4 font-medium text-black dark:text-white">
                   Action
                 </th>
@@ -114,14 +114,12 @@ const ServiceSummaryList = () => {
                       {serviceSummary.name}
                     </h5>
                   </td>
-                  {/* <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
-                    <div
-                      className={`h-4 w-10 rounded-full`}
-                      style={{
-                        backgroundColor: serviceSummary?.color,
-                      }}
-                    ></div>
-                  </td> */}
+
+                  <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
+                    <h5 className="font-medium text-black dark:text-white">
+                      {serviceSummary.is_active ? "Active" : "Inactive"}
+                    </h5>
+                  </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                     <div className="flex items-center space-x-3.5">
                       <button className="hover:text-primary">
@@ -182,7 +180,7 @@ const ServiceSummaryList = () => {
       )}
       <DialogConfirm
         openModal={openModal}
-        message=" Are you sure you want to delete this category ?"
+        message=" Are you sure you want to delete this service summary ?"
         onClose={onClose}
       >
         <button

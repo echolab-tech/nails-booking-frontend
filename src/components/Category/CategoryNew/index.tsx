@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Formik, Form, Field } from "formik";
+import { Formik, Form, Field, FieldArray, FormikValues } from "formik";
 import * as Yup from "yup";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -8,9 +8,11 @@ import { CategoryType } from "@/types/Category";
 import {
   categories,
   getCategoryById,
+  getListServiceSummary,
   updateCategory,
 } from "@/services/categories.service";
 import { useParams, useRouter } from "next/navigation";
+import { ServiceSummaryType } from "@/types/ServiceSummary";
 
 const CreatedCategory = Yup.object().shape({
   name: Yup.string().min(2).max(50).required(),
@@ -20,15 +22,35 @@ const CategoryNew = () => {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [category, setCategory] = useState<CategoryType>();
+  const [listServiceSummary, setListServiceSummary] = useState<
+    ServiceSummaryType[]
+  >([]);
 
   useEffect(() => {
     fetchCategory();
+    fetchServiceSummary();
   }, []);
 
   const fetchCategory = async () => {
     const result = await getCategoryById(id);
     setCategory(result?.data?.data);
   };
+  const fetchServiceSummary = async () => {
+    const result = await getListServiceSummary();
+    setListServiceSummary(result?.data?.data);
+  };
+
+  // const handleCheckboxChange = (id: string) => {
+  //   setCategory((prevCategory) => ({
+  //     ...prevCategory,
+  //     listServiceSummary: [
+  //       ...(prevCategory?.listServiceSummary || []), // Đảm bảo là mảng
+  //       item,
+  //     ],
+  //   }));
+  // };
+
+  // console.log(listServiceSummary, "listServiceSummary");
   return (
     <div className="grid grid-cols-1 gap-12">
       <div className="flex flex-col gap-9">
@@ -41,11 +63,13 @@ const CategoryNew = () => {
           <Formik
             enableReinitialize={true}
             initialValues={{
+              id: "",
               name: category?.name || "",
               color: category?.color || "#22d3ee",
+              serviceSummary: category?.service_summaries?.map((item) => item.id) || [],
             }}
             validationSchema={CreatedCategory}
-            onSubmit={(values: CategoryType, { resetForm }) => {
+            onSubmit={(values: any, { resetForm }) => {
               if (id) {
                 updateCategory(values, id)
                   .then((data) => {
@@ -71,11 +95,11 @@ const CategoryNew = () => {
           >
             {({ errors, touched }) => (
               <Form action="#">
-                <div className="p-6.5">
+                <div className="border-stroke  p-6.5 px-6.5 py-4 dark:border-strokedark">
                   <div className="mb-4.5 flex flex-col justify-center gap-6">
                     <div className="w-full xl:w-1/2">
                       <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                        Name
+                        Category Name
                       </label>
                       <Field
                         type="text"
@@ -100,7 +124,67 @@ const CategoryNew = () => {
                       />
                     </div>
                   </div>
-                  <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                </div>
+                <div className="border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+                  <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
+                    <h3 className="font-medium text-black dark:text-white">
+                      {id ? "Update service summary" : "New service summary"}
+                    </h3>
+                  </div>
+                  <div className="mb-4.5 flex flex-col justify-center gap-6 px-6.5 py-4">
+                    <div className="w-full">
+                    <FieldArray name="serviceSummary">
+                  {({
+                    push,
+                    remove,
+                    form: { values },
+                  }: {
+                    push: (value: any) => void;
+                    remove: (index: number) => void;
+                    form: FormikValues;
+                  }) => (
+                    <>
+                      <div className="mb-4.5 flex flex-wrap	gap-6 xl:flex-row">
+                        {listServiceSummary?.map((summary: any, index: number) => {
+                          const isChecked = values.serviceSummary.includes(
+                            summary?.id,
+                          );
+                          return (
+                            <div
+                              key={index}
+                              className="border-gray-1 w-1/3 rounded border p-3 xl:w-1/3"
+                            >
+                              <label className="checkbox-container">
+                                {summary?.name}
+                                <Field
+                                  name="serviceSummary"
+                                  type="checkbox"
+                                  value={summary.id}
+                                  checked={isChecked}
+                                  onChange={(e: any) => {
+                                    if (e.target.checked) {
+                                      push(summary.id);
+                                    } else {
+                                      const idx =
+                                        values.serviceSummary.indexOf(
+                                          summary.id,
+                                        );
+                                      if (idx >= 0) remove(idx);
+                                    }
+                                  }}
+                                />
+                                <span className="checkmark"></span>
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </FieldArray>
+                    </div>
+                  </div>
+                  <div className="mb-4.5 flex flex-col gap-6 px-6.5 py-4 xl:flex-row">
                     <div className="w-full xl:w-1/2">
                       <button
                         type="submit"

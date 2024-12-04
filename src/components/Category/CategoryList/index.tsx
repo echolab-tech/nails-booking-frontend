@@ -99,6 +99,9 @@ const CategoryList = () => {
                   Category Name
                 </th>
                 <th className="px-4 py-4 font-medium text-black dark:text-white">
+                  Service Summary
+                </th>
+                <th className="px-4 py-4 font-medium text-black dark:text-white">
                   Color
                 </th>
                 <th className="px-4 py-4 font-medium text-black dark:text-white">
@@ -113,6 +116,14 @@ const CategoryList = () => {
                     <h5 className="font-medium text-black dark:text-white">
                       {category.name}
                     </h5>
+                  </td>
+                  <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
+                      {category?.service_summaries?.map((element, index) => (
+                        <span key={index}>
+                          {element?.name}
+                          {index !== category.service_summaries.length - 1 && ", "}
+                        </span>
+                      ))}
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
                     <div

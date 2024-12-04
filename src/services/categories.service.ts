@@ -24,3 +24,11 @@ export const updateCategory = async (
 export const deleteCategory = async (id: string | null): Promise<any> => {
   return await http.delete<any>(`/categories/${id}`);
 };
+
+export const getListServiceSummary = async (
+): Promise<any> => {
+  return await http.get<any>(`/list-service-summary`);
+};
+export const deleteServiceSummary = async (id: string | null): Promise<any> => {
+  return await http.delete<any>(`/service-summary/${id}`);
+};
