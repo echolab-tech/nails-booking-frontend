@@ -475,7 +475,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                 pathname === "/service-summary/new" && "text-white"
                               }`}
                             >
-                              Service Summary New
+                              New
                             </Link>
                           </li>
                           <li>
@@ -485,7 +485,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                 pathname === "/service-summary/list" && "text-white"
                               } `}
                             >
-                              Service Summary List
+                              List
                             </Link>
                           </li>
                         </ul>

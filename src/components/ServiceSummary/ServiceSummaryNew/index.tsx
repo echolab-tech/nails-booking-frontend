@@ -19,6 +19,7 @@ import {
   getServcieSummaryById,
 } from "@/services/service-summary.service";
 import { FieldProps, FormikProps } from "formik";
+import ToggleSwitch from "@/components/Service/NewFormService/ToggleSwitch";
 
 const CreatedCategory = Yup.object().shape({
   name: Yup.string().min(2).max(50).required(),
@@ -35,7 +36,6 @@ const ServiceSummaryNew = () => {
 
   const fetchCategory = async () => {
     const result = await getServcieSummaryById(id);
-    console.log(result?.data?.data, "result");
     setServiceSummary({
       ...result?.data?.data,
       is_active: Boolean(result?.data?.data?.is_active),
@@ -83,7 +83,7 @@ const ServiceSummaryNew = () => {
               }
             }}
           >
-            {({ errors, touched }) => (
+            {({ errors, touched, values, setFieldValue }) => (
               <Form action="#">
                 <div className="p-6.5">
                   <div className="mb-4.5 flex flex-col justify-center gap-6">
@@ -109,35 +109,11 @@ const ServiceSummaryNew = () => {
                           Is Active
                         </label>
                         <div className="flex items-center">
-                          <Field name="is_active">
-                            {({ field, form }: FieldProps<boolean>) => (
-                              <div>
-                                <input
-                                  type="checkbox"
-                                  id="is_active"
-                                  checked={!!field.value} // Ép giá trị thành boolean
-                                  onChange={() => form.setFieldValue("is_active", !field.value)}
-                                  className="toggle-checkbox hidden"
-                                />
-                                <label
-                                  htmlFor="is_active"
-                                  className={`toggle-label flex h-6 w-11 cursor-pointer items-center rounded-full transition ${
-                                    field.value
-                                      ? "bg-primary"
-                                      : "dark:bg-gray-700 bg-gray-300"
-                                  }`}
-                                >
-                                  <span
-                                    className={`toggle-handle h-4 w-4 transform rounded-full bg-white shadow transition ${
-                                      field.value
-                                        ? "translate-x-5"
-                                        : "translate-x-0"
-                                    }`}
-                                  ></span>
-                                </label>
-                              </div>
-                            )}
-                          </Field>
+                          <ToggleSwitch
+                            name="is_active"
+                            value={values.is_active}
+                            handleChange={()=>setFieldValue("is_active", !values.is_active)}
+                          />
                         </div>
                       </div>
                     </div>
