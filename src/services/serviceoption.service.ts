@@ -13,3 +13,7 @@ export const getServiceOptionShow = async (
 ): Promise<any> => {
   return await http.get<any>(`/service-option/${id}/${assistantId}`);
 };
+
+export const getServiceByCategoryId = async (categoryId: string): Promise<any> => {
+  return await http.get<any>(`services/category/${categoryId}/services`);
+};

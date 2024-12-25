@@ -56,7 +56,6 @@ const ChartRecentSale: React.FC = () => {
     });
 
     const seriesData = last7Days.map((day) => {
-      console.log("day:", day);
       const [dayName, dayDate] = day.split(" ");
       return dateCountMap.get(dayName) || 0;
     });

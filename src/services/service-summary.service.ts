@@ -26,3 +26,7 @@ export const updateServiceSummary = async (
 export const deleteCategory = async (id: string | null): Promise<any> => {
   return await http.delete<any>(`/service-summary/${id}`);
 };
+
+export const getServiceCategoriesBySummaryId = async (summaryId: string): Promise<any> => {
+  return await http.get<any>(`/service-summary/${summaryId}/categories`);
+};

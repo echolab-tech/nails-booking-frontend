@@ -49,3 +49,12 @@ export const getAssistants = async (): Promise<any> => {
 export const getAllAssistants = async (): Promise<any> => {
   return await http.get<any>("/assistants?getall=true");
 };
+
+export const getAssistantBookings = async (
+  assistantId: number,
+  date: string
+): Promise<any> => {
+  return await http.get<any>(
+    `/customer/assistants/${assistantId}/bookings?date=${date}`
+  );
+};

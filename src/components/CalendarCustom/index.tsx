@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, ChangeEvent, useRef } from "react";
+import React, { useState, useEffect, ChangeEvent, useRef, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import { LuCalendar } from "react-icons/lu";
 import { LuCalendarX2 } from "react-icons/lu";
@@ -21,6 +21,7 @@ import { CustomerType } from "@/types/customer";
 import { getAllCustomer, getStatus } from "@/services/customer.service";
 import { addMinutes, format } from "date-fns";
 import { toZonedTime, formatInTimeZone } from "date-fns-tz";
+import { useRouter } from "next/navigation";
 import {
   getServiceOptionShow,
   serviceOption,
@@ -123,7 +124,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [status, setStatus] = useState<
     { id: number; name_status: string; color_code: string }[]
   >([]);
-
+  const router = useRouter();
 
   useEffect(() => {
     fetchService();
@@ -1020,7 +1021,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
           <Modal.Header>{formatHoursMinute(startTime)}</Modal.Header>
           <Modal.Body>
             <button
-              onClick={handleOpenBooking}
+              onClick={() => router.push("/booking/1")}
               type="button"
               className="inline-flex w-full items-center justify-start rounded-md bg-transparent py-2 font-medium text-black hover:bg-opacity-90 "
             >
