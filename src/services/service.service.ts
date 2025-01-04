@@ -1,6 +1,19 @@
 import { http } from "../lib/http";
 import { ServicePackageForm } from "@/types/service";
 
+interface ServiceOption {
+  id: number;
+  time: number;
+  price: number;
+}
+
+interface Service {
+  id: number;
+  name: string;
+  description: string;
+  service_options: ServiceOption[];
+}
+
 // 1. API để lấy danh sách service với phân trang và tìm kiếm
 export const getListService = async (
   page: number,
@@ -57,4 +70,3 @@ export const deletePackage = async (id: string | null): Promise<any> => {
 export const checkServiceHasBooking = async (id: string): Promise<any> => {
   return await http.get<any>(`/services/${id}/check-bookings`);
 };
-
