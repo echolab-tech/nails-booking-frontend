@@ -9,7 +9,6 @@ import ApointmentOverview from "./ApointmentOverview";
 
 const StepAddCategory = ({ handleBack, handleNext, formik }: any) => {
   const [categories, setCategories] = useState<CategoryType[]>([]);
-  const [selectedButton, setSelectedButton] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCategories(
