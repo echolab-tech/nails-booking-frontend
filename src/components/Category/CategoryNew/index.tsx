@@ -8,11 +8,11 @@ import { CategoryType } from "@/types/Category";
 import {
   categories,
   getCategoryById,
-  getListServiceSummary,
   updateCategory,
 } from "@/services/categories.service";
 import { useParams, useRouter } from "next/navigation";
 import { ServiceSummaryType } from "@/types/ServiceSummary";
+import { getServiceSummaries } from "@/services/service-summary.service";
 
 const CreatedCategory = Yup.object().shape({
   name: Yup.string().min(2).max(50).required(),
@@ -36,7 +36,7 @@ const CategoryNew = () => {
     setCategory(result?.data?.data);
   };
   const fetchServiceSummary = async () => {
-    const result = await getListServiceSummary();
+    const result = await getServiceSummaries(null, true);
     setListServiceSummary(result?.data?.data);
   };
 
@@ -66,7 +66,8 @@ const CategoryNew = () => {
               id: "",
               name: category?.name || "",
               color: category?.color || "#22d3ee",
-              serviceSummary: category?.service_summaries?.map((item) => item.id) || [],
+              serviceSummary:
+                category?.service_summaries?.map((item) => item.id) || [],
             }}
             validationSchema={CreatedCategory}
             onSubmit={(values: any, { resetForm }) => {
@@ -133,55 +134,56 @@ const CategoryNew = () => {
                   </div>
                   <div className="mb-4.5 flex flex-col justify-center gap-6 px-6.5 py-4">
                     <div className="w-full">
-                    <FieldArray name="serviceSummary">
-                  {({
-                    push,
-                    remove,
-                    form: { values },
-                  }: {
-                    push: (value: any) => void;
-                    remove: (index: number) => void;
-                    form: FormikValues;
-                  }) => (
-                    <>
-                      <div className="mb-4.5 flex flex-wrap	gap-6 xl:flex-row">
-                        {listServiceSummary?.map((summary: any, index: number) => {
-                          const isChecked = values.serviceSummary.includes(
-                            summary?.id,
-                          );
-                          return (
-                            <div
-                              key={index}
-                              className="border-gray-1 w-1/3 rounded border p-3 xl:w-1/3"
-                            >
-                              <label className="checkbox-container">
-                                {summary?.name}
-                                <Field
-                                  name="serviceSummary"
-                                  type="checkbox"
-                                  value={summary.id}
-                                  checked={isChecked}
-                                  onChange={(e: any) => {
-                                    if (e.target.checked) {
-                                      push(summary.id);
-                                    } else {
-                                      const idx =
-                                        values.serviceSummary.indexOf(
-                                          summary.id,
-                                        );
-                                      if (idx >= 0) remove(idx);
-                                    }
-                                  }}
-                                />
-                                <span className="checkmark"></span>
-                              </label>
+                      <FieldArray name="serviceSummary">
+                        {({
+                          push,
+                          remove,
+                          form: { values },
+                        }: {
+                          push: (value: any) => void;
+                          remove: (index: number) => void;
+                          form: FormikValues;
+                        }) => (
+                          <>
+                            <div className="mb-4.5 flex flex-wrap	gap-6 xl:flex-row">
+                              {listServiceSummary?.map(
+                                (summary: any, index: number) => {
+                                  const isChecked =
+                                    values.serviceSummary.includes(summary?.id);
+                                  return (
+                                    <div
+                                      key={index}
+                                      className="border-gray-1 w-1/3 rounded border p-3 xl:w-1/3"
+                                    >
+                                      <label className="checkbox-container">
+                                        {summary?.name}
+                                        <Field
+                                          name="serviceSummary"
+                                          type="checkbox"
+                                          value={summary.id}
+                                          checked={isChecked}
+                                          onChange={(e: any) => {
+                                            if (e.target.checked) {
+                                              push(summary.id);
+                                            } else {
+                                              const idx =
+                                                values.serviceSummary.indexOf(
+                                                  summary.id,
+                                                );
+                                              if (idx >= 0) remove(idx);
+                                            }
+                                          }}
+                                        />
+                                        <span className="checkmark"></span>
+                                      </label>
+                                    </div>
+                                  );
+                                },
+                              )}
                             </div>
-                          );
-                        })}
-                      </div>
-                    </>
-                  )}
-                </FieldArray>
+                          </>
+                        )}
+                      </FieldArray>
                     </div>
                   </div>
                   <div className="mb-4.5 flex flex-col gap-6 px-6.5 py-4 xl:flex-row">

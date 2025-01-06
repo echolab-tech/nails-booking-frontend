@@ -6,14 +6,14 @@ import { format, parse } from "date-fns";
 
 const DateTimeCard = ({ date }) => {
   return (
-    <div className="flex border border-primary bg-green-50 justify-center items-center p-3 gap-4 rounded-xl mt-4">
+    <div className="mt-4 flex items-center justify-center gap-4 rounded-xl border border-primary bg-green-50 p-3">
       <IoCalendarOutline size={25} className="text-primary" />
       <b className="font-bold">
-        {format(parse(date, "dd-MM-yyyy HH:mm", new Date()), "yyyy MMM dd")}
+        {/* {format(parse(date, "dd-MM-yyyy HH:mm", new Date()), "yyyy MMM dd")} */}
       </b>
       <FaRegClock size={25} className="text-primary" />
       <b className="font-bold">
-        {format(parse(date, "dd-MM-yyyy HH:mm", new Date()), "h:mm a")}
+        {/* {format(parse(date, "dd-MM-yyyy HH:mm", new Date()), "h:mm a")} */}
       </b>
     </div>
   );

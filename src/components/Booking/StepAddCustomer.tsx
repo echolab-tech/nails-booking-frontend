@@ -15,50 +15,55 @@ const StepAddCustomer = ({ handleNext, handleBackToCalendar, formik }: any) => {
   const fetchCustomer = async () => {
     try {
       const response = await getAllCustomer("");
-      setCustomerData(response.data.data);
+      setCustomerData(response?.data?.data);
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      console.error("Error fetching customer:", error);
     }
   };
 
-  const handleButtonClick = (customer: string) => {
-    setSelectedButton(customer);
+  const handleButtonClick = (customer: CustomerType) => {
+    const newAppointment = {
+      customer: { ...customer },
+      service: {},
+      otherServices: [],
+      serviceSummary: {},
+      serviceCategory: {},
+    };
+
     const newValues = {
       ...formik.values,
-      customer_name: customer,
+      appointments: [...formik.values.appointments, newAppointment], // Thêm booking mới
     };
+
+    // Cập nhật Formik và lưu vào sessionStorage
     formik.setValues(newValues);
     sessionStorage.setItem("bookingFormData", JSON.stringify(newValues));
+
+    // Chuyển qua step tiếp theo
     handleNext();
   };
 
   return (
-    <div className="p-10 bg-white w-full rounded-lg shadow-lg space-y-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="w-full space-y-8 rounded-lg bg-white p-10 shadow-lg">
+      <div className="mb-6 flex items-center justify-between">
         <div>
-          <h3 className="text-2xl text-primary mb-1 font-bold">
+          <h3 className="mb-1 text-2xl font-bold text-primary">
             Select customer
           </h3>
-          <p className="text-primary text-sm">
-            Please select the customer we need to serve
-          </p>
+          <p className="text-sm">Please select the customer we need to serve</p>
         </div>
-
       </div>
 
       <div className="mt-4 space-y-4">
-        { customerData?.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => handleButtonClick(item.name)}
-              className={`w-full flex items-center bg-transparent hover:bg-gray-2 text-dark font-semibold py-4 px-4 border border-stroke rounded ${
-                selectedButton === item.name
-                  ? "border-primary bg-primary-light text-primary"
-                  : "border-gray-200 text-gray-700 hover:border-primary"
-              }`}
-            >
-              <span className="text-lg font-medium">{item.name}</span>
-            </button>
+        {customerData?.map((item, index) => (
+          <button
+            key={index}
+            onClick={() => handleButtonClick(item)}
+            className={`text-dark flex w-full items-center rounded border border-stroke bg-transparent px-4 py-4 font-semibold hover:bg-gray-2`}
+          >
+            <span className="text-lg font-medium">{item?.name}</span>
+            <span className="text-lg font-medium">{item?.phone}</span>
+          </button>
         ))}
       </div>
 
@@ -66,7 +71,7 @@ const StepAddCustomer = ({ handleNext, handleBackToCalendar, formik }: any) => {
         <button
           type="button"
           onClick={handleBackToCalendar}
-          className="bg-primary text-white py-2 px-4 rounded-lg flex items-center gap-2 disabled:bg-gray-4"
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white disabled:bg-gray-4"
         >
           <FaArrowLeft />
           Back
@@ -76,4 +81,4 @@ const StepAddCustomer = ({ handleNext, handleBackToCalendar, formik }: any) => {
   );
 };
 
-export default StepAddCustomer; 
+export default StepAddCustomer;

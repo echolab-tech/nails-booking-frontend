@@ -46,15 +46,30 @@ export const getAssistants = async (): Promise<any> => {
   return await http.get<any>("/assistants");
 };
 
+export const getAssistantAvalible = async (
+  serviceIds: number,
+  subServiceIds: Array<number>,
+): Promise<any> => {
+  return await http.get<any>(`/get-assistants-available`, {
+    params: {
+      serviceIds: serviceIds,
+      subServiceIds: subServiceIds,
+    },
+    paramsSerializer: {
+      indexes: false,
+    },
+  });
+};
+
 export const getAllAssistants = async (): Promise<any> => {
   return await http.get<any>("/assistants?getall=true");
 };
 
 export const getAssistantBookings = async (
   assistantId: number,
-  date: string
+  date: string,
 ): Promise<any> => {
   return await http.get<any>(
-    `/customer/assistants/${assistantId}/bookings?date=${date}`
+    `/customer/assistants/${assistantId}/bookings?date=${date}`,
   );
 };

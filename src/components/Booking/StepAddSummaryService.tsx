@@ -4,13 +4,17 @@ import { ServiceSummaryType } from "../../types/ServiceSummary";
 import { getListServiceSummary } from "../../services/categories.service";
 import { FaArrowLeft } from "react-icons/fa";
 import { FcBusinessman } from "react-icons/fc";
+import ApointmentOverview from "./ApointmentOverview";
+import { getServiceSummaries } from "@/services/service-summary.service";
 
 const StepAddSummaryService = ({ handleNext, handleBack, formik }: any) => {
   const [selectedButton, setSelectedButton] = useState<string | null>(null);
-  const [serviceSummary, setServiceSummary] = useState<ServiceSummaryType[]>([]);
+  const [serviceSummary, setServiceSummary] = useState<ServiceSummaryType[]>(
+    [],
+  );
 
   useEffect(() => {
-    const storedData = sessionStorage.getItem('bookingFormData');
+    const storedData = sessionStorage.getItem("bookingFormData");
     if (storedData) {
       const parsedData = JSON.parse(storedData);
       if (parsedData.appointment_type) {
@@ -22,44 +26,38 @@ const StepAddSummaryService = ({ handleNext, handleBack, formik }: any) => {
   }, []);
 
   const fetchServiceSummary = async () => {
-    getListServiceSummary().then((result) => {
+    getServiceSummaries(null, true).then((result) => {
       setServiceSummary(result?.data?.data);
     });
   };
 
   const handleButtonClick = (serviceSummary: ServiceSummaryType) => {
-    setSelectedButton(serviceSummary.name);
-    
+    const updatedBookings = formik.values.appointments.map((booking, index) =>
+      index === formik.values.bookingIndex
+        ? { ...booking, serviceSummary }
+        : booking,
+    );
+
     const newValues = {
       ...formik.values,
-      appointment_type: {
-        ...serviceSummary,
-        id: serviceSummary.id
-      },
+      appointments: updatedBookings,
     };
-    
     formik.setValues(newValues);
-    sessionStorage.setItem('bookingFormData', JSON.stringify(newValues));
+    sessionStorage.setItem("bookingFormData", JSON.stringify(newValues));
     handleNext();
   };
 
   return (
-    <div className="p-10 bg-white w-full rounded-lg shadow-lg space-y-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="w-full space-y-8 rounded-lg bg-white p-10 shadow-lg">
+      <ApointmentOverview formik={formik} />
+      <div className="mb-6 flex items-center justify-between">
         <div>
-          <h3 className="text-2xl text-primary mb-1 font-bold">
+          <h3 className="mb-1 text-2xl font-bold text-primary">
             Select service summary
           </h3>
-          <p className="text-primary text-sm">
+          <p className="text-sm text-primary">
             Please select the category we need to serve first person
           </p>
-        </div>
-
-        <div className="flex items-center space-x-2 border border-primary rounded-lg px-4 py-2">
-          <div className="flex items-center justify-center">
-            <FcBusinessman className="w-[40px] h-[40px]" />
-          </div>
-          <span className="font-medium text">{formik.values.customer_name}</span>
         </div>
       </div>
 
@@ -68,10 +66,10 @@ const StepAddSummaryService = ({ handleNext, handleBack, formik }: any) => {
           <button
             key={index}
             onClick={() => handleButtonClick(item)}
-            className={`w-full flex items-center bg-transparent hover:bg-gray-2 text-dark font-semibold py-4 px-4 border border-stroke rounded ${
+            className={`text-dark flex w-full items-center rounded border border-stroke bg-transparent px-4 py-4 font-semibold hover:bg-gray-2 ${
               selectedButton === item.name
-                ? "border-primary bg-primary-light text-primary"
-                : "border-gray-200 text-gray-700 hover:border-primary"
+                ? "bg-primary-light border-primary text-primary"
+                : "text-gray-700 border-gray-200 hover:border-primary"
             }`}
           >
             <span className="text-lg font-medium">{item.name}</span>
@@ -83,7 +81,7 @@ const StepAddSummaryService = ({ handleNext, handleBack, formik }: any) => {
         <button
           type="button"
           onClick={handleBack}
-          className="bg-primary text-white py-2 px-4 rounded-lg flex items-center gap-2 disabled:bg-gray-4"
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white disabled:bg-gray-4"
         >
           <FaArrowLeft />
           Back

@@ -10,54 +10,35 @@ import StepAddSummaryService from "../../../components/Booking/StepAddSummarySer
 import StepAddCategory from "../../../components/Booking/StepAddCategory";
 import StepAddService from "../../../components/Booking/StepAddService";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import SelectEmployee from "@/components/Booking/SelectEmployee";
 
 const BookingPage = () => {
   const [step, setStep] = useState<number>(1);
-  const [showDetail, setShowDetail] = useState<boolean>(false);
   const [openModal, setOpenModal] = useState<boolean>(false);
-  const [showSelectAssistant, setShowSelectAssistant] =
-    useState<boolean>(false);
   const router = useRouter();
+
+  const searchParams = useSearchParams();
+  const startTime = searchParams.get("startTime");
 
   const formik = useFormik({
     initialValues: {
+      startTime,
+      bookingIndex: 0,
       appointment_type: null,
-      services: [],
-      other_services: [],
-      assistant: null,
-      booking_time: null,
+      appointments: [],
     },
     onSubmit: (values) => {},
   });
 
   const handleNext = (id: string) => {
-    // if (step === 3 && formik.values.assistant == null) {
-    //   setOpenModal(true);
-    //   return;
-    // }
-    setStep(step + 1);
+    if (step == 5) {
+      setOpenModal(true);
+    } else {
+      setStep(step + 1);
+    }
   };
   const handleBack = () => {
-    formik.resetForm();
-    if (step == 2 && showDetail) {
-      setShowDetail(false);
-      return;
-    }
-    if (step == 3) {
-      setShowDetail(false);
-    }
-
-    if (step == 4 && showDetail) {
-      setShowDetail(false);
-      return;
-    }
-
-    if (step == 5 && showDetail) {
-      setShowDetail(false);
-      return;
-    }
-
     setStep(step - 1);
   };
 
@@ -89,7 +70,7 @@ const BookingPage = () => {
 
   return (
     <DefaultLayout>
-      <div className="flex flex-col w-full items-center">
+      <div className="flex w-full flex-col items-center">
         <Stepper step={step} />
         {step == 1 && (
           <StepAddCustomer
@@ -127,6 +108,13 @@ const BookingPage = () => {
           />
         )}
         {step == 6 && (
+          <SelectEmployee
+            formik={formik}
+            handleNext={handleNext}
+            handleBack={handleBack}
+          />
+        )}
+        {step == 7 && (
           <ConfirmBooking
             formik={formik}
             handleBack={handleBack}

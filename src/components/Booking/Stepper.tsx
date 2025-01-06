@@ -8,7 +8,7 @@ import {
 
 const Stepper = ({ step }: any) => {
   const steps = [
-    { label: "Select customer", stepNumber: 1},
+    { label: "Select customer", stepNumber: 1 },
     { label: "Select service summary", stepNumber: 2 },
     { label: "Select category", stepNumber: 3 },
     { label: "Select service", stepNumber: 4 },
@@ -18,28 +18,34 @@ const Stepper = ({ step }: any) => {
   ];
 
   return (
-    <div className="w-full flex justify-center py-8">
-      <ol className="flex items-center justify-between w-full px-4">
+    <div className="flex w-full justify-center py-8">
+      <ol className="flex w-full items-center justify-between px-4">
         {steps.map(({ label, stepNumber }) => (
-          <li key={stepNumber} className="flex flex-col items-center flex-1">
-            <div className={`flex items-center w-full justify-center ${
-              stepNumber < steps.length
-                ? `${stepNumber === 1 ? 'after:content-[\'\'] after:w-[55px] after:h-[2px] after:bg-gray-200 after:ml-4 ml-[76px]' : 
-                   stepNumber === steps.length ? 'before:content-[\'\'] before:w-full before:h-[2px] before:bg-gray-200 before:mr-4' : 
-                   'before:content-[\'\'] before:w-full before:h-[2px] before:bg-gray-200 before:mr-4 after:content-[\'\'] after:w-full after:h-[2px] after:bg-gray-200 after:ml-4'}`
-                : ""
-            }`}>
+          <li key={stepNumber} className="flex flex-1 flex-col items-center">
+            <div
+              className={`flex w-full items-center justify-center ${
+                stepNumber < steps.length
+                  ? `${
+                      stepNumber === 1
+                        ? "ml-[76px] after:ml-4 after:h-[2px] after:w-[55px] after:bg-gray-200 after:content-['']"
+                        : stepNumber === steps.length
+                          ? "before:mr-4 before:h-[2px] before:w-full before:bg-gray-200 before:content-['']"
+                          : "before:mr-4 before:h-[2px] before:w-full before:bg-gray-200 before:content-[''] after:ml-4 after:h-[2px] after:w-full after:bg-gray-200 after:content-['']"
+                    }`
+                  : ""
+              }`}
+            >
               <div className="flex-shrink-0">
                 {step > stepNumber ? (
-                  <IoIosCheckmarkCircle className="text-green-500 w-8 h-8" />
+                  <IoIosCheckmarkCircle className="h-8 w-8" />
                 ) : step === stepNumber ? (
-                  <IoIosRadioButtonOn className="text-green-500 w-8 h-8" />
+                  <IoIosRadioButtonOn className="h-8 w-8" />
                 ) : (
-                  <IoIosRadioButtonOff className="text-gray-300 w-8 h-8" />
+                  <IoIosRadioButtonOff className="h-8 w-8 text-gray-300" />
                 )}
               </div>
             </div>
-            <span className="hidden md:block text-xs sm:text-sm mt-2 text-center whitespace-nowrap">
+            <span className="mt-2 hidden whitespace-nowrap text-center text-xs sm:text-sm md:block">
               {label}
             </span>
           </li>
