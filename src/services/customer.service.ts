@@ -2,9 +2,14 @@ import { CustomerEditForm } from "@/types/customerEditForm";
 import { http } from "../lib/http";
 import { CustomerForm } from "@/types/customerForm";
 import { CustomerSearchForm } from "@/types/customerSearchForm";
+import { CustomerFormAdd } from "@/types/customerAdd";
 
 export const customers = async (values: CustomerForm): Promise<any> => {
   return await http.post<any>("/customers", values);
+};
+
+export const addCustomersBooking = async (values: CustomerFormAdd): Promise<any> => {
+  return await http.post<any>("/customers/add/new", values);
 };
 
 export const getListCustomers = async (
