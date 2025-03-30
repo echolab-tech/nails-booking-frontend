@@ -9,6 +9,7 @@ import { ToastProvider } from "@/providers/ToastProvider";
 import "react-toastify/dist/ReactToastify.css";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { ToastContainer } from "react-toastify";
+import { AppointmentProvider } from "@/contexts/AppointmentContext";
 
 export default function RootLayout({
   children,
@@ -28,7 +29,13 @@ export default function RootLayout({
     <html lang="en">
       <body suppressHydrationWarning={true}>
         <div className="bg-white dark:bg-boxdark-2 dark:text-bodydark">
-          {loading ? <Loader /> : <AuthProvider>{children}</AuthProvider>}
+          {loading ? (
+            <Loader />
+          ) : (
+            <AppointmentProvider>
+              <AuthProvider>{children}</AuthProvider>
+            </AppointmentProvider>
+          )}
         </div>
         <ToastContainer position="top-center" theme="dark" />
       </body>

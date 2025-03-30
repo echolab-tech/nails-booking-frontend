@@ -1,48 +1,52 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { FcBusinessman } from "react-icons/fc";
 import { FaArrowLeft } from "react-icons/fa";
 import { MdArrowForwardIos } from "react-icons/md";
 import { CategoryType } from "@/types/Category";
 import { getServcieSummaryById } from "@/services/service-summary.service";
 import ApointmentOverview from "./ApointmentOverview";
+import { useAppointment } from "@/contexts/AppointmentContext";
 
-const StepAddCategory = ({ handleBack, handleNext, formik }: any) => {
+interface StepAddCategoryProps {
+  handleBack: () => void;
+  handleNext: () => void;
+}
+
+const StepAddCategory = ({ handleBack, handleNext }: StepAddCategoryProps) => {
   const [categories, setCategories] = useState<CategoryType[]>([]);
+  const { state, dispatch } = useAppointment();
 
   useEffect(() => {
-    fetchCategories(
-      formik.values.appointments[formik.values.bookingIndex]?.serviceSummary
-        ?.id,
-    );
-  }, []);
+    const currentAppointment =
+      state.appointments[state.currentAppointmentIndex];
+    if (currentAppointment?.serviceSummary?.id) {
+      fetchCategories(currentAppointment.serviceSummary.id);
+    }
+  }, [state.currentAppointmentIndex]);
 
   const fetchCategories = async (id: string) => {
-    getServcieSummaryById(id).then((result) => {
+    try {
+      const result = await getServcieSummaryById(id);
       setCategories(result?.data?.data?.service_categories);
-    });
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
   };
 
   const handleButtonClick = (serviceCategory: CategoryType) => {
-    const updatedBookings = formik.values.appointments.map((booking, index) =>
-      index === formik.values.bookingIndex
-        ? { ...booking, serviceCategory }
-        : booking,
-    );
+    // Dispatch action để cập nhật category cho appointment hiện tại
+    dispatch({
+      type: "SET_SERVICE_CATEGORY",
+      payload: serviceCategory,
+    });
 
-    const newValues = {
-      ...formik.values,
-      appointments: updatedBookings,
-    };
-    formik.setValues(newValues);
-    sessionStorage.setItem("bookingFormData", JSON.stringify(newValues));
     handleNext();
   };
 
   return (
     <div className="w-full space-y-6">
       <div className="w-full space-y-2 rounded-lg bg-lime-50 p-10">
-        <ApointmentOverview formik={formik} />
+        <ApointmentOverview />
       </div>
       <div className="w-full space-y-8 rounded-lg bg-white p-10 shadow-lg">
         <div className="space-y-1">
@@ -54,7 +58,7 @@ const StepAddCategory = ({ handleBack, handleNext, formik }: any) => {
           </p>
         </div>
         <div className="mb-4 mt-4 grid grid-cols-12 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
-          {categories?.map((category: any, index: number) => (
+          {categories?.map((category: CategoryType, index: number) => (
             <div className="col-span-12 xl:col-span-6" key={index}>
               <button
                 onClick={() => handleButtonClick(category)}
