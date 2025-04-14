@@ -1,0 +1,294 @@
+import React, { createContext, useContext, useReducer, ReactNode } from "react";
+
+interface Customer {
+  id?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  price: number;
+  duration: number;
+}
+
+interface ServiceCategory {
+  id: string;
+  name: string;
+}
+
+interface ServiceSummary {
+  id: string;
+  name: string;
+}
+
+interface SubService {
+  id: string;
+  name: string;
+  price: number;
+  duration: number;
+}
+
+interface Assistant {
+  id: string;
+  name: string;
+  avatar?: string;
+}
+
+interface Appointment {
+  customer?: Customer;
+  service?: Service;
+  subServices?: SubService[];
+  assistant?: Assistant;
+  serviceCategory?: ServiceCategory;
+  serviceSummary?: ServiceSummary;
+  startTime?: string;
+  endTime?: string;
+  price?: number;
+  duration?: number;
+}
+
+interface AppointmentState {
+  currentStep: number;
+  selectedTime: string;
+  appointments: Appointment[];
+  currentAppointmentIndex: number;
+  appointmentType: "single" | "group" | null;
+}
+
+type AppointmentAction =
+  | { type: "SET_STEP"; payload: number }
+  | { type: "SET_SELECTED_TIME"; payload: string }
+  | { type: "SET_APPOINTMENT_TYPE"; payload: "single" | "group" }
+  | { type: "SET_CUSTOMER"; payload: Customer }
+  | { type: "SET_SERVICE_SUMMARY"; payload: ServiceSummary }
+  | { type: "SET_SERVICE"; payload: Service }
+  | { type: "SET_SUB_SERVICE"; payload: SubService }
+  | {
+      type: "UPDATE_SUB_SERVICES";
+      payload: {
+        subService: SubService;
+        isChecked: boolean;
+      };
+    }
+  | { type: "SET_ASSISTANT"; payload: Assistant }
+  | { type: "SET_SERVICE_CATEGORY"; payload: ServiceCategory }
+  | { type: "SET_APPOINTMENT_TYPE"; payload: string }
+  | { type: "ADD_APPOINTMENT" }
+  | { type: "SET_APPOINTMENT_INDEX"; payload: number }
+  | { type: "RESET_APPOINTMENT" }
+  | { type: "ADD_APPOINTMENT_WITH_CURRENT_CUSTOMER" };
+
+const initialState: AppointmentState = {
+  currentStep: 1,
+  selectedTime: "",
+  appointments: [{}],
+  currentAppointmentIndex: 0,
+  appointmentType: null,
+};
+
+const AppointmentContext = createContext<
+  | {
+      state: AppointmentState;
+      dispatch: React.Dispatch<AppointmentAction>;
+    }
+  | undefined
+>(undefined);
+
+function appointmentReducer(
+  state: AppointmentState,
+  action: AppointmentAction,
+): AppointmentState {
+  switch (action.type) {
+    case "SET_SELECTED_TIME":
+      return {
+        ...state,
+        selectedTime: action.payload,
+      };
+    case "SET_STEP":
+      return {
+        ...state,
+        currentStep: action.payload,
+      };
+    case "SET_SELECTED_TIME":
+      return {
+        ...state,
+        selectedTime: action.payload,
+      };
+    case "SET_CUSTOMER":
+      return {
+        ...state,
+        appointments: state.appointments.map((apt, index) =>
+          index === state.currentAppointmentIndex
+            ? { ...apt, customer: action.payload }
+            : apt,
+        ),
+      };
+    case "SET_SERVICE_SUMMARY":
+      return {
+        ...state,
+        appointments: state.appointments.map((apt, index) =>
+          index === state.currentAppointmentIndex
+            ? { ...apt, serviceSummary: action.payload }
+            : apt,
+        ),
+      };
+    case "SET_SERVICE":
+      return {
+        ...state,
+        appointments: state.appointments.map((apt, index) =>
+          index === state.currentAppointmentIndex
+            ? { ...apt, service: action.payload }
+            : apt,
+        ),
+      };
+    case "SET_SERVICE_CATEGORY":
+      return {
+        ...state,
+        appointments: state.appointments.map((apt, index) =>
+          index === state.currentAppointmentIndex
+            ? { ...apt, serviceCategory: action.payload }
+            : apt,
+        ),
+      };
+    case "SET_SUB_SERVICE":
+      return {
+        ...state,
+        appointments: state.appointments.map((apt, index) =>
+          index === state.currentAppointmentIndex
+            ? { ...apt, subServices: action.payload }
+            : apt,
+        ),
+      };
+    case "UPDATE_SUB_SERVICES":
+      const { subService, isChecked } = action.payload;
+      return {
+        ...state,
+        appointments: state.appointments.map((apt, index) => {
+          if (index !== state.currentAppointmentIndex) return apt;
+
+          const currentOtherServices = apt.subServices || [];
+          let newOtherServices;
+
+          if (isChecked) {
+            // Thêm subService nếu chưa có
+            newOtherServices = currentOtherServices.some(
+              (service) => service.id === subService.id,
+            )
+              ? currentOtherServices
+              : [...currentOtherServices, subService];
+          } else {
+            // Xóa subService
+            newOtherServices = currentOtherServices.filter(
+              (service) => service.id !== subService.id,
+            );
+          }
+
+          return {
+            ...apt,
+            subServices: newOtherServices,
+          };
+        }),
+      };
+    case "SET_ASSISTANT":
+      return {
+        ...state,
+        appointments: state.appointments.map((apt, index) =>
+          index === state.currentAppointmentIndex
+            ? { ...apt, assistant: action.payload }
+            : apt,
+        ),
+      };
+    case "SET_APPOINTMENT_TYPE":
+      return {
+        ...state,
+        appointmentType: action.payload,
+      };
+    case "ADD_APPOINTMENT":
+      return {
+        ...state,
+        appointments: [
+          ...state.appointments,
+          {
+            startTime: state.selectedTime,
+          },
+        ],
+        // Tự động chuyển currentAppointmentIndex sang appointment mới
+        currentAppointmentIndex: state.appointments.length,
+      };
+    case "SET_APPOINTMENT_INDEX":
+      return {
+        ...state,
+        currentAppointmentIndex: action.payload,
+      };
+    case "RESET_APPOINTMENT":
+      return initialState;
+    case "ADD_SERVICE_GROUP_TO_CURRENT_APPOINTMENT":
+      return {
+        ...state,
+        appointments: state.appointments.map((apt, index) => {
+          if (index !== state.currentAppointmentIndex) return apt;
+
+          // Tạo service group mới với customer hiện tại
+          return {
+            ...apt,
+            serviceGroups: [
+              ...(apt.serviceGroups || []),
+              {
+                serviceSummary: null,
+                serviceCategory: null,
+                service: null,
+                subServices: [],
+              },
+            ],
+          };
+        }),
+      };
+    case "ADD_APPOINTMENT_WITH_CURRENT_CUSTOMER":
+      const currentAppointment =
+        state.appointments[state.currentAppointmentIndex];
+      return {
+        ...state,
+        appointments: [
+          ...state.appointments,
+          {
+            // Copy customer từ appointment hiện tại
+            customer: currentAppointment.customer,
+            // Reset lại các thông tin khác
+            service: null,
+            subServices: [],
+            assistant: null,
+            serviceCategory: null,
+            serviceSummary: null,
+            startTime: state.selectedTime,
+          },
+        ],
+        // Chuyển index sang appointment mới
+        currentAppointmentIndex: state.appointments.length,
+      };
+    default:
+      return state;
+  }
+}
+
+export function AppointmentProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(appointmentReducer, initialState);
+
+  return (
+    <AppointmentContext.Provider value={{ state, dispatch }}>
+      {children}
+    </AppointmentContext.Provider>
+  );
+}
+
+export function useAppointment() {
+  const context = useContext(AppointmentContext);
+  if (context === undefined) {
+    throw new Error(
+      "useAppointment must be used within an AppointmentProvider",
+    );
+  }
+  return context;
+}

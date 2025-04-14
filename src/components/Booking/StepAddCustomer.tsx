@@ -4,13 +4,22 @@ import { CustomerType } from "../../types/customer";
 import { FaArrowLeft } from "react-icons/fa";
 import { addCustomersBooking, customers, getAllCustomer } from "@/services/customer.service";
 import { toast } from "react-toastify";
+import { useAppointment } from "@/contexts/AppointmentContext";
 
-const StepAddCustomer = ({ handleNext, handleBackToCalendar, formik }: any) => {
-  const [selectedButton, setSelectedButton] = useState<string | null>(null);
+interface StepAddCustomerProps {
+  handleNext: () => void;
+  handleBackToCalendar: () => void;
+}
+
+const StepAddCustomer = ({
+  handleNext,
+  handleBackToCalendar,
+}: StepAddCustomerProps) => {
   const [customerData, setCustomerData] = useState<CustomerType[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isOpenDialog, setIsOpenDialog] = useState<boolean>(false);
   const [newCustomer, setNewCustomer] = useState({ name: "", phone: "" });
+  const { dispatch } = useAppointment();
 
   useEffect(() => {
     fetchCustomer(searchTerm);
@@ -26,22 +35,14 @@ const StepAddCustomer = ({ handleNext, handleBackToCalendar, formik }: any) => {
   };
 
   const handleButtonClick = (customer: CustomerType) => {
-    const newAppointment = {
-      customer: { ...customer },
-      service: {},
-      otherServices: [],
-      serviceSummary: {},
-      serviceCategory: {},
-    };
+    // Cập nhật customer vào context
+    dispatch({
+      type: "SET_CUSTOMER",
+      payload: customer,
+    });
 
-    const newValues = {
-      ...formik.values,
-      appointments: [...formik.values.appointments, newAppointment], // Thêm booking mới
-    };
-
-    // Cập nhật Formik và lưu vào sessionStorage
-    formik.setValues(newValues);
-    sessionStorage.setItem("bookingFormData", JSON.stringify(newValues));
+    // Thêm appointment mới nếu cần
+    // dispatch({ type: "ADD_APPOINTMENT" });
 
     // Chuyển qua step tiếp theo
     handleNext();

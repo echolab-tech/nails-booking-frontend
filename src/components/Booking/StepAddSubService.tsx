@@ -1,64 +1,77 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
-import { FcBusinessman } from "react-icons/fc";
+import { FaArrowRight } from "react-icons/fa6";
 import ApointmentOverview from "./ApointmentOverview";
 import { getService } from "@/services/service.service";
 import { formatPrice } from "../common/format_currency";
-import { FaArrowRight } from "react-icons/fa6";
+import { useAppointment } from "@/contexts/AppointmentContext";
 
-const StepAddSubService = ({ handleBack, handleNext, formik }: any) => {
-  const [availableSubServices, setAvailableSubServices] = useState<any[]>([]);
+interface SubService {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+}
+
+interface StepAddSubServiceProps {
+  handleBack: () => void;
+  handleNext: () => void;
+}
+
+const StepAddSubService = ({
+  handleBack,
+  handleNext,
+}: StepAddSubServiceProps) => {
+  const [availableSubServices, setAvailableSubServices] = useState<
+    SubService[]
+  >([]);
+  const { state, dispatch } = useAppointment();
 
   useEffect(() => {
-    const serviceId =
-      formik.values?.appointments[formik.values.bookingIndex]?.service
-        ?.service_id;
-    fetchSubService(serviceId);
-    console.log(formik.values);
-  }, [formik.values]);
+    const currentAppointment =
+      state.appointments[state.currentAppointmentIndex];
+    if (currentAppointment?.service?.service_id) {
+      fetchSubService(currentAppointment.service.service_id);
+    }
+  }, [state.currentAppointmentIndex]);
 
-  const fetchSubService = async (id: any) => {
-    getService(id).then((result) => {
+  const fetchSubService = async (id: string) => {
+    try {
+      const result = await getService(id);
       setAvailableSubServices(result?.data?.data?.subServices);
-    });
+    } catch (error) {
+      console.error("Error fetching sub services:", error);
+    }
   };
 
   const handleCheckboxChange = (
     event: React.ChangeEvent<HTMLInputElement>,
-    option: any,
+    subService: SubService,
   ) => {
     const isChecked = event.target.checked;
-    const bookingIndex = formik.values.bookingIndex;
 
-    // Lấy danh sách otherServices của booking hiện tại
-    let selectedServices = [
-      ...(formik.values.appointments[bookingIndex]?.otherServices || []),
-    ];
+    dispatch({
+      type: "UPDATE_SUB_SERVICES",
+      payload: {
+        subService,
+        isChecked,
+      },
+    });
+  };
 
-    if (isChecked) {
-      // Thêm dịch vụ vào danh sách nếu chưa có
-      if (!selectedServices.some((service) => service.id === option.id)) {
-        selectedServices.push(option);
-      }
-    } else {
-      // Xóa dịch vụ khỏi danh sách nếu đã có
-      selectedServices = selectedServices.filter(
-        (service) => service.id !== option.id,
-      );
-    }
-
-    // Cập nhật lại otherServices cho booking hiện tại
-    formik.setFieldValue(
-      `appointments[${bookingIndex}].otherServices`,
-      selectedServices,
+  const isSubServiceSelected = (subServiceId: string) => {
+    const currentAppointment =
+      state.appointments[state.currentAppointmentIndex];
+    return currentAppointment?.subServices?.some(
+      (service: SubService) => service.id === subServiceId,
     );
   };
 
   return (
     <div className="w-full space-y-6">
       <div className="w-full space-y-2 rounded-lg bg-lime-50 p-10">
-        <ApointmentOverview formik={formik} />
+        <ApointmentOverview />
       </div>
 
       <div className="w-full space-y-8 rounded-lg bg-white p-10 shadow-lg">
@@ -78,11 +91,7 @@ const StepAddSubService = ({ handleBack, handleNext, formik }: any) => {
                 <input
                   id={`checkbox-${index}`}
                   type="checkbox"
-                  checked={formik.values.appointments[
-                    formik.values.bookingIndex
-                  ]?.otherServices.some(
-                    (other_service: any) => other_service.id === item.id,
-                  )}
+                  checked={isSubServiceSelected(item.id)}
                   onChange={(e) => handleCheckboxChange(e, item)}
                   className="dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 h-6 w-6 rounded border-2 border-stroke bg-transparent text-blue-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
                 />
@@ -91,7 +100,7 @@ const StepAddSubService = ({ handleBack, handleNext, formik }: any) => {
                   className="me-4 ms-2 block text-sm font-medium text-gray-900 dark:text-gray-300"
                 >
                   <p className="font-bold">{item?.name}</p>
-                  <p>{item?.discription}</p>
+                  <p>{item?.description}</p>
                 </label>
               </div>
               <div className="flex">{formatPrice(Number(item?.price))}</div>

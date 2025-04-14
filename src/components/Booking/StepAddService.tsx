@@ -12,64 +12,46 @@ import { getCategoryById } from "@/services/categories.service";
 import { serviceTypeNew } from "@/types/ServiceNew";
 import ApointmentOverview from "./ApointmentOverview";
 import { serviceType } from "@/types/service";
+import { useAppointment } from "@/contexts/AppointmentContext";
 
-const StepAddService = ({
-  handleBack,
-  handleNext,
-  showDetail,
-  onShowDetail,
-  formik,
-}: any) => {
-  const [categories, setCategories] = useState<serviceTypeNew[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>();
-  const [serviceOptions, setServiceOptions] = useState<any[]>([]);
+interface StepAddServiceProps {
+  handleBack: () => void;
+  handleNext: () => void;
+}
+
+const StepAddService = ({ handleBack, handleNext }: StepAddServiceProps) => {
+  const [serviceOptions, setServiceOptions] = useState<serviceType[]>([]);
+  const { state, dispatch } = useAppointment();
 
   useEffect(() => {
     fetchService();
-  }, []);
+  }, [state.currentAppointmentIndex]);
 
   const fetchService = async () => {
-    getCategoryById(
-      formik?.values?.appointments[formik?.values?.bookingIndex]
-        ?.serviceCategory?.id,
-    ).then((result) => {
-      setServiceOptions(result?.data?.data?.service_options);
-    });
+    try {
+      const currentAppointment =
+        state.appointments[state.currentAppointmentIndex];
+      if (currentAppointment?.serviceCategory?.id) {
+        const result = await getCategoryById(
+          currentAppointment.serviceCategory.id,
+        );
+        setServiceOptions(result?.data?.data?.service_options);
+      }
+    } catch (error) {
+      console.error("Error fetching services:", error);
+    }
   };
 
-  // const handleShowDetail = (category: any) => {
-  //   onShowDetail();
-  //   setSelectedCategoryId(category.id);
-  //   const options = category.serviceOptions || [];
-  //   setServiceOptions(options);
-
-  //   const currentData = JSON.parse(
-  //     sessionStorage.getItem("bookingFormData") || "{}",
-  //   );
-  //   sessionStorage.setItem(
-  //     "bookingFormData",
-  //     JSON.stringify({
-  //       ...currentData,
-  //       categoryId: category.id,
-  //     }),
-  //   );
-  // };
-
   const handleSelectService = (service: serviceType) => {
-    const updatedBookings = formik.values.appointments.map((booking, index) =>
-      index === formik.values.bookingIndex ? { ...booking, service } : booking,
-    );
+    // Dispatch action để cập nhật service cho appointment hiện tại
+    dispatch({
+      type: "SET_SERVICE",
+      payload: service,
+    });
 
-    const newValues = {
-      ...formik.values,
-      appointments: updatedBookings,
-    };
-    formik.setValues(newValues);
-    sessionStorage.setItem("bookingFormData", JSON.stringify(newValues));
     handleNext();
   };
 
-  
   const formatPrice = (price: number) => {
     return `$${price.toFixed(2)}`;
   };
@@ -77,7 +59,7 @@ const StepAddService = ({
   return (
     <div className="w-full space-y-6">
       <div className="w-full space-y-2 rounded-lg bg-lime-50 p-10">
-        <ApointmentOverview formik={formik} />
+        <ApointmentOverview />
       </div>
       <div className="w-full rounded-lg bg-white p-10 shadow-lg">
         <h3 className="mb-3 text-2xl text-primary">

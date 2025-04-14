@@ -1,55 +1,59 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { ServiceSummaryType } from "../../types/ServiceSummary";
-import { getListServiceSummary } from "../../services/categories.service";
 import { FaArrowLeft } from "react-icons/fa";
-import { FcBusinessman } from "react-icons/fc";
 import ApointmentOverview from "./ApointmentOverview";
 import { getServiceSummaries } from "@/services/service-summary.service";
+import { useAppointment } from "@/contexts/AppointmentContext";
 
-const StepAddSummaryService = ({ handleNext, handleBack, formik }: any) => {
+interface StepAddSummaryServiceProps {
+  handleNext: () => void;
+  handleBack: () => void;
+}
+
+const StepAddSummaryService = ({
+  handleNext,
+  handleBack,
+}: StepAddSummaryServiceProps) => {
   const [selectedButton, setSelectedButton] = useState<string | null>(null);
   const [serviceSummary, setServiceSummary] = useState<ServiceSummaryType[]>(
     [],
   );
+  const { state, dispatch } = useAppointment();
 
   useEffect(() => {
-    const storedData = sessionStorage.getItem("bookingFormData");
-    if (storedData) {
-      const parsedData = JSON.parse(storedData);
-      if (parsedData.appointment_type) {
-        setSelectedButton(parsedData.appointment_type.name);
-      }
-      formik.setValues(parsedData);
+    // Kiểm tra serviceSummary hiện tại trong appointment
+    const currentAppointment =
+      state.appointments[state.currentAppointmentIndex];
+    if (currentAppointment?.serviceSummary?.name) {
+      setSelectedButton(currentAppointment.serviceSummary.name);
     }
     fetchServiceSummary();
-  }, []);
+  }, [state.currentAppointmentIndex]);
 
   const fetchServiceSummary = async () => {
-    getServiceSummaries(null, true).then((result) => {
+    try {
+      const result = await getServiceSummaries(null, true);
       setServiceSummary(result?.data?.data);
-    });
+    } catch (error) {
+      console.error("Error fetching service summaries:", error);
+    }
   };
 
   const handleButtonClick = (serviceSummary: ServiceSummaryType) => {
-    const updatedBookings = formik.values.appointments.map((booking, index) =>
-      index === formik.values.bookingIndex
-        ? { ...booking, serviceSummary }
-        : booking,
-    );
+    // Cập nhật service summary vào context
+    dispatch({
+      type: "SET_SERVICE_SUMMARY",
+      payload: serviceSummary,
+    });
 
-    const newValues = {
-      ...formik.values,
-      appointments: updatedBookings,
-    };
-    formik.setValues(newValues);
-    sessionStorage.setItem("bookingFormData", JSON.stringify(newValues));
+    setSelectedButton(serviceSummary.name);
     handleNext();
   };
 
   return (
     <div className="w-full space-y-8 rounded-lg bg-white p-10 shadow-lg">
-      <ApointmentOverview formik={formik} />
+      <ApointmentOverview />
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h3 className="mb-1 text-2xl font-bold text-primary">

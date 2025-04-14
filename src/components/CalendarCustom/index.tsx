@@ -28,6 +28,7 @@ import { getAllCustomer, getStatus } from "@/services/customer.service";
 import { addMinutes, format } from "date-fns";
 import { toZonedTime, formatInTimeZone } from "date-fns-tz";
 import { useRouter } from "next/navigation";
+import { useAppointment } from "@/contexts/AppointmentContext";
 import {
   getServiceOptionShow,
   serviceOption,
@@ -131,6 +132,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     { id: number; name_status: string; color_code: string }[]
   >([]);
   const router = useRouter();
+  const { dispatch } = useAppointment();
 
   useEffect(() => {
     fetchService();
@@ -181,6 +183,11 @@ const FullCalenDarCustom: React.FC<any> = () => {
   //     setEvents(data?.data?.data);
   //   });
   // };
+
+  const handleAddBooking = () => {
+    dispatch({ type: "SET_SELECTED_TIME", payload: startTime });
+    router.push(`/booking/new`);
+  };
 
   const fetchAllData = async (start: string, end: string) => {
     try {
@@ -974,13 +981,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
     fetchAllData(format(start, "dd-MM-yyyy"), format(end, "dd-MM-yyyy"));
   };
 
-  // const handleDateChange = (newDate: Date | null) => {
-  //   if (newDate) {
-  //     setDate(newDate);
-  //     calendarRef.current?.getApi().gotoDate(newDate); // Điều hướng đến ngày đã chọn
-  //   }
-  // };
-
   return (
     <>
       <FullCalendar
@@ -1029,11 +1029,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
           <Modal.Header>{formatHoursMinute(startTime)}</Modal.Header>
           <Modal.Body>
             <button
-              onClick={() =>
-                router.push(
-                  `/booking/new?startTime=${encodeURIComponent(startTime)}`,
-                )
-              }
+              onClick={handleAddBooking}
               type="button"
               className="inline-flex w-full items-center justify-start rounded-md bg-transparent py-2 font-medium text-black hover:bg-opacity-90 "
             >

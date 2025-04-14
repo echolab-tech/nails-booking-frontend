@@ -8,6 +8,7 @@ import { RiErrorWarningFill } from "react-icons/ri";
 import { Spinner } from "flowbite-react";
 import DateTimeCard from "./DateTimeCard";
 import { appointmentsPost } from "../../services/appointment.service";
+import ApointmentOverview from "./ApointmentOverview";
 
 const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -32,20 +33,7 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
       </h3>
       <div className="mb-4 mt-4 grid grid-cols-12 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
         <div className="col-span-12 rounded-xl border border-stroke p-10 xl:col-span-6">
-          {formik?.values?.services?.map((item: any, index: number) => (
-            <div
-              className="flex items-center justify-between border-b border-stroke py-2"
-              key={index}
-            >
-              <div>
-                <p className="font-bold">{item?.title}</p>
-                <p>{item?.option_name}</p>
-              </div>
-              <b className="font-bold text-primary">
-                {formatPrice(Number(item.price))}
-              </b>
-            </div>
-          ))}
+          <ApointmentOverview/>
         </div>
         <div className="col-span-12 rounded-xl border border-stroke p-5 xl:col-span-6">
           <div className="mb-2 flex items-center">
