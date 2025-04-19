@@ -39,11 +39,11 @@ interface Assistant {
 
 interface Appointment {
   customer?: Customer;
-  service?: Service;
+  service?: Service | null;
   subServices?: SubService[];
-  assistant?: Assistant;
-  serviceCategory?: ServiceCategory;
-  serviceSummary?: ServiceSummary;
+  assistant?: Assistant | null;
+  serviceCategory?: ServiceCategory | null;
+  serviceSummary?: ServiceSummary | null;
   startTime?: string;
   endTime?: string;
   price?: number;
@@ -225,27 +225,6 @@ function appointmentReducer(
       };
     case "RESET_APPOINTMENT":
       return initialState;
-    case "ADD_SERVICE_GROUP_TO_CURRENT_APPOINTMENT":
-      return {
-        ...state,
-        appointments: state.appointments.map((apt, index) => {
-          if (index !== state.currentAppointmentIndex) return apt;
-
-          // Tạo service group mới với customer hiện tại
-          return {
-            ...apt,
-            serviceGroups: [
-              ...(apt.serviceGroups || []),
-              {
-                serviceSummary: null,
-                serviceCategory: null,
-                service: null,
-                subServices: [],
-              },
-            ],
-          };
-        }),
-      };
     case "ADD_APPOINTMENT_WITH_CURRENT_CUSTOMER":
       const currentAppointment =
         state.appointments[state.currentAppointmentIndex];
