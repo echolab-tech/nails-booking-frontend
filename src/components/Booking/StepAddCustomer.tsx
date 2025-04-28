@@ -262,7 +262,7 @@ const StepAddCustomer = ({
                 onClick={handleNext}
                 className="rounded-lg bg-primary px-4 py-2 text-white"
               >
-                Continue Without History
+                Book new appointment
               </button>
             </div>
           </div>

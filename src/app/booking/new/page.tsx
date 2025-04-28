@@ -15,6 +15,7 @@ import SelectEmployee from "@/components/Booking/SelectEmployee";
 import { useAppointment } from "@/contexts/AppointmentContext";
 import AddServiceModal from "@/components/Booking/AddServiceModal";
 import AddCustomerModal from "@/components/Booking/AddCustomerModal";
+import { toast } from "react-toastify";
 
 const BookingPage = () => {
   const [openModal, setOpenModal] = useState<boolean>(false);
@@ -34,7 +35,11 @@ const BookingPage = () => {
       setOpenModal(true);
     } else if (state.currentStep === 6) {
       setShowAddServiceModal(true);
-    } else {
+    } else if (state.currentStep === 7) {
+      toast("Booking successfuly !");
+      router.push('/calendar');
+    } 
+    else {
       dispatch({ type: "SET_STEP", payload: state.currentStep + 1 });
     }
   };

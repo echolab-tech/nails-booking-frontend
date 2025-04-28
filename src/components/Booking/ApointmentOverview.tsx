@@ -5,6 +5,24 @@ import { useAppointment } from "@/contexts/AppointmentContext";
 
 const ApointmentOverview = () => {
   const { state } = useAppointment();
+  
+  function formatFullDateTime(isoString: string) {
+    const date = new Date(isoString);
+  
+    if (isNaN(date.getTime())) {
+      return "";
+    }
+  
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0"); // tháng từ 0
+    const year = date.getFullYear();
+  
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+  
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  }
+  
 
   return (
     <>
@@ -59,10 +77,14 @@ const ApointmentOverview = () => {
 
             {/* Main Service */}
             {appointment.service && (
-              <p className="text-sm">
+             <>
+               <p className="text-sm">
                 <span className="font-medium">Main Service:</span>{" "}
-                {appointment.service.title}
+                {appointment?.service?.title}
               </p>
+              <p>Start time: {formatFullDateTime(appointment.service.startTime)}</p>
+              <p>End time: {formatFullDateTime(appointment.service.endTime)}</p>
+             </>
             )}
 
             {/* Sub Services */}
@@ -72,8 +94,11 @@ const ApointmentOverview = () => {
                 <ul className="ml-4 list-disc">
                   {appointment.subServices.map((subService, subIndex) => (
                     <li key={subIndex} className="text-sm">
-                      {subService.name}
+                      {subService?.name}
+                      <p>Start time: {formatFullDateTime(subService?.startTime)}</p>
+                      <p>End time: {formatFullDateTime(subService?.endTime)}</p>
                     </li>
+                     
                   ))}
                 </ul>
               </div>

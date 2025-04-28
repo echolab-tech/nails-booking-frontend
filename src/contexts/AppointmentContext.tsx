@@ -9,9 +9,11 @@ interface Customer {
 
 interface Service {
   id: string;
-  name: string;
+  title: string;
   price: number;
   duration: number;
+  startTime: string;
+  endTime: string;
 }
 
 interface ServiceCategory {
@@ -29,6 +31,8 @@ interface SubService {
   name: string;
   price: number;
   duration: number;
+  startTime: string;
+  endTime: string;
 }
 
 interface Assistant {
@@ -89,6 +93,28 @@ const initialState: AppointmentState = {
   appointmentType: null,
 };
 
+function addMinutesToISOString(datetime: string, minutes: number): string {
+  const offset = datetime.substring(19); // +07:00
+
+  // Bỏ offset tạm để parse timestamp
+  const datetimeWithoutOffset = datetime.substring(0, 19);
+  const baseTimestamp = new Date(datetimeWithoutOffset).getTime();
+
+  // Cộng phút
+  const newTimestamp = baseTimestamp + minutes * 60 * 1000;
+  const newDate = new Date(newTimestamp);
+
+  // Format lại: yyyy-MM-ddTHH:mm:ss
+  const year = newDate.getFullYear();
+  const month = String(newDate.getMonth() + 1).padStart(2, "0");
+  const day = String(newDate.getDate()).padStart(2, "0");
+  const hour = String(newDate.getHours()).padStart(2, "0");
+  const minute = String(newDate.getMinutes()).padStart(2, "0");
+  const second = String(newDate.getSeconds()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}${offset}`;
+}
+
 const AppointmentContext = createContext<
   | {
       state: AppointmentState;
@@ -117,15 +143,38 @@ function appointmentReducer(
         ...state,
         selectedTime: action.payload,
       };
-    case "SET_CUSTOMER":
+    case "SET_CUSTOMER": {
+      const customer = action.payload;
+      const existingAppointment = state.appointments.find(
+        (apt, index) =>
+          index !== state.currentAppointmentIndex &&
+          apt.customer?.id === customer.id
+      );
+    
+      let newStartTime = state.selectedTime; // mặc định nếu chưa có thì lấy selectedTime
+      if (existingAppointment) {
+        // Nếu đã tồn tại customer -> tìm endTime lớn nhất trong service hoặc subServices
+        const serviceEndTime = existingAppointment.service?.endTime || "";
+        const lastSubServiceEndTime = existingAppointment.subServices?.length
+          ? existingAppointment.subServices[existingAppointment.subServices.length - 1].endTime
+          : "";
+    
+        newStartTime = lastSubServiceEndTime || serviceEndTime || newStartTime;
+      }
+    
       return {
         ...state,
         appointments: state.appointments.map((apt, index) =>
           index === state.currentAppointmentIndex
-            ? { ...apt, customer: action.payload }
+            ? {
+                ...apt,
+                customer,
+                startTime: newStartTime,
+              }
             : apt,
         ),
       };
+    }
     case "SET_SERVICE_SUMMARY":
       return {
         ...state,
@@ -136,11 +185,18 @@ function appointmentReducer(
         ),
       };
     case "SET_SERVICE":
+      const startTime = state.selectedTime;
+      const endTime = addMinutesToISOString(startTime, action.payload.duration);
+      const updatedService = {
+        ...action.payload,
+        startTime,
+        endTime,
+      };
       return {
         ...state,
         appointments: state.appointments.map((apt, index) =>
           index === state.currentAppointmentIndex
-            ? { ...apt, service: action.payload }
+            ? { ...apt, service: updatedService }
             : apt,
         ),
       };
@@ -154,44 +210,76 @@ function appointmentReducer(
         ),
       };
     case "SET_SUB_SERVICE":
+      let lastEndTime = currentAppointment.service.endTime;
+      const updatedSubServices = action.payload.map((subService: any) => {
+        const startTime = lastEndTime;
+        const endTime = addMinutesToISOString(startTime, subService.duration);
+        lastEndTime = endTime; // cập nhật lại để sub kế tiếp dùng
+        return {
+          ...subService,
+          startTime,
+          endTime,
+        };
+      });
       return {
         ...state,
         appointments: state.appointments.map((apt, index) =>
           index === state.currentAppointmentIndex
-            ? { ...apt, subServices: action.payload }
+            ? { ...apt, subServices: updatedSubServices }
             : apt,
         ),
       };
-    case "UPDATE_SUB_SERVICES":
+    case "UPDATE_SUB_SERVICES": {
       const { subService, isChecked } = action.payload;
+      const activeAppointment =
+        state.appointments[state.currentAppointmentIndex];
+
+      if (!activeAppointment.service || !activeAppointment.service.endTime) {
+        return state;
+      }
+
+      let updatedSubServices = activeAppointment.subServices || [];
+
+      if (isChecked) {
+        // Thêm subService nếu chưa có
+        if (!updatedSubServices.some((s) => s.id === subService.id)) {
+          updatedSubServices = [...updatedSubServices, subService];
+        }
+      } else {
+        // Xóa subService
+        updatedSubServices = updatedSubServices.filter(
+          (s) => s.id !== subService.id,
+        );
+      }
+
+      // Sắp xếp lại thời gian startTime, endTime cho các subServices
+      let lastEndTime = activeAppointment.service.endTime;
+
+      const recalculatedSubServices = updatedSubServices.map((sub) => {
+        const startTime = lastEndTime;
+        const endTime = addMinutesToISOString(startTime, sub.duration);
+        lastEndTime = endTime;
+
+        return {
+          ...sub,
+          startTime,
+          endTime,
+        };
+      });
+
       return {
         ...state,
-        appointments: state.appointments.map((apt, index) => {
-          if (index !== state.currentAppointmentIndex) return apt;
-
-          const currentOtherServices = apt.subServices || [];
-          let newOtherServices;
-
-          if (isChecked) {
-            // Thêm subService nếu chưa có
-            newOtherServices = currentOtherServices.some(
-              (service) => service.id === subService.id,
-            )
-              ? currentOtherServices
-              : [...currentOtherServices, subService];
-          } else {
-            // Xóa subService
-            newOtherServices = currentOtherServices.filter(
-              (service) => service.id !== subService.id,
-            );
-          }
-
-          return {
-            ...apt,
-            subServices: newOtherServices,
-          };
-        }),
+        appointments: state.appointments.map((apt, index) =>
+          index === state.currentAppointmentIndex
+            ? {
+                ...apt,
+                subServices: recalculatedSubServices,
+              }
+            : apt,
+        ),
       };
+    }
+
     case "SET_ASSISTANT":
       return {
         ...state,
