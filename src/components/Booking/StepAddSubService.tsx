@@ -12,6 +12,7 @@ interface SubService {
   name: string;
   price: number;
   description: string;
+  time: string;
 }
 
 interface StepAddSubServiceProps {
@@ -50,11 +51,19 @@ const StepAddSubService = ({
     subService: SubService,
   ) => {
     const isChecked = event.target.checked;
+    console.log(subService);
+
+    const subServicePayload = {
+      id: subService.id,
+      name: subService.name,
+      price: subService.price,
+      duration: subService.time,
+    };
 
     dispatch({
       type: "UPDATE_SUB_SERVICES",
       payload: {
-        subService,
+        subService: subServicePayload,
         isChecked,
       },
     });

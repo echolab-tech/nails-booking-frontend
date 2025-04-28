@@ -3,7 +3,7 @@ import { http } from "../lib/http";
 import { BookingFormType } from "@/types/event";
 
 export const appointmentsPost = async (
-  values: BookingFormType,
+  values: any,
 ): Promise<any> => {
   return await http.post<any>("/appointments", values);
 };
