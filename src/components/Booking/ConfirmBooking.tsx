@@ -30,6 +30,7 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
   interface Service {
     id: string;
     title: string;
+    service_id: string;
     price: number;
     duration: number;
     startTime: string;
@@ -98,6 +99,7 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
         service: apt.service ? {
           id: apt.service.id,
           title: apt.service.title,
+          service_id: apt.service.service_id,
           price: apt.service.price,
           duration: apt.service.duration,
           startTime: apt.service.startTime,

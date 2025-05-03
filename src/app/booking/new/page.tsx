@@ -57,6 +57,7 @@ const BookingPage = () => {
       dispatch({ type: "SET_STEP", payload: state.currentStep + 1 });
     }
     if (select === "no") {
+      dispatch({ type: "SET_ASSISTANT", payload: null });
       setShowAddServiceModal(true);
     }
     setOpenModal(false);

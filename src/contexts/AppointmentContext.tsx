@@ -10,6 +10,7 @@ interface Customer {
 interface Service {
   id: string;
   title: string;
+  service_id: string;
   price: number;
   duration: number;
   startTime: string;
@@ -206,26 +207,6 @@ function appointmentReducer(
         appointments: state.appointments.map((apt, index) =>
           index === state.currentAppointmentIndex
             ? { ...apt, serviceCategory: action.payload }
-            : apt,
-        ),
-      };
-    case "SET_SUB_SERVICE":
-      let lastEndTime = currentAppointment.service.endTime;
-      const updatedSubServices = action.payload.map((subService: any) => {
-        const startTime = lastEndTime;
-        const endTime = addMinutesToISOString(startTime, subService.duration);
-        lastEndTime = endTime; // cập nhật lại để sub kế tiếp dùng
-        return {
-          ...subService,
-          startTime,
-          endTime,
-        };
-      });
-      return {
-        ...state,
-        appointments: state.appointments.map((apt, index) =>
-          index === state.currentAppointmentIndex
-            ? { ...apt, subServices: updatedSubServices }
             : apt,
         ),
       };
