@@ -10,6 +10,7 @@ import DateTimeCard from "./DateTimeCard";
 import { appointmentsPost } from "../../services/appointment.service";
 import ApointmentOverview from "./ApointmentOverview";
 import { useAppointment } from "@/contexts/AppointmentContext";
+import { toast } from "react-toastify";
 
 const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -132,19 +133,20 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
     };
   
     return formData;
-  }  
+  } 
 
   const handleBooking = () => {
     setIsLoading(true);
     const formData = transformFormData(state);
-    console.log(formData);
-    
     appointmentsPost(formData)
     .then((result: any) => {
       setIsLoading(false);
       handleNext(result?.data?.data?.id);
     })
     .catch((error) => {
+      if(error?.data?.error){
+        toast.error(error?.data?.error);
+      }
       setIsLoading(false);
       console.error(error);
     });
