@@ -67,7 +67,7 @@ const StepAddService = ({ handleBack, handleNext }: StepAddServiceProps) => {
         </h3>
         <div className="mb-4 mt-4 grid grid-cols-12 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
           <div className="col-span-12">
-            {serviceOptions.map((item, index) => (
+            {serviceOptions?.map((item, index) => (
               <button
                 key={index}
                 onClick={() => handleSelectService(item)}
@@ -93,7 +93,7 @@ const StepAddService = ({ handleBack, handleNext }: StepAddServiceProps) => {
                 <MdArrowForwardIos size={20} />
               </button>
             ))}
-            {serviceOptions.length === 0 && (
+            {serviceOptions?.length === 0 && (
               <p className="text-gray-500 text-center">
                 No service options available for this category
               </p>
