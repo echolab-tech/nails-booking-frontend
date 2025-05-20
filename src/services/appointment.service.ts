@@ -57,3 +57,9 @@ export const appointmentsUpdateStatus = async (
   });
 };
 
+export const appointmentsCheckAssistant = async (
+  values: any,
+): Promise<any> => {
+  return await http.post<any>("/appointments/check", values);
+};
+

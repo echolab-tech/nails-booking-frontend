@@ -7,13 +7,20 @@ import { FcCalendar } from "react-icons/fc";
 import { RiErrorWarningFill } from "react-icons/ri";
 import { Spinner } from "flowbite-react";
 import DateTimeCard from "./DateTimeCard";
-import { appointmentsPost } from "../../services/appointment.service";
+import {
+  appointmentsCheckAssistant,
+  appointmentsPost,
+} from "../../services/appointment.service";
 import ApointmentOverview from "./ApointmentOverview";
 import { useAppointment } from "@/contexts/AppointmentContext";
+import DialogChooseAssistant from "./DialogChooseAssistant";
 
 const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { state } = useAppointment();
+  const [openModal, setOpenModal] = useState<boolean>(false);
+  const { state: appointmentState, dispatch } = useAppointment();
+  const [showAddServiceModal, setShowAddServiceModal] = useState(false);
+  const { state, dispatch: appointmentDispatch } = useAppointment();
   useEffect(() => {}, []);
 
   const formatPrice = (price: number) => {
@@ -26,7 +33,7 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
     email?: string;
     phone?: string;
   }
-  
+
   interface Service {
     id: string;
     title: string;
@@ -36,17 +43,17 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
     startTime: string;
     endTime: string;
   }
-  
+
   interface ServiceCategory {
     id: string;
     name: string;
   }
-  
+
   interface ServiceSummary {
     id: string;
     name: string;
   }
-  
+
   interface SubService {
     id: string;
     name: string;
@@ -55,13 +62,13 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
     startTime: string;
     endTime: string;
   }
-  
+
   interface Assistant {
     id: string;
     name: string;
     avatar?: string;
   }
-  
+
   interface Appointment {
     customer?: Customer;
     service?: Service | null;
@@ -74,7 +81,7 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
     price?: number;
     duration?: number;
   }
-  
+
   interface AppointmentState {
     currentStep: number;
     selectedTime: string;
@@ -83,6 +90,22 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
     appointmentType: "single" | "group" | null;
   }
 
+  const handleClose = () => {
+    setOpenModal(false);
+  };
+
+  const handleSelect = (select: string) => {
+    if (select === "yes") {
+      dispatch({ type: "SET_STEP", payload: 6 });
+      // dispatch({ type: "SET_ASSISTANT", payload: null });
+    }
+    if (select === "no") {
+      dispatch({ type: "SET_ASSISTANT", payload: null });
+      setShowAddServiceModal(true);
+    }
+    setOpenModal(false);
+  };
+
   function transformFormData(state: AppointmentState) {
     const formData = {
       currentStep: state.currentStep,
@@ -90,66 +113,90 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
       appointmentType: state.appointmentType,
       currentAppointmentIndex: state.currentAppointmentIndex,
       appointments: state.appointments.map((apt) => ({
-        customer: apt.customer ? {
-          id: apt.customer.id,
-          name: apt.customer.name,
-          email: apt.customer.email,
-          phone: apt.customer.phone,
-        } : null,
-        service: apt.service ? {
-          id: apt.service.id,
-          title: apt.service.title,
-          service_id: apt.service.service_id,
-          price: apt.service.price,
-          duration: apt.service.duration,
-          startTime: apt.service.startTime,
-          endTime: apt.service.endTime,
-        } : null,
-        subServices: apt.subServices?.map((sub: any) => ({
-          id: sub.id,
-          name: sub.name,
-          price: sub.price,
-          duration: sub.duration,
-          startTime: sub.startTime,
-          endTime: sub.endTime,
-        })) || [],
-        assistant: apt.assistant ? {
-          id: apt.assistant.id,
-          name: apt.assistant.name,
-          avatar: apt.assistant.avatar,
-        } : null,
-        serviceCategory: apt.serviceCategory ? {
-          id: apt.serviceCategory.id,
-          name: apt.serviceCategory.name,
-        } : null,
-        serviceSummary: apt.serviceSummary ? {
-          id: apt.serviceSummary.id,
-          name: apt.serviceSummary.name,
-        } : null,
+        customer: apt.customer
+          ? {
+              id: apt.customer.id,
+              name: apt.customer.name,
+              email: apt.customer.email,
+              phone: apt.customer.phone,
+            }
+          : null,
+        service: apt.service
+          ? {
+              id: apt.service.id,
+              title: apt.service.title,
+              service_id: apt.service.service_id,
+              price: apt.service.price,
+              duration: apt.service.duration,
+              startTime: apt.service.startTime,
+              endTime: apt.service.endTime,
+            }
+          : null,
+        subServices:
+          apt.subServices?.map((sub: any) => ({
+            id: sub.id,
+            name: sub.name,
+            price: sub.price,
+            duration: sub.duration,
+            startTime: sub.startTime,
+            endTime: sub.endTime,
+          })) || [],
+        assistant: apt.assistant
+          ? {
+              id: apt.assistant.id,
+              name: apt.assistant.name,
+              avatar: apt.assistant.avatar,
+            }
+          : null,
+        serviceCategory: apt.serviceCategory
+          ? {
+              id: apt.serviceCategory.id,
+              name: apt.serviceCategory.name,
+            }
+          : null,
+        serviceSummary: apt.serviceSummary
+          ? {
+              id: apt.serviceSummary.id,
+              name: apt.serviceSummary.name,
+            }
+          : null,
         startTime: apt.startTime,
         endTime: apt.endTime,
         price: apt.price,
         duration: apt.duration,
       })),
     };
-  
-    return formData;
-  }  
 
-  const handleBooking = () => {
+    return formData;
+  }
+
+  const handleBooking = async () => {
     setIsLoading(true);
     const formData = transformFormData(state);
-    console.log(formData);
-    
-    appointmentsPost(formData)
-    .then((result: any) => {
+    try {
+      const response = await appointmentsCheckAssistant(formData);
+
+      // Nếu không lỗi 422 thì tiếp tục gọi appointmentsPost
+      await appointmentsPost(formData)
+        .then((result: any) => {
+          setIsLoading(false);
+          handleNext(result?.data?.data?.id);
+          appointmentDispatch({ type: "RESET_APPOINTMENT" });
+        })
+        .catch((error) => {
+          setIsLoading(false);
+          console.error("Error while posting appointment:", error);
+        });
+    } catch (error: any) {
       setIsLoading(false);
-      handleNext(result?.data?.data?.id);
-    })
-    .catch((error) => {
-      setIsLoading(false);
-      console.error(error);
-    });
+      
+      if (error?.status === 422) {
+        // Nếu lỗi 422 thì hiển thị modal
+        setOpenModal(true);
+      } else {
+        console.error("Unexpected error:", error);
+      }
+    }
   };
 
   return (
@@ -159,7 +206,7 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
       </h3>
       <div className="mb-4 mt-4 grid grid-cols-12 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
         <div className="col-span-12 rounded-xl border border-stroke p-10 xl:col-span-6">
-          <ApointmentOverview/>
+          <ApointmentOverview />
         </div>
         <div className="col-span-12 rounded-xl border border-stroke p-5 xl:col-span-6">
           <div className="mb-2 flex items-center">
@@ -194,6 +241,11 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
           <FaArrowRight />
         </button>
       </div>
+      <DialogChooseAssistant
+        openModal={openModal}
+        handleClose={handleClose}
+        handleSelect={handleSelect}
+      />
     </div>
   );
 };
