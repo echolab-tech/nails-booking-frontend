@@ -7,13 +7,17 @@ import { FcCalendar } from "react-icons/fc";
 import { RiErrorWarningFill } from "react-icons/ri";
 import { Spinner } from "flowbite-react";
 import DateTimeCard from "./DateTimeCard";
-import { appointmentsPost } from "../../services/appointment.service";
+import { appointmentsCheckAssistant, appointmentsPost } from "../../services/appointment.service";
 import ApointmentOverview from "./ApointmentOverview";
 import { useAppointment } from "@/contexts/AppointmentContext";
+import DialogChooseAssistant from "./DialogChooseAssistant";
 
 const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { state } = useAppointment();
+  const [openModal, setOpenModal] = useState<boolean>(false);
+  const { state: appointmentState, dispatch } = useAppointment();
+  const [showAddServiceModal, setShowAddServiceModal] = useState(false);
+  const { state, dispatch: appointmentDispatch } = useAppointment();
   useEffect(() => {}, []);
 
   const formatPrice = (price: number) => {
@@ -83,6 +87,22 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
     appointmentType: "single" | "group" | null;
   }
 
+  const handleClose = () => {
+    setOpenModal(false);
+  };
+
+  const handleSelect = (select: string) => {
+    if (select === "yes") {
+      dispatch({ type: "SET_STEP", payload: 6});
+      // dispatch({ type: "SET_ASSISTANT", payload: null });
+    }
+    if (select === "no") {
+      dispatch({ type: "SET_ASSISTANT", payload: null });
+      setShowAddServiceModal(true);
+    }
+    setOpenModal(false);
+  };
+
   function transformFormData(state: AppointmentState) {
     const formData = {
       currentStep: state.currentStep,
@@ -136,20 +156,25 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
     return formData;
   }  
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     setIsLoading(true);
     const formData = transformFormData(state);
-    console.log(formData);
-    
-    appointmentsPost(formData)
-    .then((result: any) => {
+    try {
+      const respone = await appointmentsCheckAssistant(formData)
+      appointmentsPost(formData)
+      .then((result: any) => {
+        setIsLoading(false);
+        handleNext(result?.data?.data?.id);
+        appointmentDispatch({ type: "RESET_APPOINTMENT" })
+      })
+      .catch((error) => {
+        setIsLoading(false);
+        console.error(error);
+      });
+    } catch (error) {
       setIsLoading(false);
-      handleNext(result?.data?.data?.id);
-    })
-    .catch((error) => {
-      setIsLoading(false);
-      console.error(error);
-    });
+      setOpenModal(true);
+    }
   };
 
   return (
@@ -194,6 +219,11 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
           <FaArrowRight />
         </button>
       </div>
+      <DialogChooseAssistant
+        openModal={openModal}
+        handleClose={handleClose}
+        handleSelect={handleSelect}
+      />
     </div>
   );
 };
