@@ -60,6 +60,11 @@ const StepAddCustomer = ({
   };
 
   const handleCustomerSelect = async (customer: CustomerType) => {
+    if (customer.status === 2) {
+      toast.error("This customer is not allowed to make bookings");
+      return;
+    }
+    
     dispatch({ type: "SET_CUSTOMER", payload: customer });
     setShowCustomerList(false);
     setLoading(true);
