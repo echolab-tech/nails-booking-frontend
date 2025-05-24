@@ -167,7 +167,8 @@ const StepAddCustomer = ({
                 <button
                   key={index}
                   onClick={() => handleCustomerSelect(item)}
-                  className={`text-dark flex w-full items-center rounded border border-stroke bg-transparent px-4 py-4 font-semibold hover:bg-gray-2`}
+                  style={{ backgroundColor: item.status_info?.color_code || "#fff" }}
+                  className={`text-dark flex w-full items-center rounded border border-stroke px-4 py-4 font-semibold hover:bg-gray-2`}
                 >
                   <span className="text-lg font-medium">{item.name}</span>
                   <span className="ml-auto text-lg font-medium">

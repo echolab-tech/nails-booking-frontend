@@ -13,6 +13,11 @@ export type CustomerType = {
   avatar: any | null;
   address: string;
   status: number | null;
+  status_info: { 
+    id: number;
+    name_status: string;
+    color_code: string;
+   };
 };
 export interface Customer {
   id: number;
