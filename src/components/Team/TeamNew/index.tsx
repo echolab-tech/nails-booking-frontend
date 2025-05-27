@@ -34,7 +34,7 @@ const AssistantNewSchema = Yup.object().shape({
     (value) => {
       return !value || (value && (value as File).size <= 5 * 1024 * 1024);
     },
-  ),
+  ).nullable(),
   email: Yup.string().email("Invalid email").required("Required"),
   password: Yup.string()
     .min(6, "Too Short!")

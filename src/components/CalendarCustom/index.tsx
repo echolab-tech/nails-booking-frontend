@@ -1011,8 +1011,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
         dayMinWidth={200}
         resourceLabelContent={renderResourceLabelContent}
         datesSet={handleDatesSet}
-        slotMinTime="08:00:00" // Start time at 8 AM
-        slotMaxTime="22:00:00" // End time at 10 PM
+        slotMinTime="09:00:00" // Start time at 9 AM
+        slotMaxTime="20:00:00" // End time at 8 PM
         headerToolbar={{
           right: "today prev,next,resourceTimeGridDay,resourceTimeGridWeek",
           left: "title",
@@ -1023,6 +1023,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
           month: "long", // Display the full month name
           day: "numeric", // Display the day number
         }}
+        
       />
       {openSelect && (
         <Modal size="sm" show={openSelect} onClose={onCloseModalSelect}>
