@@ -12,7 +12,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { CiSearch } from "react-icons/ci";
-
+import defaultImage from "@/images/no-avatar.jpg";
 import "react-toastify/dist/ReactToastify.css";
 import Skeleton from "@/components/common/Skeleton";
 
@@ -174,7 +174,7 @@ const TeamList = () => {
                   <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
                     <div className="flex items-center gap-2">
                       <img
-                        src={teamItem?.avatar}
+                        src={ teamItem?.avatar || '/images/no-avatar.jpg' }
                         className="h-[50px] w-[50px] rounded-full object-cover"
                       />
                       <h5 className="font-medium text-black dark:text-white">
