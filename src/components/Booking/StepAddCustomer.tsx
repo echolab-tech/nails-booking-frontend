@@ -48,7 +48,13 @@ const StepAddCustomer = ({
 
   useEffect(() => {
     fetchCustomer(searchTerm);
-  }, [searchTerm]);
+    if (isOpenDialog) {
+      setNewCustomer((prev) => ({
+        ...prev,
+        phone: searchTerm,
+      }));
+    }
+  }, [searchTerm, isOpenDialog]);
 
   const fetchCustomer = async (searchTerm: string) => {
     try {
@@ -104,6 +110,14 @@ const StepAddCustomer = ({
     setNewCustomer({ ...newCustomer, phone: formattedValue });
   };
 
+  const handlePhoneSearchChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const rawValue = e.target.value;
+    const formattedValue = formatPhoneNumber(rawValue);
+    setSearchTerm(formattedValue);
+  };
+
   const handleCloseDialog = () => {
     setIsOpenDialog(false);
     setNewCustomer({ name: "", phone: "" }); // Reset form khi đóng
@@ -114,10 +128,12 @@ const StepAddCustomer = ({
       const response = await addCustomersBooking(newCustomer); // Gửi dữ liệu khách hàng mới
       if (response.status === 200) {
         // Kiểm tra mã trạng thái HTTP
+
         toast.success("Add customer successfully.");
         setTimeout(() => {
           fetchCustomer(searchTerm);
         }, 1000);
+        handleCustomerSelect(response.data.data);
       }
     } catch (error) {
       console.error("Error creating customer:", error);
@@ -153,7 +169,8 @@ const StepAddCustomer = ({
         <input
           type="text"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          // onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={handlePhoneSearchChange}
           placeholder="Search customers..."
           className="w-[30%] rounded border border-gray-300 px-4 py-2"
         />
