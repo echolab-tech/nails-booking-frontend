@@ -13,6 +13,7 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import { ServiceSummaryType } from "@/types/ServiceSummary";
 import { getServiceSummaries } from "@/services/service-summary.service";
+import ToggleSwitch from "@/components/Service/NewFormService/ToggleSwitch";
 
 const CreatedCategory = Yup.object().shape({
   name: Yup.string().min(2).max(50).required(),
@@ -68,6 +69,7 @@ const CategoryNew = () => {
               color: category?.color || "#22d3ee",
               serviceSummary:
                 category?.service_summaries?.map((item) => item.id) || [],
+              is_active: Boolean(category?.is_active ?? true),
             }}
             validationSchema={CreatedCategory}
             onSubmit={(values: any, { resetForm }) => {
@@ -94,7 +96,7 @@ const CategoryNew = () => {
               }
             }}
           >
-            {({ errors, touched }) => (
+            {({ errors, touched, values, setFieldValue }) => (
               <Form action="#">
                 <div className="border-stroke  p-6.5 px-6.5 py-4 dark:border-strokedark">
                   <div className="mb-4.5 flex flex-col justify-center gap-6">
@@ -132,7 +134,7 @@ const CategoryNew = () => {
                       {id ? "Update service summary" : "New service summary"}
                     </h3>
                   </div>
-                  <div className="mb-4.5 flex flex-col justify-center gap-6 px-6.5 py-4">
+                  <div className="mb-3 flex flex-col justify-center gap-6 px-6.5 py-4">
                     <div className="w-full">
                       <FieldArray name="serviceSummary">
                         {({
@@ -186,6 +188,18 @@ const CategoryNew = () => {
                       </FieldArray>
                     </div>
                   </div>
+                  <div className="mb-4.5 flex flex-col gap-2 px-6.5">
+                      <label className="block text-sm font-medium text-black dark:text-white">
+                         Is Active
+                       </label>
+                       <div className="flex items-center">
+                         <ToggleSwitch
+                           name="is_active"
+                           value={values.is_active}
+                           handleChange={() => setFieldValue("is_active", !values.is_active)}
+                         />
+                       </div>
+                   </div>
                   <div className="mb-4.5 flex flex-col gap-6 px-6.5 py-4 xl:flex-row">
                     <div className="w-full xl:w-1/2">
                       <button
