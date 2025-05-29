@@ -59,7 +59,7 @@ const TeamNew = () => {
   }, []);
 
   const fetchDataServices = async () => {
-    const services = await getListService();
+    const services = await getListService(true);
     setServices(services.data.data);
   };
 
