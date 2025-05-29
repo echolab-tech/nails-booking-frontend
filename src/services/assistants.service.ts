@@ -9,8 +9,13 @@ export const assistants = async (values: AssistantAddForm): Promise<any> => {
     },
   });
 };
-export const getListService = async (): Promise<any> => {
-  return await http.get<any>("/services");
+export const getListService = async (onlyService?: boolean): Promise<any> => {
+  const params: any = {};
+
+  if (onlyService) {
+    params.only_service = true;
+  }
+  return await http.get<any>("/services", {params});
 };
 
 export const getListAssistant = async (
