@@ -14,6 +14,7 @@ export type CategoryType = {
   id: string;
   name: string;
   color: string;
+  is_active: number;
   service_summaries: Array<{
     id: number;
     name: string;
