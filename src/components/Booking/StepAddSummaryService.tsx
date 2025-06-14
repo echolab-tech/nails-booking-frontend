@@ -66,19 +66,21 @@ const StepAddSummaryService = ({
       </div>
 
       <div className="mt-4 space-y-4">
-        {serviceSummary?.map((item, index) => (
-          <button
-            key={index}
-            onClick={() => handleButtonClick(item)}
-            className={`text-dark flex w-full items-center rounded border border-stroke bg-transparent px-4 py-4 font-semibold hover:bg-gray-2 ${
-              selectedButton === item.name
-                ? "bg-primary-light border-primary text-primary"
-                : "text-gray-700 border-gray-200 hover:border-primary"
-            }`}
-          >
-            <span className="text-lg font-medium">{item.name}</span>
-          </button>
-        ))}
+        {serviceSummary
+          ?.filter((item) => item.is_active)
+          .map((item, index) => (
+            <button
+              key={index}
+              onClick={() => handleButtonClick(item)}
+              className={`text-dark flex w-full items-center rounded border border-stroke bg-transparent px-4 py-4 font-semibold hover:bg-gray-2 ${
+                selectedButton === item.name
+                  ? "bg-primary-light border-primary text-primary"
+                  : "text-gray-700 border-gray-200 hover:border-primary"
+              }`}
+            >
+              <span className="text-lg font-medium">{item.name}</span>
+            </button>
+          ))}
       </div>
 
       <div className="flex justify-between">

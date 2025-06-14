@@ -58,17 +58,19 @@ const StepAddCategory = ({ handleBack, handleNext }: StepAddCategoryProps) => {
           </p>
         </div>
         <div className="mb-4 mt-4 grid grid-cols-12 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
-          {categories?.map((category: CategoryType, index: number) => (
-            <div className="col-span-12 xl:col-span-6" key={index}>
-              <button
-                onClick={() => handleButtonClick(category)}
-                className="text-dark flex w-full justify-between rounded border border-stroke bg-transparent px-4 py-4 font-semibold hover:border-primary hover:bg-gray-2"
-              >
-                {category?.name}
-                <MdArrowForwardIos size={20} />
-              </button>
-            </div>
-          ))}
+          {categories
+            ?.filter((category: CategoryType) => category.is_active === 1)
+            .map((category: CategoryType, index: number) => (
+              <div className="col-span-12 xl:col-span-6" key={index}>
+                <button
+                  onClick={() => handleButtonClick(category)}
+                  className="text-dark flex w-full justify-between rounded border border-stroke bg-transparent px-4 py-4 font-semibold hover:border-primary hover:bg-gray-2"
+                >
+                  {category?.name}
+                  <MdArrowForwardIos size={20} />
+                </button>
+              </div>
+            ))}
         </div>
         <div className="flex justify-between">
           <button
