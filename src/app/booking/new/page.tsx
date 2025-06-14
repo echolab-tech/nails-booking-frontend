@@ -25,6 +25,10 @@ const BookingPage = () => {
   const { state, dispatch } = useAppointment();
 
   useEffect(() => {
+    dispatch({ type: "RESET_APPOINTMENT" });
+  }, []);
+
+  useEffect(() => {
     if (!state.selectedTime) {
       router.push("/");
     }
@@ -37,9 +41,8 @@ const BookingPage = () => {
       setShowAddServiceModal(true);
     } else if (state.currentStep === 7) {
       toast("Booking successfuly !");
-      router.push('/calendar');
-    } 
-    else {
+      router.push("/calendar");
+    } else {
       dispatch({ type: "SET_STEP", payload: state.currentStep + 1 });
     }
   };

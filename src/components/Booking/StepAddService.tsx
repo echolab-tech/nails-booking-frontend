@@ -62,9 +62,7 @@ const StepAddService = ({ handleBack, handleNext }: StepAddServiceProps) => {
         <ApointmentOverview />
       </div>
       <div className="w-full rounded-lg bg-white p-10 shadow-lg">
-        <h3 className="mb-3 text-2xl text-primary">
-          I want to order a service...
-        </h3>
+        <h3 className="mb-3 text-2xl text-primary">Please choose a service</h3>
         <div className="mb-4 mt-4 grid grid-cols-12 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
           <div className="col-span-12">
             {serviceOptions?.map((item, index) => (
