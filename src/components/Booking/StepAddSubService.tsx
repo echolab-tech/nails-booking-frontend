@@ -86,7 +86,7 @@ const StepAddSubService = ({
       <div className="w-full space-y-8 rounded-lg bg-white p-10 shadow-lg">
         <div className="space-y-1">
           <h3 className="mb-1 text-2xl font-bold text-primary">
-            I want to order a service...
+            Please choose the add-on service(s).
           </h3>
         </div>
 

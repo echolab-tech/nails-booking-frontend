@@ -80,7 +80,6 @@ type AppointmentAction =
     }
   | { type: "SET_ASSISTANT"; payload: Assistant }
   | { type: "SET_SERVICE_CATEGORY"; payload: ServiceCategory }
-  | { type: "SET_APPOINTMENT_TYPE"; payload: string }
   | { type: "ADD_APPOINTMENT" }
   | { type: "SET_APPOINTMENT_INDEX"; payload: number }
   | { type: "RESET_APPOINTMENT" }
@@ -139,30 +138,27 @@ function appointmentReducer(
         ...state,
         currentStep: action.payload,
       };
-    case "SET_SELECTED_TIME":
-      return {
-        ...state,
-        selectedTime: action.payload,
-      };
     case "SET_CUSTOMER": {
       const customer = action.payload;
       const existingAppointment = state.appointments.find(
         (apt, index) =>
           index !== state.currentAppointmentIndex &&
-          apt.customer?.id === customer.id
+          apt.customer?.id === customer.id,
       );
-    
+
       let newStartTime = state.selectedTime; // mặc định nếu chưa có thì lấy selectedTime
       if (existingAppointment) {
         // Nếu đã tồn tại customer -> tìm endTime lớn nhất trong service hoặc subServices
         const serviceEndTime = existingAppointment.service?.endTime || "";
         const lastSubServiceEndTime = existingAppointment.subServices?.length
-          ? existingAppointment.subServices[existingAppointment.subServices.length - 1].endTime
+          ? existingAppointment.subServices[
+              existingAppointment.subServices.length - 1
+            ].endTime
           : "";
-    
+
         newStartTime = lastSubServiceEndTime || serviceEndTime || newStartTime;
       }
-    
+
       return {
         ...state,
         appointments: state.appointments.map((apt, index) =>
@@ -293,7 +289,10 @@ function appointmentReducer(
         currentAppointmentIndex: action.payload,
       };
     case "RESET_APPOINTMENT":
-      return initialState;
+      return {
+        ...initialState,
+        selectedTime: state.selectedTime,
+      };
     case "ADD_APPOINTMENT_WITH_CURRENT_CUSTOMER":
       const currentAppointment =
         state.appointments[state.currentAppointmentIndex];

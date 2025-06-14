@@ -12,7 +12,7 @@ const Stepper = ({ step }: any) => {
     { label: "Select service summary", stepNumber: 2 },
     { label: "Select category", stepNumber: 3 },
     { label: "Select service", stepNumber: 4 },
-    { label: "Select sub service", stepNumber: 5 },
+    { label: "Select Add-on Service", stepNumber: 5 },
     { label: "Select employee ", stepNumber: 6 },
     { label: "Confirm booking ", stepNumber: 7 },
   ];
