@@ -3,6 +3,7 @@ export type serviceTypeNew = {
   description: string | null;
   service_category_id: number | null;
   is_booking_online: boolean;
+  is_turn: boolean;
   assistantServices: number[];
   serviceOptions: {
     name: string | null;
@@ -11,13 +12,13 @@ export type serviceTypeNew = {
     price_type: string | null;
     type: string | null;
     serviceOptionAssistants: [
-    {
-      assistant_id: number | null;
-      time: string | null;
-      price_type: string | null;
-      price: number | null;
-    }
-  ];
+      {
+        assistant_id: number | null;
+        time: string | null;
+        price_type: string | null;
+        price: number | null;
+      },
+    ];
   }[];
-  category: string | null;  // Add this line
+  category: string | null; // Add this line
 };

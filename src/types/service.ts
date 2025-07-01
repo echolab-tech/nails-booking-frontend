@@ -3,6 +3,7 @@ export type serviceType = {
   name: string;
   discription: string | null;
   is_booking_online: boolean | number;
+  is_turn: boolean | number;
   category: serviceCategoryType;
   assistantServices: Array<assistantServiceType>;
   serviceOptions: Array<serviceOptionType>;

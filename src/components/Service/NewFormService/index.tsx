@@ -145,7 +145,7 @@ const ServiceSingleNew = () => {
 
   const removeFromList = (index: number, values: any, setValues: any) => {
     const updatedServiceOptions = values.serviceOptions.filter(
-      (_, i) => i !== index,
+      (_: any, i: number) => i !== index,
     );
     setValues({ ...values, serviceOptions: updatedServiceOptions });
   };
@@ -184,6 +184,10 @@ const ServiceSingleNew = () => {
     formik.setFieldValue("is_booking_online", !formik.values.is_booking_online);
   };
 
+  const handleToogleSwitchTurn = () => {
+    formik.setFieldValue("is_turn", !formik.values.is_turn);
+  };
+
   const CreatedServiceSchema = Yup.object().shape({
     name: Yup.string().min(2).max(255).required(),
     service_category_id: Yup.string().required("Category is required"),
@@ -210,6 +214,7 @@ const ServiceSingleNew = () => {
       description: service?.discription || null,
       service_category_id: service?.category?.id || null,
       is_booking_online: service?.is_booking_online == 1 ? true : false || true,
+      is_turn: service?.is_turn == 1 ? true : false || false,
       assistantServices:
         service?.assistantServices?.map((assistant: any) => assistant?.id) ||
         assistantData?.map((assistant: Assistant) => assistant?.id),
@@ -353,6 +358,17 @@ const ServiceSingleNew = () => {
                   name="is_booking_online"
                   value={formik.values.is_booking_online}
                   handleChange={handleToogleSwitch}
+                />
+              </div>
+              <div className="border-toggle p-6.5">
+                <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                  <b>Is Turn</b>
+                  <p>Enable turn-based booking for this service.</p>
+                </label>
+                <ToggleSwitch
+                  name="is_turn"
+                  value={formik.values.is_turn}
+                  handleChange={handleToogleSwitchTurn}
                 />
               </div>
               <div className="border-assistant p-6.5">
