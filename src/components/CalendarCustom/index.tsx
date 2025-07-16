@@ -994,6 +994,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
         selectable={true}
         editable={true}
         events={events}
+        selectAllow={(selectInfo) => {
+          const now = new Date();
+          return selectInfo.start >= now;
+        }}
+        eventAllow={(dropInfo, draggedEvent) => {
+          const now = new Date();
+          return dropInfo.start >= now;
+        }}
         plugins={[
           resourceTimeGridPlugin,
           interactionPlugin,
@@ -1023,7 +1031,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
           month: "long", // Display the full month name
           day: "numeric", // Display the day number
         }}
-        
       />
       {openSelect && (
         <Modal size="sm" show={openSelect} onClose={onCloseModalSelect}>
