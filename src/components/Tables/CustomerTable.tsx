@@ -7,6 +7,7 @@ import { FaEdit } from "react-icons/fa";
 import { deleteCustomer, getListCustomers } from "@/services/customer.service";
 import { toast } from "react-toastify";
 // import { Customer } from "@/types/customer";
+import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
 import PaginationCustom from "../Pagination/Pagination";
 import Search from "@/app/customers/search/page";
 import Skeleton from "../common/Skeleton";
@@ -44,6 +45,8 @@ const CustomerTable = () => {
   const router = useRouter();
   const [customerData, setCustomerData] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [openModal, setOpenModal] = useState<boolean>(false);
+  const [idDel, setIdDel] = useState<number>(0);
   const [paginationData, setPaginationData] = useState<PaginationData>({
     current_page: 1,
     total_pages: 1,
@@ -90,13 +93,25 @@ const CustomerTable = () => {
     router.push(`/customers/edit/${customerId}`);
   };
 
+ const onClose = () => {
+    setIdDel(0);
+    setOpenModal(false);
+  };
+
   const handleButtonDelete = async (customerId: number) => {
+    setOpenModal(true);
+    setIdDel(customerId);
+  };
+
+  const onDelete = async () => {
     try {
-      await deleteCustomer(customerId);
-      toast.success("Delete Success !!!");
-      fetchCustomerData(paginationData.current_page);
+      await deleteCustomer(idDel).then(() => {
+        setOpenModal(false);
+        fetchCustomerData(1);
+        toast.success("Delete Success !!!");
+      });
     } catch (error) {
-      toast.warning("Delete Fail !!!");
+      toast.warning("You cannot delete !!!");
     }
   };
 
@@ -213,7 +228,7 @@ const CustomerTable = () => {
                       </button>
                       <button
                         className="hover:text-primary"
-                        onClick={() => handleButtonDelete(item.id)}
+                        onClick={() => handleButtonDelete(item?.id)}
                       >
                         <svg
                           color="red"
@@ -246,6 +261,24 @@ const CustomerTable = () => {
           </table>
         </div>
       )}
+        <DialogConfirm
+              openModal={openModal}
+              message="If you delete this, all bookings related to this customer will also be removed. Are you sure you want to proceed ?"
+              onClose={onClose}
+            >
+              <button
+                onClick={() => onDelete()}
+                className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
+              >
+                {"Yes, I'm sure"}
+              </button>
+              <button
+                onClick={() => setOpenModal(false)}
+                className="justify-center rounded bg-zinc-800 p-3 font-medium text-gray hover:bg-opacity-90"
+              >
+                No, cancel
+              </button>
+            </DialogConfirm>
       <PaginationCustom
         currentPage={paginationData.current_page}
         totalPages={paginationData.total_pages}
