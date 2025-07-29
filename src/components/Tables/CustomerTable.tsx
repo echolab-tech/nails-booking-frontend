@@ -105,13 +105,13 @@ const CustomerTable = () => {
 
   const onDelete = async () => {
     try {
-      await deleteCustomer(idDel).then(() => {
-        setOpenModal(false);
-        fetchCustomerData(1);
-        toast.success("Delete Success !!!");
-      });
+      await deleteCustomer(idDel);
+    setOpenModal(false);
+    fetchCustomerData(1);
+    toast.success("Delete Success !!!");
     } catch (error) {
-      toast.warning("You cannot delete !!!");
+      toast.error("Delete Failed. Please try again.");
+      console.error("Error deleting customer:", error);
     }
   };
 
