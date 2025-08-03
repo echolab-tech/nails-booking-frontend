@@ -157,6 +157,8 @@ const StepAddCustomer = ({
     dispatch({ type: "SET_CUSTOMER", payload: null });
   };
 
+  const appointmentIds = state.appointments.map(appointment => appointment?.customer?.id);
+
   return (
     <div className="w-full space-y-8 rounded-lg bg-white p-10 shadow-lg">
       <div className="mb-6 flex items-center justify-between">
@@ -185,7 +187,10 @@ const StepAddCustomer = ({
                   key={index}
                   onClick={() => handleCustomerSelect(item)}
                   style={{ backgroundColor: item.status_info?.color_code || "#fff" }}
-                  className={`text-dark flex w-full items-center rounded border border-stroke px-4 py-4 font-semibold hover:bg-gray-2`}
+                  className={`text-dark flex w-full items-center rounded border border-stroke px-4 py-4 font-semibold hover:bg-gray-2 ${
+                    appointmentIds.includes(item.id) ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={appointmentIds.includes(item.id)}
                 >
                   <span className="text-lg font-medium">{item.name}</span>
                   <span className="ml-auto text-lg font-medium">
