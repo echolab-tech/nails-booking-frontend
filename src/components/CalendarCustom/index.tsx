@@ -917,15 +917,21 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const renderEventContent = (eventInfo: any) => {
+    var data = eventInfo?.event?.extendedProps;
     return (
       <>
         <b>
-          {eventInfo.timeText} {eventInfo?.event?.extendedProps?.customerName}
+          {eventInfo.timeText} {data?.customerName}
         </b>
-        <i className="block">{eventInfo.event.title}</i>
-        {eventInfo?.event?.extendedProps?.booking?.description != null && (
+        <i className="block">Phone Number: {data?.booking?.customer?.phone}</i>
+        <i className="block">Service Name: {eventInfo.event.title}</i>
+        <i className="block">Request a worker: {data?.booking.booking_type ? 'Yes' : 'No'}</i>
+        {data?.group_id !== null && (
+            <i className="block">Has a group booking (Group ID: {eventInfo.event.extendedProps.group_id})</i>
+        )}
+        {data?.booking?.description != null && (
           <i className="block">
-            Note: {eventInfo.event.extendedProps.booking.description}
+            Note: {data.booking.description}
           </i>
         )}
       </>
