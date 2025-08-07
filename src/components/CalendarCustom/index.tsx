@@ -987,9 +987,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
     fetchAllData(format(start, "dd-MM-yyyy"), format(end, "dd-MM-yyyy"));
   };
 
-  console.log('events', events);
-  
-
   return (
     <>
       <FullCalendar
