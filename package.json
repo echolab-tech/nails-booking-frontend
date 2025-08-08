@@ -41,6 +41,7 @@
     "react-tailwindcss-select": "^1.8.5",
     "react-toastify": "^10.0.5",
     "sass": "^1.75.0",
+    "tippy.js": "^6.3.7",
     "uuid": "^9.0.0",
     "yup": "^1.4.0"
   },
