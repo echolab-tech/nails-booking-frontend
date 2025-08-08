@@ -925,9 +925,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
         </b>
         <i className="block">Phone Number: {data?.booking?.customer?.phone}</i>
         <i className="block">Service Name: {eventInfo.event.title}</i>
-        <i className="block">Request a worker: {data?.booking.booking_type ? 'Yes' : 'No'}</i>
+        <i className="block">Request a worker: {data?.booking?.booking_type ? 'Yes' : 'No'}</i>
         {data?.group_id !== null && (
-            <i className="block">Has a group booking (Group ID: {eventInfo.event.extendedProps.group_id})</i>
+            <i className="block">Has a group booking (Group ID: {data.group_id})</i>
         )}
         {data?.booking?.description != null && (
           <i className="block">
