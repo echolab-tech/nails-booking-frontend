@@ -52,6 +52,8 @@ import {
 import TipButtonGrid from "../TipButtonGrid";
 import PaymentButtonGrid from "../PaymentButtonGrid";
 import CashPaymentDialog from "../CashPaymentDialog";
+import 'tippy.js/dist/tippy.css';
+import tippy from 'tippy.js';
 
 const generateTimeOptions = () => {
   const timeOptions = [];
@@ -916,6 +918,26 @@ const FullCalenDarCustom: React.FC<any> = () => {
     );
   };
 
+  const attachEventTooltip = (eventInfo: any) => {
+    const data = eventInfo.event.extendedProps;
+    const tooltipContent = `
+      <div>
+          <b>${eventInfo.timeText ?? ''} ${data?.customerName ?? ''}</b>
+          <i class="block">Phone Number: ${data?.booking?.customer?.phone ?? ''}</i>
+          <i class="block">Service Name: ${eventInfo.event.title}</i>
+          <i class="block">Request a worker: ${data?.booking?.booking_type ? 'Yes' : 'No'}</i>
+          ${data?.group_id !== null ? `<i class="block">Has a group booking (Group ID: ${data.group_id})</i>` : ''}
+          ${data?.booking?.description ? `<i class="block">Note: ${data.booking.description}</i>` : ''}
+      </div>
+    `;
+
+    tippy(eventInfo.el, {
+      content: tooltipContent,
+      allowHTML: true,
+      placement: 'top',
+    });
+  }
+
   const renderEventContent = (eventInfo: any) => {
     var data = eventInfo?.event?.extendedProps;
     return (
@@ -925,9 +947,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
         </b>
         <i className="block">Phone Number: {data?.booking?.customer?.phone}</i>
         <i className="block">Service Name: {eventInfo.event.title}</i>
-        <i className="block">Request a worker: {data?.booking.booking_type ? 'Yes' : 'No'}</i>
+        <i className="block">Request a worker: {data?.booking?.booking_type ? 'Yes' : 'No'}</i>
         {data?.group_id !== null && (
-            <i className="block">Has a group booking (Group ID: {eventInfo.event.extendedProps.group_id})</i>
+            <i className="block">Has a group booking (Group ID: {data.group_id})</i>
         )}
         {data?.booking?.description != null && (
           <i className="block">
@@ -1015,6 +1037,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
           scrollGridPlugin,
         ]}
         eventContent={renderEventContent}
+        eventDidMount={attachEventTooltip}
         eventClick={handleEventClick}
         initialView="resourceTimeGridDay"
         resources={resources}
