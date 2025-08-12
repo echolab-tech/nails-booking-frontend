@@ -3,11 +3,12 @@
 import { useState } from "react";
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FaEdit } from "react-icons/fa";
-import { deleteCustomer, getListCustomers } from "@/services/customer.service";
+import { FaEdit, FaComment } from "react-icons/fa"; 
+import { addDesciptionOfCustomer, deleteCustomer, getListCustomers } from "@/services/customer.service";
 import { toast } from "react-toastify";
 // import { Customer } from "@/types/customer";
 import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
+import { DialogWithTextArea } from "@/components/Dialog/DialogWithTextArea";
 import PaginationCustom from "../Pagination/Pagination";
 import Search from "@/app/customers/search/page";
 import Skeleton from "../common/Skeleton";
@@ -21,6 +22,7 @@ export interface Customer {
   status: Status;
   reviews: number;
   total_sales: number;
+  description: string;
 }
 
 export interface Status {
@@ -46,6 +48,9 @@ const CustomerTable = () => {
   const [customerData, setCustomerData] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [openModal, setOpenModal] = useState<boolean>(false);
+  const [openModalWriteComment, setOpenModelUpdateDescription] = useState<boolean>(false);
+  const [description, setDescription] = useState<string>("");
+  const [idUpdateDescription, setIdUpdateDescription] = useState<number>(0);
   const [idDel, setIdDel] = useState<number>(0);
   const [paginationData, setPaginationData] = useState<PaginationData>({
     current_page: 1,
@@ -98,9 +103,19 @@ const CustomerTable = () => {
     setOpenModal(false);
   };
 
-  const handleButtonDelete = async (customerId: number) => {
+  const handleButtonDelete = async (customerId: number,) => {
     setOpenModal(true);
     setIdDel(customerId);
+  };
+
+  const handleButtonWriteComment = (customerId: number, description: string) => {
+    setOpenModelUpdateDescription(true);
+    setIdUpdateDescription(customerId);
+    setDescription(description);
+  }
+
+   const closeModelUpdateDescription = () => {
+    setOpenModelUpdateDescription(false);
   };
 
   const onDelete = async () => {
@@ -131,6 +146,23 @@ const CustomerTable = () => {
         total_pages: result.data.data.metadata.total_pages,
       });
   };
+
+  const handleSetDescription = async (description: string) => {
+    setDescription(description);
+  }
+
+  const handleUpdateDescription = async () => {
+    try {
+      await addDesciptionOfCustomer(idUpdateDescription, description);
+      setOpenModelUpdateDescription(false);
+      setDescription("");
+      toast.success("Update Description Success !!!");
+      fetchCustomerData(1);
+    } catch (error) {
+      toast.error("Update Description Failed. Please try again.");
+      console.error("Error updating description:", error);
+    }
+  }
 
   return (
     <div className="rounded-sm border border-stroke bg-white px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
@@ -199,6 +231,12 @@ const CustomerTable = () => {
                     <div className="flex items-center space-x-3.5">
                       <button
                         className="hover:text-primary"
+                        onClick={() => handleButtonWriteComment(item.id, item.description)}
+                      >
+                        <FaComment color="blue" />
+                      </button>
+                      {/* <button
+                        className="hover:text-primary"
                         onClick={() => handleButtonDetail(item.id)}
                       >
                         <svg
@@ -219,7 +257,7 @@ const CustomerTable = () => {
                             fill=""
                           />
                         </svg>
-                      </button>
+                      </button> */}
                       <button
                         className="hover:text-primary"
                         onClick={() => handleButtonEdit(item.id)}
@@ -279,6 +317,25 @@ const CustomerTable = () => {
                 No, cancel
               </button>
             </DialogConfirm>
+      <DialogWithTextArea
+          openModal={openModalWriteComment}
+          onClose={closeModelUpdateDescription}
+          setDescription={handleSetDescription}
+          description={description}
+          >
+          <button
+            onClick={handleUpdateDescription}
+            className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
+          >
+            Save
+          </button>
+          <button
+            onClick={closeModelUpdateDescription}
+            className="justify-center rounded bg-zinc-800 p-3 font-medium text-gray hover:bg-opacity-90"
+          >
+            Cancel
+          </button>
+      </DialogWithTextArea>
       <PaginationCustom
         currentPage={paginationData.current_page}
         totalPages={paginationData.total_pages}
