@@ -52,8 +52,7 @@ import {
 import TipButtonGrid from "../TipButtonGrid";
 import PaymentButtonGrid from "../PaymentButtonGrid";
 import CashPaymentDialog from "../CashPaymentDialog";
-import 'tippy.js/dist/tippy.css';
-import tippy from 'tippy.js';
+import DelayNotifyModal from "../DelayNotifyModal";
 
 const generateTimeOptions = () => {
   const timeOptions = [];
@@ -87,6 +86,7 @@ interface SearchServiceOptionValues {
 const FullCalenDarCustom: React.FC<any> = () => {
   const [resources, setResources] = useState<ResourceType[]>([]);
   const [assistantId, setAssistantId] = useState<string>("");
+  const [bookingDetailId, setBookingDetailId] = useState<string>("");
   const [dateTime, setDateTime] = useState<string>("");
   const [assistant, setAssistant] = useState<Assistant>();
   const [startTime, setStartTime] = useState<string>("");
@@ -134,6 +134,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     { id: number; name_status: string; color_code: string }[]
   >([]);
   const router = useRouter();
+  const [isOpenDelay, setIsOpenDelay] = useState<boolean>(false);
   const { dispatch } = useAppointment();
 
   useEffect(() => {
@@ -289,6 +290,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       setOriginalTotalFee(totalFee);
     });
     setAssistantId(arg?.event?.extendedProps?.assistant?.id);
+    setBookingDetailId(arg?.event?.id);
     setAssistant(arg?.event?.extendedProps?.assistant);
     setEventId(arg?.event?.extendedProps?.booking_id);
     setOpenBooking(true);
@@ -820,6 +822,22 @@ const FullCalenDarCustom: React.FC<any> = () => {
     toast.success(message);
   };
 
+  const handleCloseDelay = () => {
+    setIsOpenDelay(false);
+  };
+
+  const handleOpenDelay = () => {
+    setIsOpenDelay(true);
+  };
+
+  const handleSenDelay = () => {
+    fetchAllData(
+      format(new Date(), "dd-MM-yyyy"),
+      format(new Date(), "dd-MM-yyyy"),
+    );
+    setIsOpenDelay(false);
+  };
+
   const handleError = (error: any) => {
     setIsSubmit(false);
     toast.error(error);
@@ -922,21 +940,15 @@ const FullCalenDarCustom: React.FC<any> = () => {
     const data = eventInfo.event.extendedProps;
     const tooltipContent = `
       <div>
-          <b>${eventInfo.timeText ?? ''} ${data?.customerName ?? ''}</b>
-          <i class="block">Phone Number: ${data?.booking?.customer?.phone ?? ''}</i>
+          <b>${eventInfo.timeText ?? ""} ${data?.customerName ?? ""}</b>
+          <i class="block">Phone Number: ${data?.booking?.customer?.phone ?? ""}</i>
           <i class="block">Service Name: ${eventInfo.event.title}</i>
-          <i class="block">Request a worker: ${data?.booking?.booking_type ? 'Yes' : 'No'}</i>
-          ${data?.group_id !== null ? `<i class="block">Has a group booking (Group ID: ${data.group_id})</i>` : ''}
-          ${data?.booking?.description ? `<i class="block">Note: ${data.booking.description}</i>` : ''}
+          <i class="block">Request a worker: ${data?.booking?.booking_type ? "Yes" : "No"}</i>
+          ${data?.group_id !== null ? `<i class="block">Has a group booking (Group ID: ${data.group_id})</i>` : ""}
+          ${data?.booking?.description ? `<i class="block">Note: ${data.booking.description}</i>` : ""}
       </div>
     `;
-
-    tippy(eventInfo.el, {
-      content: tooltipContent,
-      allowHTML: true,
-      placement: 'top',
-    });
-  }
+  };
 
   const renderEventContent = (eventInfo: any) => {
     var data = eventInfo?.event?.extendedProps;
@@ -947,14 +959,16 @@ const FullCalenDarCustom: React.FC<any> = () => {
         </b>
         <i className="block">Phone Number: {data?.booking?.customer?.phone}</i>
         <i className="block">Service Name: {eventInfo.event.title}</i>
-        <i className="block">Request a worker: {data?.booking?.booking_type ? 'Yes' : 'No'}</i>
+        <i className="block">
+          Request a worker: {data?.booking?.booking_type ? "Yes" : "No"}
+        </i>
         {data?.group_id !== null && (
-            <i className="block">Has a group booking (Group ID: {data.group_id})</i>
+          <i className="block">
+            Has a group booking (Group ID: {data.group_id})
+          </i>
         )}
         {data?.booking?.description != null && (
-          <i className="block">
-            Note: {data.booking.description}
-          </i>
+          <i className="block">Note: {data.booking.description}</i>
         )}
       </>
     );
@@ -1166,6 +1180,13 @@ const FullCalenDarCustom: React.FC<any> = () => {
                         className="mb-2 inline-flex w-full items-center justify-center rounded-md border border-black bg-transparent py-2 font-medium text-black text-black hover:bg-opacity-90 "
                       >
                         View profile
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleOpenDelay}
+                        className="rounded-md bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600"
+                      >
+                        Delay Notification
                       </button>
                     </div>
                   )}
@@ -1828,6 +1849,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
           onClose={handleCloseCashPayment}
           onSave={(amount) => handleSaveCashPayment(amount)}
           initialAmount={formik.values.totalFee}
+        />
+      )}
+      {isOpenDelay && (
+        <DelayNotifyModal
+          bookingDetailId={bookingDetailId}
+          openModal={isOpenDelay}
+          handleClose={handleCloseDelay}
+          handleSend={handleSenDelay}
         />
       )}
     </>
