@@ -12,6 +12,10 @@ export const addCustomersBooking = async (values: CustomerFormAdd): Promise<any>
   return await http.post<any>("/customers/add/new", values);
 };
 
+export const addDesciptionOfCustomer = async (customerId: number, description: string): Promise<any> => {
+  return await http.post<any>("/customers/description", { customerId, description });
+};
+
 export const getListCustomers = async (
   values: CustomerSearchForm,
   page: number,
