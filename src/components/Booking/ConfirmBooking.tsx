@@ -7,13 +7,11 @@ import { FcCalendar } from "react-icons/fc";
 import { RiErrorWarningFill } from "react-icons/ri";
 import { Spinner } from "flowbite-react";
 import DateTimeCard from "./DateTimeCard";
-import {
-  appointmentsCheckAssistant,
-  appointmentsPost,
-} from "../../services/appointment.service";
+import { appointmentsPost } from "../../services/appointment.service";
 import ApointmentOverview from "./ApointmentOverview";
 import { useAppointment } from "@/contexts/AppointmentContext";
-import DialogChooseAssistant from "./DialogChooseAssistant";
+import { toast } from "react-toastify";
+import TechnicianUnavailableModal from "./TechnicianUnavailableModal";
 
 const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -94,15 +92,23 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
     setOpenModal(false);
   };
 
-  const handleSelect = (select: string) => {
-    if (select === "yes") {
-      dispatch({ type: "SET_STEP", payload: 6 });
-      // dispatch({ type: "SET_ASSISTANT", payload: null });
-    }
-    if (select === "no") {
-      dispatch({ type: "SET_ASSISTANT", payload: null });
-      setShowAddServiceModal(true);
-    }
+  const handleCancelBooking = () => {
+    appointmentDispatch({ type: "RESET_APPOINTMENT" });
+    setOpenModal(false);
+  };
+
+  const handleChangeTechnician = () => {
+    dispatch({ type: "SET_STEP", payload: 6 });
+    setOpenModal(false);
+  };
+
+  const handleWaitingList = () => {
+    // todo
+    setOpenModal(false);
+  };
+
+  const handleFindNewTime = () => {
+    // todo
     setOpenModal(false);
   };
 
@@ -171,31 +177,25 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
   }
 
   const handleBooking = async () => {
-    setIsLoading(true);
     const formData = transformFormData(state);
     try {
-      const response = await appointmentsCheckAssistant(formData);
+      setIsLoading(true);
 
-      // Nếu không lỗi 422 thì tiếp tục gọi appointmentsPost
-      await appointmentsPost(formData)
-        .then((result: any) => {
-          setIsLoading(false);
-          handleNext(result?.data?.data?.id);
-          appointmentDispatch({ type: "RESET_APPOINTMENT" });
-        })
-        .catch((error) => {
-          setIsLoading(false);
-          console.error("Error while posting appointment:", error);
-        });
+      const result: any = await appointmentsPost(formData);
+
+      handleNext(result?.data?.data?.id);
+      appointmentDispatch({ type: "RESET_APPOINTMENT" });
     } catch (error: any) {
-      setIsLoading(false);
-      
       if (error?.status === 422) {
-        // Nếu lỗi 422 thì hiển thị modal
         setOpenModal(true);
       } else {
-        console.error("Unexpected error:", error);
+        console.error("Error while posting appointment:", error);
+        toast.error(
+          "An error occurred while booking the appointment. Please try again.",
+        );
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -241,10 +241,13 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
           <FaArrowRight />
         </button>
       </div>
-      <DialogChooseAssistant
+      <TechnicianUnavailableModal
         openModal={openModal}
         handleClose={handleClose}
-        handleSelect={handleSelect}
+        handleCancelBooking={handleCancelBooking}
+        handleFindNewTime={handleFindNewTime}
+        handleChangeTechnician={handleChangeTechnician}
+        handleWaitingList={handleWaitingList}
       />
     </div>
   );
