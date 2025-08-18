@@ -29,6 +29,9 @@ import { addMinutes, format } from "date-fns";
 import { toZonedTime, formatInTimeZone } from "date-fns-tz";
 import { useRouter } from "next/navigation";
 import { useAppointment } from "@/contexts/AppointmentContext";
+import { ImUserTie } from "react-icons/im";
+import { FaUserTimes } from "react-icons/fa";
+
 import {
   getServiceOptionShow,
   serviceOption,
@@ -955,12 +958,20 @@ const FullCalenDarCustom: React.FC<any> = () => {
     return (
       <>
         <b>
+          {data?.booking?.booking_type ? (
+            <ImUserTie size={20} color="text-white" />
+          ) : (
+            <FaUserTimes size={20} color="text-white" />
+          )}
           {eventInfo.timeText} {data?.customerName}
         </b>
         <i className="block">Phone Number: {data?.booking?.customer?.phone}</i>
         <i className="block">Service Name: {eventInfo.event.title}</i>
         <i className="block">
-          Request a worker: {data?.booking?.booking_type ? "Yes" : "No"}
+          Request a worker:{" "}
+          <span className=" text-red">
+            {data?.booking?.booking_type ? "Yes" : "No"}
+          </span>
         </i>
         {data?.group_id !== null && (
           <i className="block">
