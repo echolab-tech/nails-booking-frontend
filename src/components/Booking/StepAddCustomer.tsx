@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { CustomerType } from "../../types/customer";
 import { FaArrowLeft } from "react-icons/fa";
 import { CiEdit } from "react-icons/ci";
+import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
 
 import {
   addCustomersBooking,
@@ -11,7 +12,7 @@ import {
 } from "@/services/customer.service";
 import { toast } from "react-toastify";
 import { useAppointment } from "@/contexts/AppointmentContext";
-import { getListAppointmentCustomer } from "@/services/appointment.service";
+import { deleteAppointment, getListAppointmentCustomer } from "@/services/appointment.service";
 
 interface StepAddCustomerProps {
   handleNext: () => void;
@@ -39,12 +40,15 @@ const StepAddCustomer = ({
   const [customerData, setCustomerData] = useState<CustomerType[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isOpenDialog, setIsOpenDialog] = useState<boolean>(false);
+  const [openModalConfirm, setOpenModalConfirm] = useState<boolean>(false);
+  const [idAppointmentHandle, setIdAppointmentHandle] = useState<number>(0);
   const [newCustomer, setNewCustomer] = useState({ name: "", phone: "" });
   const [showCustomerList, setShowCustomerList] = useState(true);
   const [pastAppointments, setPastAppointments] = useState<PastAppointment[]>(
     [],
   );
   const [loading, setLoading] = useState(false);
+  const [customerIdSelect, setCustomerIdSelect] = useState<string>('');
 
   useEffect(() => {
     fetchCustomer(searchTerm);
@@ -74,6 +78,7 @@ const StepAddCustomer = ({
     dispatch({ type: "SET_CUSTOMER", payload: customer });
     setShowCustomerList(false);
     setLoading(true);
+    setCustomerIdSelect(customer?.id);
     try {
       const response = await getListAppointmentCustomer(customer?.id);
       console.log(response?.data?.data);
@@ -149,6 +154,25 @@ const StepAddCustomer = ({
   const handleCancel = (appointmentId: number) => {
     // Implement cancel logic
     console.log("Cancel appointment:", appointmentId);
+    setOpenModalConfirm(true);
+    setIdAppointmentHandle(appointmentId);
+  };
+
+  const onCloseCancle = () => {
+      setIdAppointmentHandle(0);
+      setOpenModalConfirm(false);
+  };
+
+  const onDeleteAppointment = async () => {
+    try {
+      await deleteAppointment(idAppointmentHandle);
+      setOpenModalConfirm(false);
+      toast.success("Cancle success !!!");
+      const response = await getListAppointmentCustomer(customerIdSelect);
+      setPastAppointments(response?.data?.data);
+    } catch (error) {
+      toast.warning("You cannot cancle appointment !!!");
+    }
   };
 
   const handleBackToCustomerList = () => {
@@ -365,6 +389,24 @@ const StepAddCustomer = ({
           Back
         </button>
       </div>
+      <DialogConfirm
+        openModal={openModalConfirm}
+        message=" Are you sure you want to cancle this appointment ?"
+        onClose={onCloseCancle}
+      >
+        <button
+          onClick={() => onDeleteAppointment()}
+          className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          {"Yes, I'm sure"}
+        </button>
+        <button
+          onClick={() => setOpenModalConfirm(false)}
+          className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          No, cancel
+        </button>
+      </DialogConfirm>
     </div>
   );
 };
