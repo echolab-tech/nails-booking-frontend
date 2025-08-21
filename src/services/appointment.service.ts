@@ -25,7 +25,7 @@ export const getAppointmentByDate = async (
 };
 
 export const getListAppointmentCustomer = async (
-  customer_id: number,
+  customer_id: string,
 ): Promise<any> => {
   return await http.get<any>(`/appointments/list/${customer_id}`);
 };
@@ -63,3 +63,6 @@ export const appointmentsCheckAssistant = async (
   return await http.post<any>("/appointments/check", values);
 };
 
+export const deleteAppointment = async (id: number): Promise<any> => {
+  return await http.delete<any>(`/appointments/${id}`);
+};
