@@ -8,14 +8,14 @@ import { FcCalendar } from "react-icons/fc";
 import { RiErrorWarningFill } from "react-icons/ri";
 import { Spinner } from "flowbite-react";
 import DateTimeCard from "./DateTimeCard";
-import { appointmentsPost } from "../../services/appointment.service";
+import { appointmentsPost, updateAppointment } from "../../services/appointment.service";
 import ApointmentOverview from "./ApointmentOverview";
 import { useAppointment } from "@/contexts/AppointmentContext";
 import { toast } from "react-toastify";
 import TechnicianUnavailableModal from "./TechnicianUnavailableModal";
 import { createWaitList } from "../../services/waitlist.service";
 
-const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
+const ConfirmBooking = ({ handleBack, handleNext, isEdit, appointmentData, formik }: any) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [openModal, setOpenModal] = useState<boolean>(false);
@@ -226,10 +226,16 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
     const formData = transformFormData(state);
     try {
       setIsLoading(true);
-
-      const result: any = await appointmentsPost(formData);
-
-      handleNext(result?.data?.data?.id);
+      if (isEdit) {
+        formData.appointments[0].customer = appointmentData?.customer;
+        const result:any = await updateAppointment(appointmentData?.id, formData);
+        toast.success("Appointment updated successfully!");
+        handleNext(result?.data?.data?.id);
+      } else {
+        const result:any = await appointmentsPost(formData);
+        toast.success("Appointment created successfully!");
+        handleNext(result?.data?.data?.id);
+      }
       appointmentDispatch({ type: "RESET_APPOINTMENT" });
     } catch (error: any) {
       if (error?.status === 422) {
@@ -283,7 +289,7 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white disabled:bg-gray-4"
         >
           {isLoading && <Spinner />}
-          Reservations
+          {isEdit ? "Update" : "Reservations"}
           <FaArrowRight />
         </button>
       </div>

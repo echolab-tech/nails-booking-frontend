@@ -6,9 +6,10 @@ import {
   IoIosCheckmarkCircle,
 } from "react-icons/io";
 
-const Stepper = ({ step }: any) => {
+const Stepper = ({ step, isEdit }: { step: number; isEdit: boolean }) => {
+  var labelAtStepOne = isEdit ? "Change start time" : "Select customer";
   const steps = [
-    { label: "Select customer", stepNumber: 1 },
+    { label: labelAtStepOne, stepNumber: 1 },
     { label: "Select service summary", stepNumber: 2 },
     { label: "Select category", stepNumber: 3 },
     { label: "Select service", stepNumber: 4 },

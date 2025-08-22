@@ -61,6 +61,7 @@ interface AppointmentState {
   appointments: Appointment[];
   currentAppointmentIndex: number;
   appointmentType: "single" | "group" | null;
+  appointmentId?: number;
 }
 
 type AppointmentAction =
@@ -83,7 +84,8 @@ type AppointmentAction =
   | { type: "ADD_APPOINTMENT" }
   | { type: "SET_APPOINTMENT_INDEX"; payload: number }
   | { type: "RESET_APPOINTMENT" }
-  | { type: "ADD_APPOINTMENT_WITH_CURRENT_CUSTOMER" };
+  | { type: "ADD_APPOINTMENT_WITH_CURRENT_CUSTOMER" }
+  | { type: "SET_APPOINTMENT_ID_FOR_UPDATE"; payload: number };
 
 const initialState: AppointmentState = {
   currentStep: 1,
@@ -314,6 +316,12 @@ function appointmentReducer(
         ],
         // Chuyển index sang appointment mới
         currentAppointmentIndex: state.appointments.length,
+      };
+    case "SET_APPOINTMENT_ID_FOR_UPDATE":
+      return {
+        ...state,
+        appointmentId: action.payload,
+        // customerData: action.payload.customerData,
       };
     default:
       return state;
