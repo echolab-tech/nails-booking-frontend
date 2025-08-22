@@ -9,11 +9,13 @@ import { useAppointment } from "@/contexts/AppointmentContext";
 interface StepAddSummaryServiceProps {
   handleNext: () => void;
   handleBack: () => void;
+  isEdit: boolean;
 }
 
 const StepAddSummaryService = ({
   handleNext,
   handleBack,
+  isEdit,
 }: StepAddSummaryServiceProps) => {
   const [selectedButton, setSelectedButton] = useState<string | null>(null);
   const [serviceSummary, setServiceSummary] = useState<ServiceSummaryType[]>(
@@ -42,7 +44,7 @@ const StepAddSummaryService = ({
 
   const handleButtonClick = (serviceSummary: ServiceSummaryType) => {
     // Cập nhật service summary vào context
-    dispatch({
+        dispatch({
       type: "SET_SERVICE_SUMMARY",
       payload: serviceSummary,
     });
@@ -88,16 +90,18 @@ const StepAddSummaryService = ({
           ))}
       </div>
 
-      <div className="flex justify-between">
-        <button
-          type="button"
-          onClick={handleBack}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white disabled:bg-gray-4"
-        >
-          <FaArrowLeft />
-          Back
-        </button>
-      </div>
+      {!isEdit && (
+        <div className="flex justify-between">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white disabled:bg-gray-4"
+          >
+            <FaArrowLeft />
+            Back
+          </button>
+        </div>
+      )}
     </div>
   );
 };
