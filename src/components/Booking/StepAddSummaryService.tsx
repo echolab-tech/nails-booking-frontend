@@ -90,18 +90,16 @@ const StepAddSummaryService = ({
           ))}
       </div>
 
-      {!isEdit && (
-        <div className="flex justify-between">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white disabled:bg-gray-4"
-          >
-            <FaArrowLeft />
-            Back
-          </button>
-        </div>
-      )}
+      <div className="flex justify-between">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white disabled:bg-gray-4"
+        >
+          <FaArrowLeft />
+          Back
+        </button>
+      </div>
     </div>
   );
 };
