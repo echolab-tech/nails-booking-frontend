@@ -4,11 +4,10 @@ import { FaArrowLeft } from "react-icons/fa";
 import { useAppointment } from "@/contexts/AppointmentContext";
 
 interface StepUpdateStarttimeProps {
-  handleBack: () => void;
   handleNext: () => void;
 }
 
-const StepUpdateStarttime = ({ handleBack, handleNext }: StepUpdateStarttimeProps) => {
+const StepUpdateStarttime = ({ handleNext }: StepUpdateStarttimeProps) => {
   const { state, dispatch } = useAppointment();
 
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,15 +37,7 @@ const StepUpdateStarttime = ({ handleBack, handleNext }: StepUpdateStarttimeProp
             onChange={handleDateChange}
           />
         </div>
-        <div className="flex justify-between">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white disabled:bg-gray-4"
-          >
-            <FaArrowLeft />
-            Back
-          </button>
+        <div className="flex justify-end">
           <button
             type="button"
             onClick={() => handleNext()}

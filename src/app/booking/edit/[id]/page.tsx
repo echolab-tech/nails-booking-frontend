@@ -44,7 +44,6 @@ const BookingPage = () => {
     if (!state.appointmentId) return;
     const data = await getAppointmentById(state.appointmentId);
     setAppointmentData(data?.data?.data);
-    dispatch({ type: "SET_ASSISTANT", payload: data?.data?.data?.bookingDetails[0].assistant });
   }
 
   const handleNext = () => {
@@ -115,7 +114,7 @@ const BookingPage = () => {
       <div className="flex w-full flex-col items-center">
         <Stepper isEdit={isEdit} step={state.currentStep} />
         {state.currentStep === 1 && (
-          <StepUpdateStarttime handleNext={handleNext} handleBack={handleBack} />
+          <StepUpdateStarttime handleNext={handleNext}/>
         )}
         {state.currentStep === 2 && (
           <StepAddSummaryService
