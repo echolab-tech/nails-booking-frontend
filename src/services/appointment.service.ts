@@ -15,6 +15,13 @@ export const updateAppointment = async (
   return await http.put<any>(`/appointments/${id}`, values);
 };
 
+export const updateEntireAppointment = async (
+  id: string,
+  values: BookingFormType,
+): Promise<any> => {
+  return await http.put<any>(`/appointments/edit/${id}`, values);
+};
+
 export const getAppointmentByDate = async (
   start: string,
   end: string,
