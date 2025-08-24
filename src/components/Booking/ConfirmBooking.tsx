@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { FaArrowLeft } from "react-icons/fa";
 import { FaArrowRight } from "react-icons/fa";
@@ -12,8 +13,10 @@ import ApointmentOverview from "./ApointmentOverview";
 import { useAppointment } from "@/contexts/AppointmentContext";
 import { toast } from "react-toastify";
 import TechnicianUnavailableModal from "./TechnicianUnavailableModal";
+import { createWaitList } from "../../services/waitlist.service";
 
 const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [openModal, setOpenModal] = useState<boolean>(false);
   const { state: appointmentState, dispatch } = useAppointment();
@@ -102,11 +105,54 @@ const ConfirmBooking = ({ handleBack, handleNext, formik }: any) => {
     setOpenModal(false);
   };
 
-  const handleWaitingList = () => {
-    // todo
-    setOpenModal(false);
-  };
+  const handleWaitingList = async () => {
+    try {
+      const currentAppointment = state.appointments[state.currentAppointmentIndex];
+      const customerId = currentAppointment?.customer?.id;
+  
+      if (!customerId) {
+        toast.error("Không tìm thấy thông tin khách hàng");
+        return;
+      }
+  
+      // Service ID từ DB
+      const mainServiceId = currentAppointment?.service?.service_id;
+      if (!mainServiceId) {
+        toast.error("Không tìm thấy thông tin service");
+        return;
+      }
+  
+      // SubService ID từ DB
+      const subServiceId =
+        currentAppointment?.subServices?.[0]?.id || null;
+  
+      const waitListData = {
+        id_customer: customerId,
+        id_service: mainServiceId,
+        id_sub_service: subServiceId,
+        desired_time: (() => {
+          const date = formik?.values?.startTime || new Date();
+          const d = new Date(date);
+          return d.toISOString().slice(0, 19).replace('T', ' ');
+        })(),
+      };
 
+      // Gọi API để thêm vào waitlist
+      await createWaitList(waitListData);
+      
+      toast.success("Đã thêm vào danh sách chờ thành công!");
+      setOpenModal(false);
+      appointmentDispatch({ type: "RESET_APPOINTMENT" });
+      dispatch({ type: "SET_STEP", payload: 1 });
+      
+      // Navigate to calendar page
+      router.push('/calendar');
+    } catch (error: any) {
+      console.error("Error adding to waiting list:", error);
+      toast.error("Có lỗi xảy ra khi thêm vào danh sách chờ. Vui lòng thử lại.");
+    }
+  };
+  
   const handleFindNewTime = () => {
     // todo
     setOpenModal(false);
