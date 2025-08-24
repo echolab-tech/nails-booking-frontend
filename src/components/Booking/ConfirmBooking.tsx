@@ -8,7 +8,7 @@ import { FcCalendar } from "react-icons/fc";
 import { RiErrorWarningFill } from "react-icons/ri";
 import { Spinner } from "flowbite-react";
 import DateTimeCard from "./DateTimeCard";
-import { appointmentsPost, updateAppointment } from "../../services/appointment.service";
+import { appointmentsPost, updateEntireAppointment } from "../../services/appointment.service";
 import ApointmentOverview from "./ApointmentOverview";
 import { useAppointment } from "@/contexts/AppointmentContext";
 import { toast } from "react-toastify";
@@ -228,7 +228,7 @@ const ConfirmBooking = ({ handleBack, handleNext, isEdit, appointmentData, formi
       setIsLoading(true);
       if (isEdit) {
         formData.appointments[0].customer = appointmentData?.customer;
-        const result:any = await updateAppointment(appointmentData?.id, formData);
+        const result:any = await updateEntireAppointment(appointmentData?.id, formData);
         toast.success("Appointment updated successfully!");
         handleNext(result?.data?.data?.id);
       } else {
