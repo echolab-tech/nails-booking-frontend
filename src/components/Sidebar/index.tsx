@@ -11,6 +11,7 @@ import { GrCatalogOption } from "react-icons/gr";
 import { LuUsers } from "react-icons/lu";
 import { BsTags } from "react-icons/bs";
 import { TbShoppingCartDiscount } from "react-icons/tb";
+import { MdFormatListBulleted } from "react-icons/md";
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -576,6 +577,22 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   );
                 }}
               </SidebarLinkGroup>
+
+              {/* <!-- Menu Item WaitList --> */}
+              <li>
+                <Link
+                  href="/waitlist"
+                  className={`group relative flex items-center gap-2.5 rounded-sm px-4 py-2 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
+                    pathname.includes("waitlist") &&
+                    "bg-graydark dark:bg-meta-4"
+                  }`}
+                >
+                  <MdFormatListBulleted />
+                  WaitList
+                </Link>
+              </li>
+
+              {/* <!-- Menu Item service --> */}
 
               {/* <!-- Menu Item Appointments --> */}
               <SidebarLinkGroup
