@@ -4,6 +4,7 @@ import { CustomerType } from "../../types/customer";
 import { FaArrowLeft } from "react-icons/fa";
 import { CiEdit } from "react-icons/ci";
 import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
+import { useRouter } from "next/navigation";
 
 import {
   addCustomersBooking,
@@ -49,6 +50,7 @@ const StepAddCustomer = ({
   );
   const [loading, setLoading] = useState(false);
   const [customerIdSelect, setCustomerIdSelect] = useState<string>('');
+  const router = useRouter();
 
   useEffect(() => {
     fetchCustomer(searchTerm);
@@ -149,6 +151,11 @@ const StepAddCustomer = ({
   const handleEdit = (appointmentId: number) => {
     // Implement edit logic
     console.log("Edit appointment:", appointmentId);
+    dispatch({
+      type: "SET_APPOINTMENT_ID_FOR_UPDATE",
+      payload: appointmentId,
+    });
+    router.push(`/booking/edit/${appointmentId}`);
   };
 
   const handleCancel = (appointmentId: number) => {
