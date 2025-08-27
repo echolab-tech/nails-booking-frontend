@@ -1,11 +1,12 @@
 "use client";
 import PaginationCustom from "@/components/Pagination/Pagination";
-import { getListAppointment } from "@/services/appointment.service";
+import { getListAppointment, exportAppointment, deleteMultiAppointment} from "@/services/appointment.service";
 import { serviceOption } from "@/services/serviceoption.service";
 import { AppointmentEditForm } from "@/types/AppointmentEditForm";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Skeleton from "@/components/common/Skeleton";
+import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
 
 interface PaginationData {
   current_page: number;
@@ -24,6 +25,8 @@ const ApointmentList = () => {
   const router = useRouter();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [openModalConfirm, setOpenModalConfirm] = useState<boolean>(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [paginationData, setPaginationData] = useState<PaginationData>({
     current_page: 1,
     total_pages: 1,
@@ -35,6 +38,11 @@ const ApointmentList = () => {
     start_time: "",
     end_time: "",
   });
+  const [inputValues, setInputValues] = useState<SearchValues>({
+    name_customer: "",
+    start_time: "",
+    end_time: "",
+  });
   useEffect(() => {
     fetchAppointments(1);
   }, []);
@@ -42,6 +50,9 @@ const ApointmentList = () => {
     try {
       setIsLoading(true);
       const response = await getListAppointment(searchValues, page);
+      setInputValues(searchValues);
+      const ids = response.data.appointMents.map((appt: any) => appt.id);
+      setSelectedIds(ids);
       setAppointments(response.data.appointMents);
       setPaginationData(response.data.paginationData);
       setIsLoading(false);
@@ -57,6 +68,42 @@ const ApointmentList = () => {
   };
   const handleSearch = async () => {
     fetchAppointments(1);
+  };
+  const handleOpenModelDelete = () => {
+    setOpenModalConfirm(true);
+  }
+  const closeModalConfirm = async() => {
+    setOpenModalConfirm(false);
+  };
+  const handlePrint = async() => {
+    try {
+      setIsLoading(true);
+      await exportAppointment(inputValues);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+  const handlePrintAnhDelete = async() => {
+    setOpenModalConfirm(false);
+    try {
+      setIsLoading(true);
+      await exportAppointment(inputValues, true);
+      fetchAppointments(1);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error :", error);
+    }
+  };
+  const handleDelete = async() => {
+    try {
+      setOpenModalConfirm(false);
+      await deleteMultiAppointment(inputValues);
+      fetchAppointments(1);
+    } catch (error) {
+      console.error("Error delete multi appointment:", error);
+    }
+    console.log("Arr dête", selectedIds);
   };
   return (
     <div className="rounded-sm border border-stroke bg-white px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
@@ -103,12 +150,25 @@ const ApointmentList = () => {
             </div>
           </div>
           <div className="w-full xl:w-1/3">
-            <div className="flex w-full justify-center">
+            <div className="flex w-full justify-center gap-2">
               <button
                 className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
                 onClick={handleSearch}
               >
                 Search
+              </button>
+              <button
+                className="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+                onClick={() => handlePrint()}
+              >
+                Print
+              </button>
+              <button
+                className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
+                style={{ backgroundColor: "red" }}
+                onClick={() => handleOpenModelDelete()}
+              >
+                Delete
               </button>
             </div>
           </div>
@@ -224,6 +284,24 @@ const ApointmentList = () => {
         totalPages={paginationData.total_pages}
         onPageChange={onPageChange}
       />
+            <DialogConfirm
+        openModal={openModalConfirm}
+        message="Do you want to print appointments from the screen??"
+        onClose={closeModalConfirm}
+      >
+        <button
+          onClick={() => handlePrintAnhDelete()}
+          className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          {"Yes, I'm sure"}
+        </button>
+        <button
+          onClick={() => handleDelete()}
+          className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          No, cancel
+        </button>
+      </DialogConfirm>
     </div>
   );
 };
