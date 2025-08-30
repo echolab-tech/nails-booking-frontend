@@ -73,3 +73,37 @@ export const appointmentsCheckAssistant = async (
 export const deleteAppointment = async (id: number): Promise<any> => {
   return await http.delete<any>(`/appointments/${id}`);
 };
+
+export const deleteMultiAppointment = async (
+  values: AppointmentSearchForm,
+  ): Promise<any> => {
+  return await http.post<any>(`/appointments/delete-multi`, values);
+};
+
+export const exportAppointment = async (
+  values: AppointmentSearchForm,
+  hasDelete: boolean = false,
+): Promise<void> => {
+  const params: any = { 
+    ...values, 
+    download: 'pdf' 
+  };
+
+  if (hasDelete) {
+    params.hasDelete = true;
+  }
+
+  const res = await http.get(`/appointments`, {
+    params,
+    responseType: 'blob',
+  });
+
+  // Tạo link download
+  const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", "appointments.pdf");
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+};
