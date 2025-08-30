@@ -14,6 +14,7 @@ import { useAppointment } from "@/contexts/AppointmentContext";
 import { toast } from "react-toastify";
 import TechnicianUnavailableModal from "./TechnicianUnavailableModal";
 import { createWaitList } from "../../services/waitlist.service";
+import { formatDateTime } from "../utils/formatDate";
 
 const ConfirmBooking = ({ handleBack, handleNext, isEdit, appointmentData, formik }: any) => {
   const router = useRouter();
@@ -131,9 +132,12 @@ const ConfirmBooking = ({ handleBack, handleNext, isEdit, appointmentData, formi
         id_service: mainServiceId,
         id_sub_service: subServiceId,
         desired_time: (() => {
-          const date = formik?.values?.startTime || new Date();
-          const d = new Date(date);
-          return d.toISOString().slice(0, 19).replace('T', ' ');
+          const startTime = currentAppointment?.startTime;
+          if (!startTime) {
+            throw new Error("Không tìm thấy thời gian đặt lịch");
+          }
+          
+          return formatDateTime(startTime);
         })(),
       };
 
