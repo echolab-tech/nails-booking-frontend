@@ -15,11 +15,13 @@ import { toast } from "react-toastify";
 import TechnicianUnavailableModal from "./TechnicianUnavailableModal";
 import { createWaitList } from "../../services/waitlist.service";
 import { formatDateTime } from "../utils/formatDate";
+import { DialogSelectTime } from "../Dialog/DialogSelectTime";
 
 const ConfirmBooking = ({ handleBack, handleNext, isEdit, appointmentData, formik }: any) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [openModal, setOpenModal] = useState<boolean>(false);
+  const [openModalSelectTime, setOpenModalSelectTime] = useState<boolean>(false);
   const { state: appointmentState, dispatch } = useAppointment();
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
   const { state, dispatch: appointmentDispatch } = useAppointment();
@@ -160,6 +162,13 @@ const ConfirmBooking = ({ handleBack, handleNext, isEdit, appointmentData, formi
   const handleFindNewTime = () => {
     // todo
     setOpenModal(false);
+    setOpenModalSelectTime(true);
+  };
+
+  const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedDate = event.target.value;
+    dispatch({ type: "SET_SELECTED_TIME", payload: selectedDate });
+    dispatch({ type: "UPDATE_SELECTED_TIME", payload: selectedDate });
   };
 
   function transformFormData(state: AppointmentState) {
@@ -305,6 +314,12 @@ const ConfirmBooking = ({ handleBack, handleNext, isEdit, appointmentData, formi
         handleChangeTechnician={handleChangeTechnician}
         handleWaitingList={handleWaitingList}
       />
+      <DialogSelectTime
+        openModal={openModalSelectTime}
+        message="Please select a new date and time for the additional service."
+        onClose={() => setOpenModalSelectTime(false)}
+        handleChangeDate={handleDateChange}
+        />
     </div>
   );
 };

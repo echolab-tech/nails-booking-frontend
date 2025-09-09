@@ -333,7 +333,7 @@ const StepAddCustomer = ({
             <div className="space-y-4">
               {pastAppointments.length === 0 ? (
                 <p className="text-gray-500 text-center">
-                  No past appointments found
+                  No current or future appointments found
                 </p>
               ) : (
                 pastAppointments.map((appointment) => (
