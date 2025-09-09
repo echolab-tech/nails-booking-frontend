@@ -85,7 +85,8 @@ type AppointmentAction =
   | { type: "SET_APPOINTMENT_INDEX"; payload: number }
   | { type: "RESET_APPOINTMENT" }
   | { type: "ADD_APPOINTMENT_WITH_CURRENT_CUSTOMER" }
-  | { type: "SET_APPOINTMENT_ID_FOR_UPDATE"; payload: number };
+  | { type: "SET_APPOINTMENT_ID_FOR_UPDATE"; payload: number }
+  | { type: "UPDATE_SELECTED_TIME"; payload: string };
 
 const initialState: AppointmentState = {
   currentStep: 1,
@@ -322,6 +323,41 @@ function appointmentReducer(
         ...state,
         appointmentId: action.payload,
         // customerData: action.payload.customerData,
+      };
+    case "UPDATE_SELECTED_TIME":
+      return {
+        ...state,
+        appointments: state.appointments.map((apt, index) => {
+          if (index !== state.currentAppointmentIndex) return apt;
+          if (!apt.service) return apt;
+    
+          const duration = apt.service.duration || 0;
+          const newStart = action.payload;
+          const newEnd = addMinutesToISOString(newStart, duration);
+          let prevEnd = newEnd;
+    
+          const updatedSubServices = (apt.subServices || []).map((sub) => {
+            const subStart = 	prevEnd;
+            const subEnd = addMinutesToISOString(subStart, sub.duration || 0);
+            prevEnd = subEnd;
+    
+            return {
+              ...sub,
+              startTime: subStart,
+              endTime: subEnd,
+            };
+          });
+    
+          return {
+            ...apt,
+            service: {
+              ...apt.service,
+              startTime: newStart,
+              endTime: newEnd,
+            },
+            subServices: updatedSubServices,
+          };
+        }),
       };
     default:
       return state;
