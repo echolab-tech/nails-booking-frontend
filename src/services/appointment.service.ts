@@ -107,3 +107,15 @@ export const exportAppointment = async (
   link.click();
   link.remove();
 };
+
+export const cancelAppointmentByGroup = async (
+  id: any,
+  ): Promise<any> => {
+  return await http.post<any>(`/appointments/cancel-appointment-by-group/${id}`);
+};
+
+export const cancelOnlyServiceOfCustomer = async (
+  id: any,
+  ): Promise<any> => {
+  return await http.post<any>(`/appointments/cancel-only-service/${id}`);
+}
