@@ -1073,7 +1073,11 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
   const handleSelectNoCancelGroup = () => {
     setOpenStepOneCancel(false);
-    setOpenStepTwoCancel(true);
+    if (formik.values.services.length > 1 ) {
+      setOpenStepTwoCancel(true);
+      return;
+    }
+    handleCancelAllServiceOfCustomer();
   }
 
   const handleCancelAllServiceOfCustomer = async () => {
