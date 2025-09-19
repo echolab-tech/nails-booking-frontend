@@ -44,6 +44,9 @@ import {
   getAppointmentByDate,
   getAppointmentById,
   updateAppointment,
+  cancelAppointmentByGroup,
+  cancelOnlyServiceOfCustomer,
+  deleteAppointment,
 } from "@/services/appointment.service";
 import { toast } from "react-toastify";
 import { BlockTimeType } from "@/types/BlockTime";
@@ -56,6 +59,7 @@ import TipButtonGrid from "../TipButtonGrid";
 import PaymentButtonGrid from "../PaymentButtonGrid";
 import CashPaymentDialog from "../CashPaymentDialog";
 import DelayNotifyModal from "../DelayNotifyModal";
+import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
 
 const generateTimeOptions = () => {
   const timeOptions = [];
@@ -138,6 +142,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
   >([]);
   const router = useRouter();
   const [isOpenDelay, setIsOpenDelay] = useState<boolean>(false);
+  const [openStepOneCancel, setOpenStepOneCancel] = useState<boolean>(false);
+  const [openStepTwoCancel, setOpenStepTwoCancel] = useState<boolean>(false);
+  const [detailId, setDetailId] = useState<string>("");
+  const [otherServices, setOtherServices] = useState<any[]>([]);
   const { dispatch } = useAppointment();
 
   useEffect(() => {
@@ -279,6 +287,18 @@ const FullCalenDarCustom: React.FC<any> = () => {
       return;
     }
     getAppointmentById(arg?.event?.extendedProps?.booking_id).then((result) => {
+      const filteredIds: number[] = [];
+
+      result?.data?.data?.bookingDetails.forEach((detail: any) => {
+        if (detail?.serviceOptionId === arg?.event?.extendedProps?.serviceOptionId) {
+          setDetailId(detail?.id);
+        } else {
+          filteredIds.push(detail?.id);
+        }
+      });
+
+      setOtherServices(filteredIds);
+
       formik.setValues({
         ...formik.values,
         customer: result?.data?.data?.customer,
@@ -1018,6 +1038,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const handleChangeStatus = async (event: any) => {
     const { value } = event.target;
     try {
+      if (value == 5) {
+        setOpenStepOneCancel(true);
+        return;
+      }
       await appointmentsUpdateStatus(eventId, value);
       fetchAllData(calendarStartDate, calendarEndDate);
       setOpenBooking(false);
@@ -1033,6 +1057,54 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setCalendarEndDate(format(end, "dd-MM-yyyy"));
     fetchAllData(format(start, "dd-MM-yyyy"), format(end, "dd-MM-yyyy"));
   };
+
+  const handleCancelAppointmentByGroup = async() => {
+    try {
+      await cancelAppointmentByGroup(eventId);
+      setOpenStepOneCancel(false);
+      fetchAllData(calendarStartDate, calendarEndDate);
+      setOpenBooking(false);
+      toast.success("Status appointment cancel appoinment successfully.");
+    } catch (error) {
+      setOpenStepOneCancel(false);
+      toast.error("Failed to update cancel appointment by group.");
+    }
+  }
+
+  const handleSelectNoCancelGroup = () => {
+    setOpenStepOneCancel(false);
+    if (formik.values.services.length > 1 ) {
+      setOpenStepTwoCancel(true);
+      return;
+    }
+    handleCancelAllServiceOfCustomer();
+  }
+
+  const handleCancelAllServiceOfCustomer = async () => {
+    try {
+      await deleteAppointment(Number(eventId));
+      setOpenStepTwoCancel(false);
+      fetchAllData(calendarStartDate, calendarEndDate);
+      setOpenBooking(false);
+      toast.success("Status appointment cancel service of customer successfully.");
+    } catch (error) {
+      setOpenStepTwoCancel(false);
+      toast.error("Failed to update cancel service of customer.");
+    }
+  }
+
+  const handleCancelOnlyServiceOfCustomer = async () => {
+    try {
+      await cancelOnlyServiceOfCustomer(eventId);
+      setOpenStepTwoCancel(false);
+      fetchAllData(calendarStartDate, calendarEndDate);
+      setOpenBooking(false);
+      toast.success("Status appointment cancel only service of customer successfully.");
+    } catch (error) {
+      setOpenStepTwoCancel(false);
+      toast.error("Failed to update cancel only service of customer.");
+    }
+  }
 
   return (
     <>
@@ -1233,7 +1305,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
                         Services
                       </h3>
                       {formik.values.services.length > 0 ? (
-                        formik.values.services.map(
+                        formik.values.services
+                        .filter(
+                          (detail: any) =>
+                              ! otherServices.includes(detail?.id)
+                        )                   
+                        .map(
                           (detail: any, index: number) => (
                             <div
                               className="service relative mt-3 w-full"
@@ -1870,6 +1947,42 @@ const FullCalenDarCustom: React.FC<any> = () => {
           handleSend={handleSenDelay}
         />
       )}
+      <DialogConfirm
+        openModal={	openStepOneCancel }
+        message="Cancel the whole group?"
+        onClose={() => setOpenStepOneCancel(false)}
+      >
+        <button
+          onClick={handleCancelAppointmentByGroup}
+          className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          {"Yes"}
+        </button>
+        <button
+           onClick={handleSelectNoCancelGroup}
+          className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          No
+        </button>
+      </DialogConfirm>
+      <DialogConfirm
+        openModal={	openStepTwoCancel }
+        message="Cancel all the services from this customer?"
+        onClose={() => setOpenStepTwoCancel(false)}
+      >
+        <button
+          onClick={handleCancelAllServiceOfCustomer}
+          className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          {"Yes"}
+        </button>
+        <button
+           onClick={handleCancelOnlyServiceOfCustomer}
+          className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          No
+        </button>
+      </DialogConfirm>
     </>
   );
 };
