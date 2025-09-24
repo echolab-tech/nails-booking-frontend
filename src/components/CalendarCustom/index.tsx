@@ -47,6 +47,7 @@ import {
   cancelAppointmentByGroup,
   cancelOnlyServiceOfCustomer,
   deleteAppointment,
+  deleteBookingDetail
 } from "@/services/appointment.service";
 import { toast } from "react-toastify";
 import { BlockTimeType } from "@/types/BlockTime";
@@ -144,8 +145,11 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [isOpenDelay, setIsOpenDelay] = useState<boolean>(false);
   const [openStepOneCancel, setOpenStepOneCancel] = useState<boolean>(false);
   const [openStepTwoCancel, setOpenStepTwoCancel] = useState<boolean>(false);
+  const [openCancelAllServices, setOpenCancelAllServices] = useState<boolean>(false);
   const [detailId, setDetailId] = useState<string>("");
   const [otherServices, setOtherServices] = useState<any[]>([]);
+  const [groupId, setGroupId] = useState<number|null>(null);
+  const [bookingDetailsId,setBookingDetailsId] = useState<number|null>(null);
   const { dispatch } = useAppointment();
 
   useEffect(() => {
@@ -281,6 +285,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
   const handleEventClick = (arg: any) => {
     const eventType = arg?.event?.extendedProps?.type;
+    console.log(eventType, "eventType");
     setStartTime(arg.event.startStr);
     if (eventType == "blocktime") {
       setOpenBlockTime(true);
@@ -312,6 +317,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       const { totalFee } = calculateTotals(result?.data?.data?.bookingDetails);
       setOriginalTotalFee(totalFee);
     });
+    setGroupId(arg?.event?.extendedProps?.booking?.booking_group_id);
     setAssistantId(arg?.event?.extendedProps?.assistant?.id);
     setBookingDetailId(arg?.event?.id);
     setAssistant(arg?.event?.extendedProps?.assistant);
@@ -1035,13 +1041,32 @@ const FullCalenDarCustom: React.FC<any> = () => {
     );
   };
 
-  const handleChangeStatus = async (event: any) => {
+  const handleChangeStatus = async (event: any, filteredServices: any) => {
     const { value } = event.target;
     try {
       if (value == 5) {
-        setOpenStepOneCancel(true);
-        return;
+        if (groupId !== null) {
+          setOpenStepOneCancel(true);
+          return;
+        }
+
+        const services = formik.values.services || [];
+  
+        if (services.length === 1) {
+          await deleteAppointment(Number(eventId));
+          setOpenCancelAllServices(false);
+          fetchAllData(calendarStartDate, calendarEndDate);
+          setOpenBooking(false);
+          return;
+        }
+  
+        if (services.length > 1) {
+          setBookingDetailsId(filteredServices?.id);
+          setOpenCancelAllServices(true);
+          return;
+        }
       }
+  
       await appointmentsUpdateStatus(eventId, value);
       fetchAllData(calendarStartDate, calendarEndDate);
       setOpenBooking(false);
@@ -1050,7 +1075,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       toast.error("Failed to update status appointment.");
     }
   };
-
+  
   const handleDatesSet = (dateInfo: any) => {
     const { start, end } = dateInfo;
     setCalendarStartDate(format(start, "dd-MM-yyyy"));
@@ -1084,6 +1109,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     try {
       await deleteAppointment(Number(eventId));
       setOpenStepTwoCancel(false);
+      setOpenCancelAllServices(false);
       fetchAllData(calendarStartDate, calendarEndDate);
       setOpenBooking(false);
       toast.success("Status appointment cancel service of customer successfully.");
@@ -1103,6 +1129,19 @@ const FullCalenDarCustom: React.FC<any> = () => {
     } catch (error) {
       setOpenStepTwoCancel(false);
       toast.error("Failed to update cancel only service of customer.");
+    }
+  }
+
+  const handleCancelOnlyService = async () => {
+    try {
+      await deleteBookingDetail(bookingDetailsId);
+
+      setOpenCancelAllServices(false);
+      fetchAllData(calendarStartDate, calendarEndDate);
+      setOpenBooking(false);
+
+    } catch (error) {
+      console.error("Failed to cancel service:", error);
     }
   }
 
@@ -1289,7 +1328,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
                           id="status"
                           name="status"
                           value={eventStatus}
-                          onChange={handleChangeStatus}
+                          onChange={(event) =>
+                            handleChangeStatus(
+                              event,
+                              formik.values.services.find(
+                                (detail: any) => !otherServices.includes(detail?.id)
+                              )
+                            )
+                          }
                           className="dark:bg-gray-700 dark:border-gray-600 block w-[150px] rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
                         >
                           {bookingStatus?.map((item, i) => (
@@ -1978,6 +2024,24 @@ const FullCalenDarCustom: React.FC<any> = () => {
         </button>
         <button
            onClick={handleCancelOnlyServiceOfCustomer}
+          className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          No
+        </button>
+      </DialogConfirm>
+      <DialogConfirm
+        openModal={	openCancelAllServices }
+        message="Cancel the all services ?"
+        onClose={() => setOpenCancelAllServices(false)}
+      >
+        <button
+          onClick={handleCancelAllServiceOfCustomer}
+          className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          {"Yes"}
+        </button>
+        <button
+           onClick={handleCancelOnlyService}
           className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
         >
           No

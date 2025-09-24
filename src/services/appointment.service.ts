@@ -119,3 +119,9 @@ export const cancelOnlyServiceOfCustomer = async (
   ): Promise<any> => {
   return await http.post<any>(`/appointments/cancel-only-service/${id}`);
 }
+
+export const deleteBookingDetail = async (
+  id: any,
+  ): Promise<any> => {
+  return await http.delete<any>(`/appointments/booking-detail/${id}`);
+}
