@@ -146,6 +146,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [openStepTwoCancel, setOpenStepTwoCancel] = useState<boolean>(false);
   const [detailId, setDetailId] = useState<string>("");
   const [otherServices, setOtherServices] = useState<any[]>([]);
+  const [groupId, setGroupId] = useState<number|null>(null);
   const { dispatch } = useAppointment();
 
   useEffect(() => {
@@ -312,6 +313,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       const { totalFee } = calculateTotals(result?.data?.data?.bookingDetails);
       setOriginalTotalFee(totalFee);
     });
+    setGroupId(arg?.event?.extendedProps?.booking?.booking_group_id);
     setAssistantId(arg?.event?.extendedProps?.assistant?.id);
     setBookingDetailId(arg?.event?.id);
     setAssistant(arg?.event?.extendedProps?.assistant);
@@ -1039,9 +1041,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
     const { value } = event.target;
     try {
       if (value == 5) {
+        if (groupId === null) {
+          setOpenStepTwoCancel(true);
+          return;
+        }
         setOpenStepOneCancel(true);
         return;
       }
+
       await appointmentsUpdateStatus(eventId, value);
       fetchAllData(calendarStartDate, calendarEndDate);
       setOpenBooking(false);
