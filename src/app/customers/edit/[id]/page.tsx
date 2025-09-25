@@ -29,9 +29,8 @@ import SelectStatus from "@/components/Customer/SelectStatus";
 
 const CustomerEditSchema = Yup.object().shape({
   phone: Yup.string()
-    .min(10, "Too Short!")
-    .max(15, "Too Long!")
-    .required("Required"),
+    .matches(/^\(\d{3}\)\s\d{3}-\d{4}$/, "Phone must be in format (000) 123-1234")
+    .required("Please enter phone"),
 });
 
 const CustomeEditForm = () => {
@@ -255,7 +254,20 @@ const CustomeEditForm = () => {
                         <Field
                           type="text"
                           name="phone"
-                          onChange={handleChange}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            let value = e.target.value.replace(/\D/g, ""); // chỉ lấy số
+                        
+                            if (value.length <= 3) {
+                              setFieldValue("phone", value);
+                            } else if (value.length <= 6) {
+                              setFieldValue("phone", `(${value.slice(0, 3)}) ${value.slice(3)}`);
+                            } else {
+                              setFieldValue(
+                                "phone",
+                                `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6, 10)}`
+                              );
+                            }
+                          }}
                           onBlur={handleBlur}
                           value={values?.phone}
                           placeholder="+8412121219"
