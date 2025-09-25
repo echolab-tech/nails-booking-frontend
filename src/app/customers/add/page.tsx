@@ -18,8 +18,10 @@ import { useRouter } from "next/navigation";
 
 const CustomerNewSchema = Yup.object().shape({
   phone: Yup.string()
-    .matches(/^\d{10}$/, "Phone number must be exactly 10 digits")
-    .required("Please enter phone"),
+  .matches(
+    /^(\d{10}|\(\d{3}\)\s\d{3}-\d{4})$/,
+    "Phone number must be 10 digits or in format (xxx) xxx-xxxx"
+  ).required("Please enter phone"),
   status: Yup.string().required("Please select status"),
 });
 
@@ -81,6 +83,27 @@ const CustomeNewForm = () => {
     value: item.id.toString(),
     label: item.name,
   }));
+
+  const handlePhoneChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setFieldValue: (field: string, value: any) => void
+  ) => {
+    let value = e.target.value.replace(/\D/g, "");
+  
+    if (value.length <= 3) {
+      setFieldValue("phone", value);
+      return;
+    }
+  
+    if (value.length <= 6) {
+      value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+    } else {
+      value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6, 10)}`;
+    }
+  
+    setFieldValue("phone", value);
+  };
+  
 
   return (
     <DefaultLayout>
@@ -232,6 +255,9 @@ const CustomeNewForm = () => {
                           type="text"
                           name="phone"
                           placeholder="+8412121219"
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            handlePhoneChange(e, setFieldValue)
+                          }
                           className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                         />
                         {errors.phone && touched.phone && (
