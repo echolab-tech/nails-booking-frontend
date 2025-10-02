@@ -29,5 +29,5 @@ export const getListServiceSummary = async (): Promise<any> => {
   return await http.get<any>(`/list-service-summary`);
 };
 export const deleteServiceSummary = async (id: string | null): Promise<any> => {
-  return await http.delete<any>(`/service-summary/${id}`);
+  return await http.delete<any>(`/services-summary/${id}`);
 };
