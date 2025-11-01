@@ -25,7 +25,7 @@ const BookingPage = () => {
   const { state, dispatch } = useAppointment();
   const [appointmentData, setAppointmentData] = useState<any | null>(null);
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
-
+  const [bookingType, setBookingType] = useState<number>(0);
 
   useEffect(() => {
     dispatch({ type: "RESET_APPOINTMENT" });
@@ -43,12 +43,18 @@ const BookingPage = () => {
   const getAppointmentData = async() => {
     if (!state.appointmentId) return;
     const data = await getAppointmentById(state.appointmentId);
+    setBookingType(data?.data?.data?.booking_type);
     setAppointmentData(data?.data?.data);
   }
 
   const handleNext = () => {
     if (state.currentStep === 5) {
-      setOpenModal(true);
+      if (bookingType === 0) {
+        dispatch({ type: "SET_ASSISTANT", payload: null });
+        setShowAddServiceModal(true);
+      } else {
+        setOpenModal(true);
+      }
     } else if (state.currentStep === 6) {
       setShowAddServiceModal(true);
     } else if (state.currentStep === 7) {
