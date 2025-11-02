@@ -16,6 +16,7 @@ import TechnicianUnavailableModal from "./TechnicianUnavailableModal";
 import { createWaitList } from "../../services/waitlist.service";
 import { formatDateTime } from "../utils/formatDate";
 import { DialogSelectTime } from "../Dialog/DialogSelectTime";
+import ConfirmOverTimeModal from "@/components/Booking/ConfirmOverTimeModal";
 
 const ConfirmBooking = ({ handleBack, handleNext, isEdit, appointmentData, formik }: any) => {
   const router = useRouter();
@@ -25,6 +26,15 @@ const ConfirmBooking = ({ handleBack, handleNext, isEdit, appointmentData, formi
   const { state: appointmentState, dispatch } = useAppointment();
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
   const { state, dispatch: appointmentDispatch } = useAppointment();
+  const [showConfirmOverTimeModal, setShowConfirmOverTimeModal] = useState(false);
+  const [confirmModalHandlers, setConfirmModalHandlers] = useState<{
+    handleConfirm: () => void;
+    handleCancel: () => void;
+  }>({
+    handleConfirm: () => {},
+    handleCancel: () => {},
+  });
+
   useEffect(() => {}, []);
 
   const formatPrice = (price: number) => {
@@ -235,10 +245,44 @@ const ConfirmBooking = ({ handleBack, handleNext, isEdit, appointmentData, formi
     return formData;
   }
 
+  const handleCheckOverTime = (appointments:any) => {
+    var endTime = '';
+    appointments.forEach((appointment:any) => {
+      var endTimeOflastItem = appointment?.subServices?.length > 0
+        ? appointment.subServices[appointment.subServices.length - 1].endTime
+        : appointment?.service?.endTime;
+      if (endTime === '' || endTimeOflastItem > endTime) {
+        endTime = endTimeOflastItem;
+      }
+    });
+
+    return validateTime(endTime);
+  }
+
+  const validateTime = (endTime: string) => {
+    const date = new Date(endTime);
+
+    const eightPM = new Date(date);
+    eightPM.setHours(20, 0, 0, 0); // 20:00:00.000
+    
+    const sameDay =
+      date.getFullYear() === eightPM.getFullYear() &&
+      date.getMonth() === eightPM.getMonth() &&
+      date.getDate() === eightPM.getDate();
+    return sameDay && date > eightPM;
+  }
+
   const handleBooking = async () => {
     const formData = transformFormData(state);
     try {
       setIsLoading(true);
+
+      if (handleCheckOverTime(state.appointments)) {
+        const confirm = await showConfirmModal();
+        if (! confirm) {
+          return;
+        }
+      }
       if (isEdit) {
         formData.appointments[0].customer = appointmentData?.customer;
         const result:any = await updateEntireAppointment(appointmentData?.id, formData);
@@ -262,6 +306,22 @@ const ConfirmBooking = ({ handleBack, handleNext, isEdit, appointmentData, formi
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const showConfirmModal = () => {
+    return new Promise<boolean>((resolve) => {
+      const handleConfirm = () => {
+        setShowConfirmOverTimeModal(false);
+        resolve(true);
+      };
+      const handleCancel = () => {
+        setShowConfirmOverTimeModal(false);
+        resolve(false);
+      };
+  
+      setConfirmModalHandlers({ handleConfirm, handleCancel });
+      setShowConfirmOverTimeModal(true);
+    });
   };
 
   return (
@@ -320,6 +380,11 @@ const ConfirmBooking = ({ handleBack, handleNext, isEdit, appointmentData, formi
         onClose={() => setOpenModalSelectTime(false)}
         handleChangeDate={handleDateChange}
         />
+      <ConfirmOverTimeModal
+        isOpen={showConfirmOverTimeModal}
+        onClose={confirmModalHandlers.handleCancel}
+        onConfirm={confirmModalHandlers.handleConfirm}
+      />
     </div>
   );
 };
