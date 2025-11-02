@@ -31,6 +31,8 @@ import { useRouter } from "next/navigation";
 import { useAppointment } from "@/contexts/AppointmentContext";
 import { ImUserTie } from "react-icons/im";
 import { FaUserTimes } from "react-icons/fa";
+import tippy from "tippy.js";
+import "tippy.js/dist/tippy.css"; 
 
 import {
   getServiceOptionShow,
@@ -973,10 +975,18 @@ const FullCalenDarCustom: React.FC<any> = () => {
           <i class="block">Phone Number: ${data?.booking?.customer?.phone ?? ""}</i>
           <i class="block">Service Name: ${eventInfo.event.title}</i>
           <i class="block">Request a worker: ${data?.booking?.booking_type ? "Yes" : "No"}</i>
-          ${data?.group_id !== null ? `<i class="block">Has a group booking (Group ID: ${data.group_id})</i>` : ""}
+          ${data?.booking?.booking_group_id !== null ? `<i class="block">Has a group booking (Group ID: ${data?.booking?.booking_group_id})</i>` : ""}
           ${data?.booking?.description ? `<i class="block">Note: ${data.booking.description}</i>` : ""}
       </div>
     `;
+
+    tippy(eventInfo.el, {
+      content: tooltipContent,
+      allowHTML: true,
+      placement: "top",
+      theme: "light-border",
+      delay: [200, 0],
+    });
   };
 
   const renderEventContent = (eventInfo: any) => {
@@ -999,9 +1009,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
             {data?.booking?.booking_type ? "Yes" : "No"}
           </span>
         </i>
-        {data?.group_id !== null && (
+        {data?.booking?.booking_group_id !== null && (
           <i className="block">
-            Has a group booking (Group ID: {data.group_id})
+            Has a group booking (Group ID: {data?.booking?.booking_group_id})
           </i>
         )}
         {data?.booking?.description != null && (
