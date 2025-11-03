@@ -180,8 +180,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
       name: "Started",
     },
     {
-      value: 4,
-      name: "No-show",
+      value: 6,
+      name: "No-showed",
+    },
+    {
+      value: 7,
+      name: "Late",
     },
     {
       value: 5,

@@ -79,8 +79,13 @@ const StepAddService = ({ handleBack, handleNext }: StepAddServiceProps) => {
                     trigger="hover"
                     className="w-[300px]"
                   >
-                    <IoIosHelpCircleOutline size={20} color="warning" />
-                  </Tooltip>
+                    <span
+                      onClick={(e) => e.stopPropagation()}
+                      className="cursor-pointer hover:scale-110 transition-transform"
+                    >
+                      <IoIosHelpCircleOutline size={20}/>
+                    </span>    
+              </Tooltip>
                   <div className="ml-5 flex">
                     <p>{item?.option_name}</p>
                     <div className="flex">
