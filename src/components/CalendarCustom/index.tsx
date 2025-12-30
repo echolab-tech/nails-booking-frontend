@@ -994,34 +994,40 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const renderEventContent = (eventInfo: any) => {
-    var data = eventInfo?.event?.extendedProps;
+    const data = eventInfo?.event?.extendedProps;
+
     return (
-      <>
-        <b>
+      <div className="h-full overflow-hidden flex flex-col">
+        <div className="shrink-0 font-semibold flex items-center gap-1">
           {data?.booking?.booking_type ? (
             <ImUserTie size={20} color="text-white" />
           ) : (
-            <FaUserTimes size={20} color="text-white" />
+            <FaUserTimes size={16} color="text-white" />
           )}
-          {eventInfo.timeText} {data?.customerName}
-        </b>
-        <i className="block">Phone Number: {data?.booking?.customer?.phone}</i>
-        <i className="block">Service Name: {eventInfo.event.title}</i>
-        <i className="block">
-          Request a worker:{" "}
-          <span className=" text-red">
-            {data?.booking?.booking_type ? "Yes" : "No"}
+          <span>
+            {eventInfo.timeText} {data?.customerName}
           </span>
-        </i>
-        {data?.booking?.booking_group_id !== null && (
-          <i className="block">
-            Has a group booking (Group ID: {data?.booking?.booking_group_id})
-          </i>
-        )}
-        {data?.booking?.description != null && (
-          <i className="block">Note: {data.booking.description}</i>
-        )}
-      </>
+        </div>
+
+        <div className="flex-1 overflow-hidden">
+          <div>Phone: {data?.booking?.customer?.phone}</div>
+          <div>Service name: {eventInfo.event.title}</div>
+          <div>
+            Request worker:{" "}
+            <span className="text-red">
+              {data?.booking?.booking_type ? "Yes" : "No"}
+            </span>
+          </div>
+  
+          {data?.booking?.booking_group_id && (
+            <div>Has a group booking (Group ID: {data.booking.booking_group_id})</div>
+          )}
+  
+          {data?.booking?.description && (
+            <div>Note: {data.booking.description}</div>
+          )}
+        </div>
+      </div>
     );
   };
 
@@ -1186,7 +1192,11 @@ const FullCalenDarCustom: React.FC<any> = () => {
           bootstrap5Plugin,
           scrollGridPlugin,
         ]}
-        eventContent={renderEventContent}
+        eventContent={(arg) => (
+          <div style={{ height: "100%" }}>
+            {renderEventContent(arg)}
+          </div>
+        )}
         eventDidMount={attachEventTooltip}
         eventClick={handleEventClick}
         initialView="resourceTimeGridDay"
