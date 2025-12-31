@@ -976,6 +976,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     const tooltipContent = `
       <div>
           <b>${eventInfo.timeText ?? ""} ${data?.customerName ?? ""}</b>
+          ${data?.booking?.customer?.email ? `<i class="block">Email: ${data.booking?.customer?.email}</i>` : ""}
           <i class="block">Phone Number: ${data?.booking?.customer?.phone ?? ""}</i>
           <i class="block">Service Name: ${eventInfo.event.title}</i>
           <i class="block">Request a worker: ${data?.booking?.booking_type ? "Yes" : "No"}</i>
@@ -1010,6 +1011,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
         </div>
 
         <div className="flex-1 overflow-hidden">
+          {data?.booking?.customer?.email&& (
+            <div className="truncate">Email: {data?.booking?.customer?.email}</div>
+          )}
           <div>Phone: {data?.booking?.customer?.phone}</div>
           <div>Service name: {eventInfo.event.title}</div>
           <div>
