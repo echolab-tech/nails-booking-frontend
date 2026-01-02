@@ -185,7 +185,8 @@ function appointmentReducer(
         ),
       };
     case "SET_SERVICE":
-      const startTime = state.selectedTime;
+      var startTimeOfService = state.appointments[state.currentAppointmentIndex]?.startTime;
+      const startTime = startTimeOfService !== undefined ? startTimeOfService : state.selectedTime;
       const endTime = addMinutesToISOString(startTime, action.payload.duration);
       const updatedService = {
         ...action.payload,

@@ -55,7 +55,7 @@ const ApointmentOverview = () => {
             {/* Selected Time */}
             {state.selectedTime && (
               <p className="text-sm">
-                <span className="font-medium">Time:</span> {state.selectedTime}
+                <span className="font-medium">Time:</span> {state.appointments[index]?.startTime}
               </p>
             )}
 
