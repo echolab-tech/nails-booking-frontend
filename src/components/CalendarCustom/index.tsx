@@ -94,6 +94,8 @@ interface SearchServiceOptionValues {
 }
 
 const FullCalenDarCustom: React.FC<any> = () => {
+  const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
   const [resources, setResources] = useState<ResourceType[]>([]);
   const [assistantId, setAssistantId] = useState<string>("");
   const [bookingDetailId, setBookingDetailId] = useState<string>("");
@@ -143,7 +145,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [status, setStatus] = useState<
     { id: number; name_status: string; color_code: string }[]
   >([]);
-  const router = useRouter();
+
   const [isOpenDelay, setIsOpenDelay] = useState<boolean>(false);
   const [openStepOneCancel, setOpenStepOneCancel] = useState<boolean>(false);
   const [openStepTwoCancel, setOpenStepTwoCancel] = useState<boolean>(false);
@@ -161,6 +163,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
     fetchDataBlockType();
     fetchDataStatus();
   }, [calendarStartDate, calendarEndDate]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const bookingStatus = [
     {
@@ -840,18 +846,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
     const { data } = await checkoutAppointment(eventId, formik.values);
     setOpenTips(false);
     toast.success(data.message);
-    fetchAllData(
-      format(new Date(), "dd-MM-yyyy"),
-      format(new Date(), "dd-MM-yyyy"),
-    );
+    refreshData();
   };
   const handleSuccess = (message: string) => {
     setIsSubmit(false);
     setOpenBooking(false);
-    fetchAllData(
-      format(new Date(), "dd-MM-yyyy"),
-      format(new Date(), "dd-MM-yyyy"),
-    );
+    refreshData();
     setSelectedCustomer(false);
     formik.resetForm();
     toast.success(message);
@@ -866,10 +866,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleSenDelay = () => {
-    fetchAllData(
-      format(new Date(), "dd-MM-yyyy"),
-      format(new Date(), "dd-MM-yyyy"),
-    );
+    refreshData();
     setIsOpenDelay(false);
   };
 
@@ -926,10 +923,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
           setIsSubmit(false);
           onCloseModalBlockTime();
           formikBlockTime.resetForm();
-          fetchAllData(
-            format(new Date(), "dd-MM-yyyy"),
-            format(new Date(), "dd-MM-yyyy"),
-          );
+          refreshData();
           toast.success("Block time created");
         })
         .catch((e) => {
@@ -1141,8 +1135,13 @@ const FullCalenDarCustom: React.FC<any> = () => {
     }
   };
 
+  const refreshData = () => {
+    fetchAllData(calendarStartDate, calendarEndDate);
+  };
+
   const handleDatesSet = (dateInfo: any) => {
     const { start, end } = dateInfo;
+    localStorage.setItem("CALENDAR_VIEW_DATE", start.toISOString());
     setCalendarStartDate(format(start, "dd-MM-yyyy"));
     setCalendarEndDate(format(end, "dd-MM-yyyy"));
     fetchAllData(format(start, "dd-MM-yyyy"), format(end, "dd-MM-yyyy"));
@@ -1152,7 +1151,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     try {
       await cancelAppointmentByGroup(eventId);
       setOpenStepOneCancel(false);
-      fetchAllData(calendarStartDate, calendarEndDate);
+      refreshData();
       setOpenBooking(false);
       toast.success("Status appointment cancel appoinment successfully.");
     } catch (error) {
@@ -1175,7 +1174,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       await deleteAppointment(Number(eventId));
       setOpenStepTwoCancel(false);
       setOpenCancelAllServices(false);
-      fetchAllData(calendarStartDate, calendarEndDate);
+      refreshData();
       setOpenBooking(false);
       toast.success("Status appointment cancel service of customer successfully.");
     } catch (error) {
@@ -1188,7 +1187,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     try {
       await cancelOnlyServiceOfCustomer(eventId);
       setOpenStepTwoCancel(false);
-      fetchAllData(calendarStartDate, calendarEndDate);
+      refreshData();
       setOpenBooking(false);
       toast.success("Status appointment cancel only service of customer successfully.");
     } catch (error) {
@@ -1202,7 +1201,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       await deleteBookingDetail(bookingDetailsId);
 
       setOpenCancelAllServices(false);
-      fetchAllData(calendarStartDate, calendarEndDate);
+      refreshData();
       setOpenBooking(false);
 
     } catch (error) {
@@ -1210,9 +1209,20 @@ const FullCalenDarCustom: React.FC<any> = () => {
     }
   }
 
+  if (!isMounted)
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Spinner />
+      </div>
+    );
+
+  const initialViewDate =
+    localStorage.getItem("CALENDAR_VIEW_DATE") || new Date().toISOString();
+
   return (
     <>
       <FullCalendar
+        initialDate={initialViewDate}
         eventBackgroundColor="#06b6d4"
         eventBorderColor="#06b6d4"
         slotDuration="00:05:00"
