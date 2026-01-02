@@ -94,6 +94,7 @@ interface SearchServiceOptionValues {
 }
 
 const FullCalenDarCustom: React.FC<any> = () => {
+  const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [resources, setResources] = useState<ResourceType[]>([]);
   const [assistantId, setAssistantId] = useState<string>("");
