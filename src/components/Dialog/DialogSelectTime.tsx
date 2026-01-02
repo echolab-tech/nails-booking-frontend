@@ -18,8 +18,19 @@ export function DialogSelectTime({
   handleChangeDate,
 }: DialogSelectTimeProps) {
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
   const handleOk = () => {
+    const selectedDay = selectedDate.split("T")[0];
+    const today = new Date().toISOString().split("T")[0];
+
+    if (selectedDay <= today) {
+      setError("You cannot select a date in the past");
+      return;
+    }
+
+    setError("");
+
     if (selectedDate) {
       const event = {
         target: { value: selectedDate },
@@ -55,9 +66,21 @@ export function DialogSelectTime({
               <input
                 type="datetime-local"
                 id="start-time"
-                className="w-full rounded border border-stroke px-4 py-2 text-dark"
-                onChange={(e) => setSelectedDate(e.target.value)}
+                className={`w-full rounded px-4 py-2 text-dark border ${
+                  error
+                    ? "border-red focus:border-red focus:ring-red-500"
+                    : "border-stroke focus:border-primary focus:ring-primary"
+                }`}
+                onChange={(e) => {
+                  setSelectedDate(e.target.value);
+                  setError("");
+                }}
               />
+              {error && (
+                <p className="mt-1 text-left text-sm text-red">
+                  {error}
+                </p>
+              )}
             </div>
             <div className="flex justify-center gap-4 mt-4">
               <Button color="gray" onClick={onClose}>
