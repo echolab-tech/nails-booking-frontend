@@ -32,7 +32,7 @@ import { useAppointment } from "@/contexts/AppointmentContext";
 import { ImUserTie } from "react-icons/im";
 import { FaUserTimes } from "react-icons/fa";
 import tippy from "tippy.js";
-import "tippy.js/dist/tippy.css"; 
+import "tippy.js/dist/tippy.css";
 
 import {
   getServiceOptionShow,
@@ -150,8 +150,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [openCancelAllServices, setOpenCancelAllServices] = useState<boolean>(false);
   const [detailId, setDetailId] = useState<string>("");
   const [otherServices, setOtherServices] = useState<any[]>([]);
-  const [groupId, setGroupId] = useState<number|null>(null);
-  const [bookingDetailsId,setBookingDetailsId] = useState<number|null>(null);
+  const [groupId, setGroupId] = useState<number | null>(null);
+  const [bookingDetailsId, setBookingDetailsId] = useState<number | null>(null);
   const { dispatch } = useAppointment();
 
   useEffect(() => {
@@ -607,8 +607,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
       const lastServiceEndTime =
         formik.values.services.length > 0
           ? new Date(
-              formik.values.services[formik.values.services.length - 1].end,
-            )
+            formik.values.services[formik.values.services.length - 1].end,
+          )
           : new Date(startTime);
 
       // Thời gian bắt đầu của dịch vụ mới là thời gian kết thúc của dịch vụ cuối cùng
@@ -943,10 +943,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const renderCustomer = (customer: any) => {
     const initials = customer?.name
       ? customer?.name
-          .split(" ")
-          .map((name: string) => name[0])
-          .join("")
-          .slice(0, 2)
+        .split(" ")
+        .map((name: string) => name[0])
+        .join("")
+        .slice(0, 2)
       : "N/A";
 
     return (
@@ -994,34 +994,85 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const renderEventContent = (eventInfo: any) => {
-    var data = eventInfo?.event?.extendedProps;
+    const data = eventInfo?.event?.extendedProps;
+    const start = eventInfo.event.start;
+    const end = eventInfo.event.end;
+    const durationMillis = end - start;
+    const durationMinutes = durationMillis / (1000 * 60);
+
+    // Thresholds (in minutes)
+    const showRequestTech = durationMinutes >= 10;
+    const showPhone = durationMinutes >= 15;
+    const showCustomerName = durationMinutes >= 30;
+    const showEmail = durationMinutes >= 45;
+    const showGroupInfo = durationMinutes >= 30;
+    const showNote = durationMinutes >= 45;
+
     return (
-      <>
-        <b>
-          {data?.booking?.booking_type ? (
-            <ImUserTie size={20} color="text-white" />
-          ) : (
-            <FaUserTimes size={20} color="text-white" />
-          )}
-          {eventInfo.timeText} {data?.customerName}
-        </b>
-        <i className="block">Phone Number: {data?.booking?.customer?.phone}</i>
-        <i className="block">Service Name: {eventInfo.event.title}</i>
-        <i className="block">
-          Request a worker:{" "}
-          <span className=" text-red">
-            {data?.booking?.booking_type ? "Yes" : "No"}
-          </span>
-        </i>
-        {data?.booking?.booking_group_id !== null && (
-          <i className="block">
-            Has a group booking (Group ID: {data?.booking?.booking_group_id})
-          </i>
+      <div className="overflow-hidden p-0.5 text-xs leading-tight">
+        {/* 1. Service Time */}
+        {showRequestTech && (
+          <div className="font-bold flex items-center gap-1">
+            {data?.booking?.booking_type ? (
+              <ImUserTie size={14} className="text-white flex-shrink-0" />
+            ) : (
+              <FaUserTimes size={14} className="text-white flex-shrink-0" />
+            )}
+            <span className="truncate">{eventInfo.timeText}</span>
+          </div>
         )}
-        {data?.booking?.description != null && (
-          <i className="block">Note: {data.booking.description}</i>
+        {/* 2. Service Name */}
+        <div className={`${showCustomerName ? "" : "truncate"} font-semibold`} title={eventInfo.event.title}>
+          {eventInfo.event.title}
+        </div>
+
+        {/* 3. Request Technician */}
+        {showRequestTech && (
+          <div className="truncate">
+            Request Technician:{" "}
+            <span
+              className={
+                data?.booking?.booking_type ? "text-red-300 font-bold" : ""
+              }
+            >
+              {data?.booking?.booking_type ? "Yes" : "No"}
+            </span>
+          </div>
         )}
-      </>
+
+        {/* 4. Customer Phone */}
+        {showPhone && data?.booking?.customer?.phone && (
+          <div className="truncate">Phone: {data?.booking?.customer?.phone}</div>
+        )}
+
+        {/* 5. Customer Name */}
+        {showCustomerName && data?.customerName && (
+          <div className="truncate font-medium text-white/90">
+            Name: {data?.customerName}
+          </div>
+        )}
+
+        {/* 6. Customer Email */}
+        {showEmail && data?.booking?.customer?.email && (
+          <div className="truncate text-[10px] opacity-90">
+            Email: {data?.booking?.customer?.email}
+          </div>
+        )}
+
+        {/* Extra Info: Group Booking */}
+        {showGroupInfo && data?.booking?.booking_group_id !== null && (
+          <div className="truncate italic text-[10px]">
+            Group ID: {data?.booking?.booking_group_id}
+          </div>
+        )}
+
+        {/* Extra Info: Note */}
+        {showNote && data?.booking?.description && (
+          <div className="italic truncate text-[10px] opacity-80">
+            Note: {data.booking.description}
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -1065,7 +1116,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
         }
 
         const services = formik.values.services || [];
-  
+
         if (services.length === 1) {
           await deleteAppointment(Number(eventId));
           setOpenCancelAllServices(false);
@@ -1073,14 +1124,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
           setOpenBooking(false);
           return;
         }
-  
+
         if (services.length > 1) {
           setBookingDetailsId(filteredServices?.id);
           setOpenCancelAllServices(true);
           return;
         }
       }
-  
+
       await appointmentsUpdateStatus(eventId, value);
       fetchAllData(calendarStartDate, calendarEndDate);
       setOpenBooking(false);
@@ -1089,7 +1140,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       toast.error("Failed to update status appointment.");
     }
   };
-  
+
   const handleDatesSet = (dateInfo: any) => {
     const { start, end } = dateInfo;
     setCalendarStartDate(format(start, "dd-MM-yyyy"));
@@ -1097,7 +1148,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     fetchAllData(format(start, "dd-MM-yyyy"), format(end, "dd-MM-yyyy"));
   };
 
-  const handleCancelAppointmentByGroup = async() => {
+  const handleCancelAppointmentByGroup = async () => {
     try {
       await cancelAppointmentByGroup(eventId);
       setOpenStepOneCancel(false);
@@ -1112,7 +1163,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
   const handleSelectNoCancelGroup = () => {
     setOpenStepOneCancel(false);
-    if (formik.values.services.length > 1 ) {
+    if (formik.values.services.length > 1) {
       setOpenStepTwoCancel(true);
       return;
     }
@@ -1366,77 +1417,77 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       </h3>
                       {formik.values.services.length > 0 ? (
                         formik.values.services
-                        .filter(
-                          (detail: any) =>
-                              ! otherServices.includes(detail?.id)
-                        )                   
-                        .map(
-                          (detail: any, index: number) => (
-                            <div
-                              className="service relative mt-3 w-full"
-                              key={index}
-                            >
-                              <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
-                              <div className="flex flex-1 px-6.5 py-4">
-                                <div className="w-full xl:w-3/4">
-                                  <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                    {detail?.title}
-                                  </label>
-                                  <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                                    {detail?.name}
-                                  </label>
-                                  <div className="flex items-center">
-                                    <span>
-                                      {formatHoursMinute(detail?.start)}
-                                    </span>
-                                    <span className="m-1">・</span>
-                                    <span>
-                                      {detail?.time}
-                                      min
-                                    </span>
-                                    <span className="m-1">・</span>
-                                    <span>{detail?.assistant?.name}</span>
+                          .filter(
+                            (detail: any) =>
+                              !otherServices.includes(detail?.id)
+                          )
+                          .map(
+                            (detail: any, index: number) => (
+                              <div
+                                className="service relative mt-3 w-full"
+                                key={index}
+                              >
+                                <div className="absolute bottom-0 left-0 top-0 w-1 bg-blue-500"></div>
+                                <div className="flex flex-1 px-6.5 py-4">
+                                  <div className="w-full xl:w-3/4">
+                                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                      {detail?.title}
+                                    </label>
+                                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
+                                      {detail?.name}
+                                    </label>
+                                    <div className="flex items-center">
+                                      <span>
+                                        {formatHoursMinute(detail?.start)}
+                                      </span>
+                                      <span className="m-1">・</span>
+                                      <span>
+                                        {detail?.time}
+                                        min
+                                      </span>
+                                      <span className="m-1">・</span>
+                                      <span>{detail?.assistant?.name}</span>
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="w-full xl:w-1/4">
-                                  <label className="mb-3 ml-3 block flex justify-end text-sm font-medium text-black dark:text-white">
-                                    ${detail.price}
-                                  </label>
-                                  <div className="flex justify-end space-x-3.5">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleEditService(
-                                          detail?.serviceOptionId,
-                                        )
-                                      }
-                                      className="hover:text-primary"
-                                    >
-                                      <FaRegPenToSquare
-                                        size={25}
-                                        className="text-black"
-                                      />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="hover:text-primary"
-                                      onClick={() =>
-                                        handleRemoveServiceOption(
-                                          detail.serviceOptionId,
-                                        )
-                                      }
-                                    >
-                                      <BsTrash
-                                        size={25}
-                                        className="text-black"
-                                      />
-                                    </button>
+                                  <div className="w-full xl:w-1/4">
+                                    <label className="mb-3 ml-3 block flex justify-end text-sm font-medium text-black dark:text-white">
+                                      ${detail.price}
+                                    </label>
+                                    <div className="flex justify-end space-x-3.5">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleEditService(
+                                            detail?.serviceOptionId,
+                                          )
+                                        }
+                                        className="hover:text-primary"
+                                      >
+                                        <FaRegPenToSquare
+                                          size={25}
+                                          className="text-black"
+                                        />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="hover:text-primary"
+                                        onClick={() =>
+                                          handleRemoveServiceOption(
+                                            detail.serviceOptionId,
+                                          )
+                                        }
+                                      >
+                                        <BsTrash
+                                          size={25}
+                                          className="text-black"
+                                        />
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          ),
-                        )
+                            ),
+                          )
                       ) : (
                         <div className="flex min-h-[100px] flex-col items-center">
                           <GoInbox size={50} />
@@ -2008,7 +2059,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
         />
       )}
       <DialogConfirm
-        openModal={	openStepOneCancel }
+        openModal={openStepOneCancel}
         message="Cancel the whole group?"
         onClose={() => setOpenStepOneCancel(false)}
       >
@@ -2019,14 +2070,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
           {"Yes"}
         </button>
         <button
-           onClick={handleSelectNoCancelGroup}
+          onClick={handleSelectNoCancelGroup}
           className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
         >
           No
         </button>
       </DialogConfirm>
       <DialogConfirm
-        openModal={	openStepTwoCancel }
+        openModal={openStepTwoCancel}
         message="Cancel all the services from this customer?"
         onClose={() => setOpenStepTwoCancel(false)}
       >
@@ -2037,14 +2088,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
           {"Yes"}
         </button>
         <button
-           onClick={handleCancelOnlyServiceOfCustomer}
+          onClick={handleCancelOnlyServiceOfCustomer}
           className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
         >
           No
         </button>
       </DialogConfirm>
       <DialogConfirm
-        openModal={	openCancelAllServices }
+        openModal={openCancelAllServices}
         message="Cancel the all services ?"
         onClose={() => setOpenCancelAllServices(false)}
       >
@@ -2055,7 +2106,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
           {"Yes"}
         </button>
         <button
-           onClick={handleCancelOnlyService}
+          onClick={handleCancelOnlyService}
           className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
         >
           No
