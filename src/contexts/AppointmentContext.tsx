@@ -64,6 +64,14 @@ interface AppointmentState {
   appointmentId?: number;
 }
 
+type AppointmentKey = keyof Appointment;
+const keyByStep: Record<number, AppointmentKey> = {
+  2: "serviceSummary",
+  3: "serviceCategory",
+  4: "service",
+  5: "subServices",
+};
+
 type AppointmentAction =
   | { type: "SET_STEP"; payload: number }
   | { type: "SET_SELECTED_TIME"; payload: string }
@@ -86,7 +94,8 @@ type AppointmentAction =
   | { type: "RESET_APPOINTMENT" }
   | { type: "ADD_APPOINTMENT_WITH_CURRENT_CUSTOMER" }
   | { type: "SET_APPOINTMENT_ID_FOR_UPDATE"; payload: number }
-  | { type: "UPDATE_SELECTED_TIME"; payload: string };
+  | { type: "UPDATE_SELECTED_TIME"; payload: string }
+  | { type: "CLEAR_APPOINTMENT_BY_STEP"; payload: number };
 
 const initialState: AppointmentState = {
   currentStep: 1,
@@ -357,6 +366,23 @@ function appointmentReducer(
             },
             subServices: updatedSubServices,
           };
+        }),
+      };
+    case "CLEAR_APPOINTMENT_BY_STEP":
+      const step = action.payload;
+      const key = keyByStep[step];
+      if (!key) return state;
+      return {
+        ...state,
+        appointments: state.appointments.map((apt, index) => {
+          if (index !== state.currentAppointmentIndex) return apt;
+          if (step === 5) {
+            const { service, subServices, ...rest } = apt;
+            return rest;
+          }
+
+          const { [key]: _, ...rest } = apt;
+          return rest;
         }),
       };
     default:
