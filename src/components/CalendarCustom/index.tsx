@@ -1016,8 +1016,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
           </div>
         )}
         {/* 2. Service Name */}
-        <div className={`${showCustomerName ? "" : "truncate"} font-semibold`} title={eventInfo.event.title}>
-          {eventInfo.event.title}
+        <div className={`${showCustomerName ? "" : "truncate"} font-semibold`} title={eventInfo.event.extendedProps.service.name}>
+          {eventInfo.event.extendedProps.service.name}
         </div>
 
         {/* 3. Request Technician */}
