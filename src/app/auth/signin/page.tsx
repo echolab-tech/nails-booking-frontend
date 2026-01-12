@@ -7,7 +7,7 @@ import NoneSideBarLayout from "@/components/Layouts/NoneSideBarLayout";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { login } from "@/services/login.service";
-import { resetPassword } from "@/services/reset-password.service";
+import { resetPassword, forgotEmail } from "@/services/reset-password.service";
 import { useRouter } from "next/navigation";
 import { LoginType, ResetPasswordType } from "@/types/login";
 import { toast } from "react-toastify";
@@ -24,6 +24,10 @@ const SignIn: React.FC = () => {
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [isResetting, setIsResetting] = useState(false);
+  const [showForgotEmailModal, setShowForgotEmailModal] = useState(false);
+  const [forgotEmailPhone, setForgotEmailPhone] = useState("");
+  const [isFetchingEmail, setIsFetchingEmail] = useState(false);
+  const [retrievedEmail, setRetrievedEmail] = useState("");
 
   const handleResetPassword = async () => {
     if (!resetEmail) {
@@ -45,6 +49,7 @@ const SignIn: React.FC = () => {
       setResetEmail("");
     } catch (error: any) {
       const errorMessage =
+        error?.data?.message ||
         error?.response?.data?.message ||
         error?.response?.data?.error ||
         error?.message ||
@@ -52,6 +57,42 @@ const SignIn: React.FC = () => {
       toast.error(errorMessage);
     } finally {
       setIsResetting(false);
+    }
+  };
+
+  const handleForgotEmail = async () => {
+    if (!forgotEmailPhone) {
+      toast.error("Please enter your phone number.");
+      return;
+    }
+
+    const phoneRegex = /^[0-9]{10,11}$/;
+    if (!phoneRegex.test(forgotEmailPhone)) {
+      toast.error("Please enter a valid phone number (10-11 digits).");
+      return;
+    }
+
+    setIsFetchingEmail(true);
+    try {
+      const response = await forgotEmail({ phone: forgotEmailPhone });
+      const data = response?.data;
+      
+      if (data?.success && data?.email) {
+        setRetrievedEmail(data.email);
+        toast.success(data.message || "Email found successfully!");
+      } else {
+        toast.error(data?.message || "Could not find email associated with this phone number.");
+      }
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.message ||
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Failed to retrieve email. Please try again.";
+      toast.error(errorMessage);
+    } finally {
+      setIsFetchingEmail(false);
     }
   };
 
@@ -155,13 +196,23 @@ const SignIn: React.FC = () => {
                         <label className="block font-medium text-black dark:text-white">
                           Password
                         </label>
-                        <button
-                          type="button"
-                          onClick={() => setShowResetModal(true)}
-                          className="text-sm text-primary hover:underline"
-                        >
-                          Forgot Password?
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowResetModal(true)}
+                            className="text-sm font-medium text-primary transition-all duration-200 hover:text-primary/80 hover:underline hover:underline-offset-2"
+                          >
+                            Forgot Password?
+                          </button>
+                          <span className="text-sm text-gray-400 dark:text-gray-600">•</span>
+                          <button
+                            type="button"
+                            onClick={() => setShowForgotEmailModal(true)}
+                            className="text-sm font-medium text-primary transition-all duration-200 hover:text-primary/80 hover:underline hover:underline-offset-2"
+                          >
+                            Forgot Email?
+                          </button>
+                        </div>
                       </div>
                       <div className="relative">
                         <Field
@@ -350,6 +401,97 @@ const SignIn: React.FC = () => {
                 className="flex-1 rounded-lg border border-primary bg-primary py-3 px-4 text-white transition hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isResetting ? "Sending..." : "Send Reset Link"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Forgot Email Modal */}
+      {showForgotEmailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="relative w-full max-w-md rounded-lg border border-stroke bg-white p-6 shadow-lg dark:border-strokedark dark:bg-boxdark">
+            <button
+              onClick={() => {
+                setShowForgotEmailModal(false);
+                setForgotEmailPhone("");
+                setRetrievedEmail("");
+              }}
+              className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              <svg
+                className="fill-current"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M18 6L6 18M6 6L18 18"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+
+            <div className="mb-4">
+              <h3 className="text-2xl font-bold text-black dark:text-white">
+                Forgot Email?
+              </h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Enter your phone number and we&apos;ll help you find your email address.
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <label className="mb-2.5 block font-medium text-black dark:text-white">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                value={forgotEmailPhone}
+                onChange={(e) => setForgotEmailPhone(e.target.value)}
+                placeholder="Enter your phone number"
+                className="w-full rounded-lg border border-stroke bg-transparent py-3 pl-4 pr-4 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    handleForgotEmail();
+                  }
+                }}
+              />
+            </div>
+
+            {retrievedEmail && (
+              <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                <p className="text-sm font-medium text-black dark:text-white">
+                  Your email address:
+                </p>
+                <p className="mt-1 text-lg font-bold text-primary">
+                  {retrievedEmail}
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowForgotEmailModal(false);
+                  setForgotEmailPhone("");
+                  setRetrievedEmail("");
+                }}
+                className="flex-1 rounded-lg border border-stroke bg-transparent py-3 px-4 text-black transition hover:bg-gray-100 dark:border-strokedark dark:text-white dark:hover:bg-boxdark-2"
+              >
+                Close
+              </button>
+              <button
+                onClick={handleForgotEmail}
+                disabled={isFetchingEmail}
+                className="flex-1 rounded-lg border border-primary bg-primary py-3 px-4 text-white transition hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isFetchingEmail ? "Searching..." : "Find Email"}
               </button>
             </div>
           </div>
