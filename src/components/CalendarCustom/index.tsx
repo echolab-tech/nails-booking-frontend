@@ -971,7 +971,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       <div>
           <b>${eventInfo.timeText ?? ""} ${data?.customerName ?? ""}</b>
           <i class="block">Phone Number: ${data?.booking?.customer?.phone ?? ""}</i>
-          <i class="block">Service Name: ${eventInfo.event.title}</i>
+          <i class="block">Service Name: ${eventInfo?.event?.extendedProps?.service?.name}</i>
           <i class="block">Request a worker: ${data?.booking?.booking_type ? "Yes" : "No"}</i>
           ${data?.booking?.booking_group_id !== null ? `<i class="block">Has a group booking (Group ID: ${data?.booking?.booking_group_id})</i>` : ""}
           ${data?.booking?.description ? `<i class="block">Note: ${data.booking.description}</i>` : ""}
@@ -1016,8 +1016,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
           </div>
         )}
         {/* 2. Service Name */}
-        <div className={`${showCustomerName ? "" : "truncate"} font-semibold`} title={eventInfo.event.extendedProps.service.name}>
-          {eventInfo.event.extendedProps.service.name}
+        <div className={`${showCustomerName ? "" : "truncate"} font-semibold`} title={eventInfo?.event?.extendedProps?.service?.name}>
+          {eventInfo?.event?.extendedProps?.service?.name}
         </div>
 
         {/* 3. Request Technician */}
