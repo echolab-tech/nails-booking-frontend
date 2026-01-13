@@ -967,6 +967,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
   const attachEventTooltip = (eventInfo: any) => {
     const data = eventInfo.event.extendedProps;
+    if (data?.type === "blocktime") {
+      return;
+    }
     const tooltipContent = `
       <div>
           <b>${eventInfo.timeText ?? ""} ${data?.customerName ?? ""}</b>
@@ -1001,6 +1004,15 @@ const FullCalenDarCustom: React.FC<any> = () => {
     const showEmail = durationMinutes >= 45;
     const showGroupInfo = durationMinutes >= 30;
     const showNote = durationMinutes >= 45;
+
+    if (data?.type === "blocktime") {
+      return (
+        <div className="overflow-hidden p-1 text-xs leading-tight">
+          <div className="font-bold truncate">{data.title || "Block Time"}</div>
+          {data.reason && <div className="italic truncate">{data.reason}</div>}
+        </div>
+      );
+    }
 
     return (
       <div className="overflow-hidden p-0.5 text-xs leading-tight">
