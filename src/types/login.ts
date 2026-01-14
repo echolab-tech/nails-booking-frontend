@@ -13,3 +13,14 @@ export type ResetPasswordConfirmType = {
   password: string;
   password_confirmation: string;
 };
+
+export type ForgotEmailType = {
+  phone: string;
+};
+
+export type ForgotEmailResponseType = {
+  success: boolean;
+  email: string;
+  masked_email: string;
+  message: string;
+};
