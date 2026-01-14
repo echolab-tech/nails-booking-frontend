@@ -50,7 +50,11 @@ const BookingPage = () => {
   };
 
   const handleBack = () => {
-    dispatch({ type: "SET_STEP", payload: state.currentStep - 1 });
+    const prevStep = state.currentStep - 1;
+    const nextStep = prevStep === 5 ? prevStep - 1 : prevStep;
+  
+    dispatch({ type: "SET_STEP", payload: nextStep });
+    dispatch({type: "CLEAR_APPOINTMENT_BY_STEP", payload: prevStep});
   };
 
   const handleClose = () => {
