@@ -54,11 +54,15 @@ export const getAssistants = async (): Promise<any> => {
 export const getAssistantAvalible = async (
   serviceIds: number,
   subServiceIds: Array<number>,
+  startTime?: string,
+  endTime?: string,
 ): Promise<any> => {
   return await http.get<any>(`/get-assistants-available`, {
     params: {
       serviceIds: serviceIds,
       subServiceIds: subServiceIds,
+      startTime: startTime,
+      endTime: endTime,
     },
     paramsSerializer: {
       indexes: false,

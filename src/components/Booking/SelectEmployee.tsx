@@ -17,6 +17,7 @@ const SelectEmployee = ({ handleBack, handleNext }: SelectEmployeeProps) => {
   const [selectedAssistant, setSelectedAssistant] = useState<number | null>(
     null,
   );
+  const [loading, setLoading] = useState<boolean>(false);
   const { state, dispatch } = useAppointment();
 
   useEffect(() => {
@@ -24,18 +25,33 @@ const SelectEmployee = ({ handleBack, handleNext }: SelectEmployeeProps) => {
   }, [state.currentAppointmentIndex]);
 
   const fetchAssistants = async () => {
+    setLoading(true);
     try {
       const currentAppointment =
         state.appointments[state.currentAppointmentIndex];
-      const serviceIds = currentAppointment.service?.service_id;
+      const serviceIds = Number(currentAppointment.service?.service_id);
       const subServiceIds = currentAppointment?.subServices?.map(
-        (service: any) => service.id,
-      );
+        (service: any) => Number(service.id),
+      ) || [];
 
-      const result = await getAssistantAvalible(serviceIds, subServiceIds);
+      const startTime = currentAppointment?.service?.startTime;
+      
+      let endTime = currentAppointment?.service?.endTime;
+      if (currentAppointment?.subServices && currentAppointment.subServices.length > 0) {
+        endTime = currentAppointment.subServices[currentAppointment.subServices.length - 1].endTime;
+      }
+
+      const result = await getAssistantAvalible(
+        serviceIds, 
+        subServiceIds,
+        startTime,
+        endTime
+      );
       setAssistants(result?.data?.data);
     } catch (error) {
       console.error("Error fetching assistants:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,6 +75,11 @@ const SelectEmployee = ({ handleBack, handleNext }: SelectEmployeeProps) => {
       <ApointmentOverview />
       <div className="my-10">
         <div className="grid grid-cols-12 gap-2">
+          {!loading && assistants.length === 0 && (
+            <div className="col-span-12 text-center text-red-500">
+              No available technician found.
+            </div>
+          )}
           {assistants?.map((item, index) => (
             <div
               key={index}
