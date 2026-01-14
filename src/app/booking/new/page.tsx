@@ -10,17 +10,19 @@ import StepAddSummaryService from "../../../components/Booking/StepAddSummarySer
 import StepAddCategory from "../../../components/Booking/StepAddCategory";
 import StepAddService from "../../../components/Booking/StepAddService";
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import SelectEmployee from "@/components/Booking/SelectEmployee";
 import { useAppointment } from "@/contexts/AppointmentContext";
 import AddServiceModal from "@/components/Booking/AddServiceModal";
 import AddCustomerModal from "@/components/Booking/AddCustomerModal";
 import { toast } from "react-toastify";
+import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
 
 const BookingPage = () => {
   const [openModal, setOpenModal] = useState<boolean>(false);
   const [showAddServiceModal, setShowAddServiceModal] = useState(false);
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
+  const [openModalConfirm, setOpenModalConfirm] = useState(false);
   const router = useRouter();
   const { state, dispatch } = useAppointment();
 
@@ -72,10 +74,28 @@ const BookingPage = () => {
     if (addMore) {
       dispatch({ type: "ADD_APPOINTMENT_WITH_CURRENT_CUSTOMER" });
       dispatch({ type: "SET_STEP", payload: 2 });
+      setOpenModalConfirm(true);
     } else {
       setShowAddCustomerModal(true);
     }
   };
+
+  const closeModalConfirm = async() => {
+    setOpenModalConfirm(false);
+  };
+
+  const handleSetStartTime = () => {
+    var beforeAppointment = state.appointments[state.currentAppointmentIndex - 1];
+    var endTimeOfBeforeAppointment = '';
+    if (beforeAppointment?.subServices && beforeAppointment.subServices.length > 0) {
+      var lengthOfSubServices = beforeAppointment.subServices.length;
+      endTimeOfBeforeAppointment = beforeAppointment.subServices[lengthOfSubServices - 1].endTime;
+    } else if (beforeAppointment?.service) {
+      endTimeOfBeforeAppointment = beforeAppointment.service.endTime;
+    }
+    state.appointments[state.currentAppointmentIndex].startTime = endTimeOfBeforeAppointment;
+    setOpenModalConfirm(false);
+  }
 
   const handleAddCustomerConfirm = (addMore: boolean) => {
     if (addMore) {
@@ -145,6 +165,24 @@ const BookingPage = () => {
         onClose={() => setShowAddCustomerModal(false)}
         onConfirm={handleAddCustomerConfirm}
       />
+      <DialogConfirm
+        openModal={openModalConfirm}
+        message="Do you want the start time of this new service to coincide with the previous service?"
+        onClose={closeModalConfirm}
+      >
+        <button
+          onClick={() => setOpenModalConfirm(false)}
+          className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          {"Yes, I'm sure"}
+        </button>
+        <button
+          onClick={() => handleSetStartTime()}
+          className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          No, cancel
+        </button>
+      </DialogConfirm>
     </DefaultLayout>
   );
 };

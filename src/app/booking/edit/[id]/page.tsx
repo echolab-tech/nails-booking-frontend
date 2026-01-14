@@ -17,6 +17,7 @@ import { toast } from "react-toastify";
 import { getAppointmentById } from "@/services/appointment.service";
 import AddCustomerModal from "@/components/Booking/AddCustomerModal";
 import StepUpdateStarttime from "@/components/Booking/StepUpdateStarttime";
+import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
 
 const BookingPage = () => {
   const [openModal, setOpenModal] = useState<boolean>(false);
@@ -26,6 +27,7 @@ const BookingPage = () => {
   const [appointmentData, setAppointmentData] = useState<any | null>(null);
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
   const [bookingType, setBookingType] = useState<number>(0);
+  const [openModalConfirm, setOpenModalConfirm] = useState(false);
 
   useEffect(() => {
     dispatch({ type: "RESET_APPOINTMENT" });
@@ -90,6 +92,8 @@ const BookingPage = () => {
     if (addMore) {
       dispatch({ type: "ADD_APPOINTMENT_WITH_CURRENT_CUSTOMER" });
       dispatch({ type: "SET_STEP", payload: 2 });
+      setOpenModalConfirm(true);
+
     } else {
       setShowAddCustomerModal(true);
     }
@@ -114,6 +118,23 @@ const BookingPage = () => {
       router.push("/");
     }
   };
+
+  const closeModalConfirm = async() => {
+    setOpenModalConfirm(false);
+  };
+
+  const handleSetStartTime = () => {
+    var beforeAppointment = state.appointments[state.currentAppointmentIndex - 1];
+    var endTimeOfBeforeAppointment = '';
+    if (beforeAppointment?.subServices && beforeAppointment.subServices.length > 0) {
+      var lengthOfSubServices = beforeAppointment.subServices.length;
+      endTimeOfBeforeAppointment = beforeAppointment.subServices[lengthOfSubServices - 1].endTime;
+    } else if (beforeAppointment?.service) {
+      endTimeOfBeforeAppointment = beforeAppointment.service.endTime;
+    }
+    state.appointments[state.currentAppointmentIndex].startTime = endTimeOfBeforeAppointment;
+    setOpenModalConfirm(false);
+  }
 
   return (
     <DefaultLayout>
@@ -160,6 +181,24 @@ const BookingPage = () => {
         onClose={() => setShowAddCustomerModal(false)}
         onConfirm={handleAddCustomerConfirm}
       />
+      <DialogConfirm
+        openModal={openModalConfirm}
+        message="Do you want the start time of this new service to coincide with the previous service?"
+        onClose={closeModalConfirm}
+      >
+        <button
+          onClick={() => setOpenModalConfirm(false)}
+          className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          {"Yes, I'm sure"}
+        </button>
+        <button
+          onClick={() => handleSetStartTime()}
+          className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          No, cancel
+        </button>
+      </DialogConfirm>
     </DefaultLayout>
   );
 };
