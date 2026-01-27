@@ -106,25 +106,20 @@ const initialState: AppointmentState = {
 };
 
 function addMinutesToISOString(datetime: string, minutes: number): string {
-  const offset = datetime.substring(19); // +07:00
-
-  // Bỏ offset tạm để parse timestamp
-  const datetimeWithoutOffset = datetime.substring(0, 19);
-  const baseTimestamp = new Date(datetimeWithoutOffset).getTime();
-
-  // Cộng phút
-  const newTimestamp = baseTimestamp + minutes * 60 * 1000;
+  const date = new Date(datetime);
+  const newTimestamp = date.getTime() + minutes * 60 * 1000;
   const newDate = new Date(newTimestamp);
-
-  // Format lại: yyyy-MM-ddTHH:mm:ss
   const year = newDate.getFullYear();
   const month = String(newDate.getMonth() + 1).padStart(2, "0");
   const day = String(newDate.getDate()).padStart(2, "0");
   const hour = String(newDate.getHours()).padStart(2, "0");
   const minute = String(newDate.getMinutes()).padStart(2, "0");
   const second = String(newDate.getSeconds()).padStart(2, "0");
-
-  return `${year}-${month}-${day}T${hour}:${minute}:${second}${offset}`;
+  const offset = -newDate.getTimezoneOffset();
+  const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, "0");
+  const offsetMinutes = String(Math.abs(offset) % 60).padStart(2, "0");
+  const offsetSign = offset >= 0 ? "+" : "-";
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}${offsetSign}${offsetHours}:${offsetMinutes}`;
 }
 
 const AppointmentContext = createContext<
