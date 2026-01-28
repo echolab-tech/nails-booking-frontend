@@ -14,6 +14,13 @@ export const getServiceOptionShow = async (
   return await http.get<any>(`/service-option/${id}/${assistantId}`);
 };
 
+export const batchServiceOptionShow = async (
+  services: { id: number; type: string }[],
+  assistantId: string,
+): Promise<any> => {
+  return await http.post<any>(`/service-option/batch`, { services, assistantId });
+};
+
 export const getServiceByCategoryId = async (categoryId: string): Promise<any> => {
   return await http.get<any>(`services/category/${categoryId}/services`);
 };
