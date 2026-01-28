@@ -336,6 +336,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
         totalFee: Number(result?.data?.data?.total_fee),
         totalTime: result?.data?.data?.total_time,
         description: result?.data?.data?.description,
+        booking_type: result?.data?.data?.booking_type,
       });
       setEventStatus(result?.data?.data?.status);
       setSelectedCustomer(true);
@@ -501,87 +502,108 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setOpenBlockTime(false);
   };
 
+  const [openConfirmRequestTech, setOpenConfirmRequestTech] = useState(false);
+  const [pendingDropInfo, setPendingDropInfo] = useState<any>(null);
+  const [newAssistantName, setNewAssistantName] = useState<string>("");
+  const [draggedBookingId, setDraggedBookingId] = useState<string>("");
+
   const handleDrop = (info: any) => {
-    getAppointmentById(info.event._def.extendedProps?.booking_id).then(
-      (result) => {
+    const selectedAssistant = info.event._def.resourceIds[0];
+    const serviceOptionId = info.event._def.extendedProps?.serviceOptionId;
+
+    getServiceOptionShow(serviceOptionId, selectedAssistant)
+      .then((service) => {
+        setPendingDropInfo({ ...info, serviceData: service.data.data });
+        setNewAssistantName(info.resource?.title || "new assistant");
+        setDraggedBookingId(info.event._def.extendedProps?.booking_id);
+        setOpenConfirmRequestTech(true);
+      })
+      .catch((error) => {
+        toast.error(
+          error.response?.data?.message ||
+            "The assistant is not capable of performing this service.",
+        );
+        info.revert();
+      });
+  };
+
+  const handleConfirmRequestTech = (val: number) => {
+    setOpenConfirmRequestTech(false);
+    if (!pendingDropInfo) return;
+
+    const info = pendingDropInfo;
+    const serviceData = info.serviceData;
+    
+    getAppointmentById(info.event._def.extendedProps?.booking_id)
+      .then((result) => {
         formik.setValues({
           ...formik.values,
           customer: result?.data?.data?.customer,
           services: result?.data?.data?.bookingDetails,
           totalFee: Number(result?.data?.data?.total_fee),
           totalTime: result?.data?.data?.total_time,
+          booking_type: result?.data?.data?.booking_type,
         });
         setEventStatus(result?.data?.data?.status);
         setSelectedCustomer(true);
-        const { totalFee } = calculateTotals(
-          result?.data?.data?.bookingDetails,
-        );
-        setOriginalTotalFee(totalFee);
         const originalServices = result?.data?.data?.bookingDetails;
-        const selectedAssistant = info.event._def.resourceIds[0];
+        
+        const { price, assistant, time } = serviceData;
 
-        getServiceOptionShow(
-          info.event._def.extendedProps?.serviceOptionId,
-          selectedAssistant,
-        )
-          .then((service) => {
-            const { price, assistant, time } = service.data.data;
+        const existingOption = originalServices.find(
+          (option: any) =>
+            option.serviceOptionId ===
+            info.event._def.extendedProps?.serviceOptionId,
+        );
 
-            const existingOption = originalServices.find(
-              (option: any) =>
-                option.serviceOptionId ===
-                info.event._def.extendedProps?.serviceOptionId,
-            );
+        if (existingOption) {
+          const newStartTime = new Date(info.event.startStr);
+          const newEndTime = addMinutes(newStartTime, time);
+          existingOption.serviceOptionId = serviceData.serviceOptionId;
+          existingOption.price = price;
+          existingOption.time = time;
+          existingOption.assistant = {
+            id: assistant.id,
+            name: assistant.name,
+          };
+          existingOption.start = formatDateTimeWithOffset(newStartTime);
+          existingOption.end = formatDateTimeWithOffset(newEndTime);
+        }
 
-            if (existingOption) {
-              const newStartTime = new Date(info.event.startStr);
-              const newEndTime = addMinutes(newStartTime, time);
-              existingOption.serviceOptionId = service.data.data.serviceOptionId;
-              existingOption.price = price;
-              existingOption.time = time;
-              existingOption.assistant = {
-                id: assistant.id,
-                name: assistant.name,
-              };
-              existingOption.start = formatDateTimeWithOffset(newStartTime);
-              existingOption.end = formatDateTimeWithOffset(newEndTime);
-            }
+        const { totalTime, totalFee } = calculateTotals(originalServices);
+        let values: any = {
+          customer: result?.data?.data?.customer,
+          services: [...originalServices],
+          tips: [],
+          paymentMethod: "",
+          description: "",
+          payTotal: 0,
+          totalFee: totalFee,
+          totalTime: totalTime,
+          booking_type: val,
+        };
 
-            const { totalTime, totalFee } = calculateTotals(originalServices);
-            let values = {
-              customer: result?.data?.data?.customer,
-              services: [...originalServices],
-              tips: [],
-              paymentMethod: "",
-              description: "",
-              payTotal: 0,
-              totalFee: totalFee,
-              totalTime: totalTime,
-            };
-            updateAppointment(
-              info.event._def.extendedProps.booking_id,
-              values,
-            )
-              .then((result) => {
-                handleSuccess("Appointment updated");
-              })
-              .catch((error) => {
-                toast.error("Failed to update appointment");
-                info.revert();
-              });
+        updateAppointment(info.event._def.extendedProps.booking_id, values)
+          .then((result) => {
+            handleSuccess("Appointment updated");
           })
           .catch((error) => {
-            toast.error(
-              error.response?.data?.message ||
-                "The assistant is not capable of performing this service.",
-            );
+            toast.error("Failed to update appointment");
             info.revert();
           });
-      },
-    ).catch((error) => {
-      console.error(error);
-      info.revert();
-    });
+      })
+      .catch((error) => {
+        console.error(error);
+        info.revert();
+      });
+  };
+
+  const handleCancelRequestTech = () => {  
+      setOpenConfirmRequestTech(false);
+      if (pendingDropInfo) {
+          pendingDropInfo.revert();
+      }
+      setPendingDropInfo(null);
   };
 
   const handleShowService = () => {
@@ -736,25 +758,57 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleAssistantChange = async (e: any) => {
-    const selectedAssistant = e.target.value;
-    const result = await getServiceOptionShow(
-      serviceOptionUpdateId,
-      selectedAssistant,
-    );
-    setServiceOptionUpdateIdNew(result.data.data.serviceOptionId);
-    const { price, assistant, time } = result.data.data;
-    setBookingDetail((prevDetail: any) => ({
-      ...prevDetail,
-      price: price,
-      time: time,
-      assistant: {
-        id: assistant?.id,
-        name: assistant?.name,
-      },
-    }));
+    try {
+      const selectedAssistant = e.target.value;
+      const result = await getServiceOptionShow(
+        serviceOptionUpdateId,
+        selectedAssistant,
+      );
+      setServiceOptionUpdateIdNew(result.data.data.serviceOptionId);
+      const { price, assistant, time } = result.data.data;
+      setBookingDetail((prevDetail: any) => ({
+        ...prevDetail,
+        price: price,
+        time: time,
+        assistant: {
+          id: assistant?.id,
+          name: assistant?.name,
+        },
+      }));
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message ||
+          "The assistant is not capable of performing this service.",
+      );
+    }
   };
 
+  const [openConfirmRequestTechDrawer, setOpenConfirmRequestTechDrawer] = useState(false);
+
   const handleUpdateAssistant = () => {
+    const existingOption = formik.values.services.find(
+      (option) => option.serviceOptionId === serviceOptionUpdateId,
+    );
+
+    if (existingOption && bookingDetail?.assistant?.id !== existingOption?.assistant?.id) {
+       setNewAssistantName(bookingDetail?.assistant?.name || "new assistant");
+       setOpenConfirmRequestTechDrawer(true);
+       return;
+    }
+    
+    performUpdateAssistant(null); 
+  };
+
+  const handleConfirmRequestTechDrawer = (val: number) => {
+      setOpenConfirmRequestTechDrawer(false);
+      performUpdateAssistant(val);
+  };
+  
+  const handleCancelRequestTechDrawer = () => {
+      setOpenConfirmRequestTechDrawer(false);
+  };
+
+  const performUpdateAssistant = (bookingTypeVal: number | null) => {
     const { price, assistant, time } = bookingDetail;
     const existingOption = formik.values.services.find(
       (option) => option.serviceOptionId === serviceOptionUpdateId,
@@ -774,6 +828,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
       // Cập nhật lại giá trị trong Formik
       formik.setFieldValue("services", [...formik.values.services]);
+
+      if (bookingTypeVal !== null) {
+          formik.setFieldValue("booking_type", bookingTypeVal);
+      }
 
       // Tính toán sau khi đã cập nhật danh sách dịch vụ
       const { totalTime, totalFee } = calculateTotals(formik.values.services);
@@ -1319,6 +1377,55 @@ const FullCalenDarCustom: React.FC<any> = () => {
           </Modal.Body>
         </Modal>
       )}
+
+      {/* Confirmation Dialog for Request Technician on Drag & Drop */}
+      <DialogConfirm
+        openModal={openConfirmRequestTech}
+        message={`Do you want to request this technician (${newAssistantName})?`}
+        onClose={handleCancelRequestTech}
+      >
+        <div className="flex flex-col gap-3 w-full">
+            <div className="flex gap-4 justify-center">
+                <button
+                    onClick={() => handleConfirmRequestTech(1)}
+                    className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90 min-w-[100px]"
+                >
+                    Yes
+                </button>
+                <button
+                    onClick={() => handleConfirmRequestTech(0)}
+                    className="justify-center rounded bg-zinc-800 p-3 font-medium text-gray hover:bg-opacity-90 min-w-[100px]"
+                >
+                    No
+                </button>
+            </div>
+        </div>
+      </DialogConfirm>
+
+      {/* Confirmation Dialog for Request Technician in Drawer */}
+      <DialogConfirm
+        openModal={openConfirmRequestTechDrawer}
+        message={`Do you want to request this technician (${newAssistantName})?`}
+        onClose={handleCancelRequestTechDrawer}
+      >
+        <div className="flex flex-col gap-3 w-full">
+            <div className="flex gap-4 justify-center">
+                <button
+                    onClick={() => handleConfirmRequestTechDrawer(1)}
+                    className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90 min-w-[100px]"
+                >
+                    Yes
+                </button>
+                <button
+                    onClick={() => handleConfirmRequestTechDrawer(0)}
+                    className="justify-center rounded bg-zinc-800 p-3 font-medium text-gray hover:bg-opacity-90 min-w-[100px]"
+                >
+                    No
+                </button>
+            </div>
+        </div>
+      </DialogConfirm>
+
       <Drawer
         className="max-h-dvh w-full shadow-2xl lg:w-[50%] xl:w-[50%]"
         open={openBooking}
