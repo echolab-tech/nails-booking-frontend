@@ -17,6 +17,7 @@ export type BookingFormType = {
   totalFee: number;
   totalTime: number;
   payTotal: number;
+  booking_type?: number;
 };
 
 type serviceSelectType = {
