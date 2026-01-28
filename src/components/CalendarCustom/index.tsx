@@ -523,51 +523,65 @@ const FullCalenDarCustom: React.FC<any> = () => {
         getServiceOptionShow(
           info.event._def.extendedProps?.serviceOptionId,
           selectedAssistant,
-        ).then((service) => {
-          const { price, assistant, time } = service.data.data;
+        )
+          .then((service) => {
+            const { price, assistant, time } = service.data.data;
 
-          // Tìm kiếm service option
-          const existingOption = originalServices.find(
-            (option: any) =>
-              option.serviceOptionId ===
-              info.event._def.extendedProps?.serviceOptionId,
-          );
+            const existingOption = originalServices.find(
+              (option: any) =>
+                option.serviceOptionId ===
+                info.event._def.extendedProps?.serviceOptionId,
+            );
 
-          if (existingOption) {
-            const newStartTime = new Date(info.event.startStr);
-            const newEndTime = addMinutes(newStartTime, time);
-            // Nếu tìm thấy serviceOption, cập nhật các giá trị
-            existingOption.serviceOptionId = service.data.data.serviceOptionId;
-            existingOption.price = price;
-            existingOption.time = time;
-            existingOption.assistant = {
-              id: assistant.id,
-              name: assistant.name,
+            if (existingOption) {
+              const newStartTime = new Date(info.event.startStr);
+              const newEndTime = addMinutes(newStartTime, time);
+              existingOption.serviceOptionId = service.data.data.serviceOptionId;
+              existingOption.price = price;
+              existingOption.time = time;
+              existingOption.assistant = {
+                id: assistant.id,
+                name: assistant.name,
+              };
+              existingOption.start = formatDateTimeWithOffset(newStartTime);
+              existingOption.end = formatDateTimeWithOffset(newEndTime);
+            }
+
+            const { totalTime, totalFee } = calculateTotals(originalServices);
+            let values = {
+              customer: result?.data?.data?.customer,
+              services: [...originalServices],
+              tips: [],
+              paymentMethod: "",
+              description: "",
+              payTotal: 0,
+              totalFee: totalFee,
+              totalTime: totalTime,
             };
-            existingOption.start = formatDateTimeWithOffset(newStartTime);
-            existingOption.end = formatDateTimeWithOffset(newEndTime);
-          }
-
-          const { totalTime, totalFee } = calculateTotals(originalServices);
-          let values = {
-            customer: result?.data?.data?.customer,
-            services: [...originalServices],
-            tips: [],
-            paymentMethod: "",
-            description: "",
-            payTotal: 0,
-            totalFee: totalFee,
-            totalTime: totalTime,
-          };
-          updateAppointment(
-            info.event._def.extendedProps.booking_id,
-            values,
-          ).then((result) => {
-            handleSuccess("Appointment updated");
+            updateAppointment(
+              info.event._def.extendedProps.booking_id,
+              values,
+            )
+              .then((result) => {
+                handleSuccess("Appointment updated");
+              })
+              .catch((error) => {
+                toast.error("Failed to update appointment");
+                info.revert();
+              });
+          })
+          .catch((error) => {
+            toast.error(
+              error.response?.data?.message ||
+                "The assistant is not capable of performing this service.",
+            );
+            info.revert();
           });
-        });
       },
-    );
+    ).catch((error) => {
+      console.error(error);
+      info.revert();
+    });
   };
 
   const handleShowService = () => {
