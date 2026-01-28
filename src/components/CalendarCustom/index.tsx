@@ -26,13 +26,26 @@ import { GoInbox } from "react-icons/go";
 import { CustomerType } from "@/types/customer";
 import { getAllCustomer, getStatus } from "@/services/customer.service";
 import { addMinutes, format } from "date-fns";
-import { toZonedTime, formatInTimeZone } from "date-fns-tz";
 import { useRouter } from "next/navigation";
 import { useAppointment } from "@/contexts/AppointmentContext";
 import { ImUserTie } from "react-icons/im";
 import { FaUserTimes } from "react-icons/fa";
 import tippy from "tippy.js";
 import "tippy.js/dist/tippy.css";
+
+const formatDateTimeWithOffset = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+  const second = String(date.getSeconds()).padStart(2, "0");
+  const offset = -date.getTimezoneOffset();
+  const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, "0");
+  const offsetMinutes = String(Math.abs(offset) % 60).padStart(2, "0");
+  const offsetSign = offset >= 0 ? "+" : "-";
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}${offsetSign}${offsetHours}:${offsetMinutes}`;
+};
 
 import {
   getServiceOptionShow,
@@ -489,8 +502,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleDrop = (info: any) => {
-    const timeZone = "Asia/Ho_Chi_Minh";
-
     getAppointmentById(info.event._def.extendedProps?.booking_id).then(
       (result) => {
         formik.setValues({
@@ -512,61 +523,65 @@ const FullCalenDarCustom: React.FC<any> = () => {
         getServiceOptionShow(
           info.event._def.extendedProps?.serviceOptionId,
           selectedAssistant,
-        ).then((service) => {
-          const { price, assistant, time } = service.data.data;
+        )
+          .then((service) => {
+            const { price, assistant, time } = service.data.data;
 
-          // Tìm kiếm service option
-          const existingOption = originalServices.find(
-            (option: any) =>
-              option.serviceOptionId ===
-              info.event._def.extendedProps?.serviceOptionId,
-          );
+            const existingOption = originalServices.find(
+              (option: any) =>
+                option.serviceOptionId ===
+                info.event._def.extendedProps?.serviceOptionId,
+            );
 
-          if (existingOption) {
-            const lastServiceEndTime = new Date(info.event.startStr);
+            if (existingOption) {
+              const newStartTime = new Date(info.event.startStr);
+              const newEndTime = addMinutes(newStartTime, time);
+              existingOption.serviceOptionId = service.data.data.serviceOptionId;
+              existingOption.price = price;
+              existingOption.time = time;
+              existingOption.assistant = {
+                id: assistant.id,
+                name: assistant.name,
+              };
+              existingOption.start = formatDateTimeWithOffset(newStartTime);
+              existingOption.end = formatDateTimeWithOffset(newEndTime);
+            }
 
-            const newStartTime = toZonedTime(lastServiceEndTime, timeZone);
-            const newEndTime = addMinutes(newStartTime, time);
-            // Nếu tìm thấy serviceOption, cập nhật các giá trị
-            existingOption.serviceOptionId = service.data.data.serviceOptionId;
-            existingOption.price = price;
-            existingOption.time = time;
-            existingOption.assistant = {
-              id: assistant.id,
-              name: assistant.name,
+            const { totalTime, totalFee } = calculateTotals(originalServices);
+            let values = {
+              customer: result?.data?.data?.customer,
+              services: [...originalServices],
+              tips: [],
+              paymentMethod: "",
+              description: "",
+              payTotal: 0,
+              totalFee: totalFee,
+              totalTime: totalTime,
             };
-            existingOption.end = formatInTimeZone(
-              newEndTime,
-              timeZone,
-              "yyyy-MM-dd HH:mm:ssXXX",
+            updateAppointment(
+              info.event._def.extendedProps.booking_id,
+              values,
+            )
+              .then((result) => {
+                handleSuccess("Appointment updated");
+              })
+              .catch((error) => {
+                toast.error("Failed to update appointment");
+                info.revert();
+              });
+          })
+          .catch((error) => {
+            toast.error(
+              error.response?.data?.message ||
+                "The assistant is not capable of performing this service.",
             );
-            existingOption.start = formatInTimeZone(
-              newStartTime,
-              timeZone,
-              "yyyy-MM-dd HH:mm:ssXXX",
-            );
-          }
-
-          const { totalTime, totalFee } = calculateTotals(originalServices);
-          let values = {
-            customer: result?.data?.data?.customer,
-            services: [...originalServices],
-            tips: [],
-            paymentMethod: "",
-            description: "",
-            payTotal: 0,
-            totalFee: totalFee,
-            totalTime: totalTime,
-          };
-          updateAppointment(
-            info.event._def.extendedProps.booking_id,
-            values,
-          ).then((result) => {
-            handleSuccess("Appointment updated");
+            info.revert();
           });
-        });
       },
-    );
+    ).catch((error) => {
+      console.error(error);
+      info.revert();
+    });
   };
 
   const handleShowService = () => {
@@ -607,8 +622,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
         return;
       }
 
-      const timeZone = "Asia/Ho_Chi_Minh";
-
       // Nếu không có dịch vụ nào trước đó, sử dụng startTime
       const lastServiceEndTime =
         formik.values.services.length > 0
@@ -618,7 +631,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
           : new Date(startTime);
 
       // Thời gian bắt đầu của dịch vụ mới là thời gian kết thúc của dịch vụ cuối cùng
-      const newStartTime = toZonedTime(lastServiceEndTime, timeZone);
+      const newStartTime = lastServiceEndTime;
       const newEndTime = addMinutes(newStartTime, time);
 
       const newService = {
@@ -631,12 +644,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
           id: assistant.id,
           name: assistant.name,
         },
-        start: formatInTimeZone(
-          newStartTime,
-          timeZone,
-          "yyyy-MM-dd HH:mm:ssXXX",
-        ),
-        end: formatInTimeZone(newEndTime, timeZone, "yyyy-MM-dd HH:mm:ssXXX"),
+        start: formatDateTimeWithOffset(newStartTime),
+        end: formatDateTimeWithOffset(newEndTime),
       };
 
       // Cập nhật danh sách dịch vụ trong formik
@@ -746,27 +755,22 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleUpdateAssistant = () => {
-    const timeZone = "Asia/Ho_Chi_Minh";
     const { price, assistant, time } = bookingDetail;
     const existingOption = formik.values.services.find(
       (option) => option.serviceOptionId === serviceOptionUpdateId,
     );
-    const newStartTime = toZonedTime(bookingDetail.start, timeZone);
+    const newStartTime = new Date(bookingDetail.start);
     const newEndTime = addMinutes(newStartTime, time);
     if (existingOption) {
       // Cập nhật các giá trị của existingOption với newService
       existingOption.serviceOptionId = serviceOptionUpdateIdNew;
       existingOption.price = price;
       existingOption.time = time;
-      (existingOption.end = formatInTimeZone(
-        newEndTime,
-        timeZone,
-        "yyyy-MM-dd HH:mm:ssXXX",
-      )),
-        (existingOption.assistant = {
-          id: assistant.id,
-          name: assistant.name,
-        });
+      existingOption.end = formatDateTimeWithOffset(newEndTime);
+      existingOption.assistant = {
+        id: assistant.id,
+        name: assistant.name,
+      };
 
       // Cập nhật lại giá trị trong Formik
       formik.setFieldValue("services", [...formik.values.services]);
@@ -1234,6 +1238,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   return (
     <>
       <FullCalendar
+        timeZone="local"
         initialDate={initialViewDate}
         eventBackgroundColor="#06b6d4"
         eventBorderColor="#06b6d4"
