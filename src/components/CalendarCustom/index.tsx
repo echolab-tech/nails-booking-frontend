@@ -489,7 +489,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleDrop = (info: any) => {
-    const timeZone = "Asia/Ho_Chi_Minh";
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     getAppointmentById(info.event._def.extendedProps?.booking_id).then(
       (result) => {
@@ -607,7 +607,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
         return;
       }
 
-      const timeZone = "Asia/Ho_Chi_Minh";
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
       // Nếu không có dịch vụ nào trước đó, sử dụng startTime
       const lastServiceEndTime =
@@ -746,7 +746,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleUpdateAssistant = () => {
-    const timeZone = "Asia/Ho_Chi_Minh";
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const { price, assistant, time } = bookingDetail;
     const existingOption = formik.values.services.find(
       (option) => option.serviceOptionId === serviceOptionUpdateId,
