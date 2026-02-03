@@ -2,6 +2,7 @@ import { AssistantAddForm } from "@/types/AssistantAddForm";
 import { http } from "../lib/http";
 import { AssistantEditForm } from "@/types/AssistantEditFrom";
 import { AssistantSearchForm } from "@/types/AssitantSearch";
+
 export const assistants = async (values: AssistantAddForm): Promise<any> => {
   return await http.post<any>("/assistants", values, {
     headers: {
@@ -35,7 +36,7 @@ export const assistantUpdate = async (
 ): Promise<any> => {
   return await http.post<any>(`/assistants/${id}`, values, {
     headers: {
-      "Content-Type": "mumultipart/form-data",
+      "Content-Type": "multipart/form-data",
     },
   });
 };

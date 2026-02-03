@@ -6,5 +6,7 @@ export type AssistantEditForm = {
     address: string,
     avatar: any | null,
     birthday:  string | null,
+    increase: number | null,
+    reduce: number | null,
     services:[] | null,
 }
