@@ -87,7 +87,7 @@ type AppointmentAction =
         isChecked: boolean;
       };
     }
-  | { type: "SET_ASSISTANT"; payload: Assistant }
+  | { type: "SET_ASSISTANT"; payload: Assistant | null }
   | { type: "SET_SERVICE_CATEGORY"; payload: ServiceCategory }
   | { type: "ADD_APPOINTMENT" }
   | { type: "SET_APPOINTMENT_INDEX"; payload: number }
@@ -95,7 +95,8 @@ type AppointmentAction =
   | { type: "ADD_APPOINTMENT_WITH_CURRENT_CUSTOMER" }
   | { type: "SET_APPOINTMENT_ID_FOR_UPDATE"; payload: number }
   | { type: "UPDATE_SELECTED_TIME"; payload: string }
-  | { type: "CLEAR_APPOINTMENT_BY_STEP"; payload: number };
+  | { type: "CLEAR_APPOINTMENT_BY_STEP"; payload: number }
+  | { type: "SET_APPOINTMENT_START_TIME"; payload: string };
 
 const initialState: AppointmentState = {
   currentStep: 1,
@@ -385,6 +386,15 @@ function appointmentReducer(
           const { [key]: _, ...rest } = apt;
           return rest;
         }),
+      };
+    case "SET_APPOINTMENT_START_TIME":
+      return {
+        ...state,
+        appointments: state.appointments.map((apt, index) =>
+          index === state.currentAppointmentIndex
+            ? { ...apt, startTime: action.payload }
+            : apt,
+        ),
       };
     default:
       return state;

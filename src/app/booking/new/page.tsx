@@ -89,15 +89,15 @@ const BookingPage = () => {
   };
 
   const handleSetStartTime = () => {
-    var beforeAppointment = state.appointments[state.currentAppointmentIndex - 1];
-    var endTimeOfBeforeAppointment = '';
+    const beforeAppointment = state.appointments[state.currentAppointmentIndex - 1];
+    let endTimeOfBeforeAppointment = '';
     if (beforeAppointment?.subServices && beforeAppointment.subServices.length > 0) {
-      var lengthOfSubServices = beforeAppointment.subServices.length;
+      const lengthOfSubServices = beforeAppointment.subServices.length;
       endTimeOfBeforeAppointment = beforeAppointment.subServices[lengthOfSubServices - 1].endTime;
     } else if (beforeAppointment?.service) {
       endTimeOfBeforeAppointment = beforeAppointment.service.endTime;
     }
-    state.appointments[state.currentAppointmentIndex].startTime = endTimeOfBeforeAppointment;
+    dispatch({ type: "SET_APPOINTMENT_START_TIME", payload: endTimeOfBeforeAppointment });
     setOpenModalConfirm(false);
   }
 
@@ -124,7 +124,7 @@ const BookingPage = () => {
   return (
     <DefaultLayout>
       <div className="flex w-full flex-col items-center">
-        <Stepper step={state.currentStep} />
+        <Stepper step={state.currentStep} isEdit={false} />
         {state.currentStep === 1 && (
           <StepAddCustomer
             handleBackToCalendar={handleBackToCalendar}
@@ -184,7 +184,7 @@ const BookingPage = () => {
           onClick={() => handleSetStartTime()}
           className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
         >
-          No, cancel
+          No
         </button>
       </DialogConfirm>
     </DefaultLayout>

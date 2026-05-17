@@ -9,13 +9,11 @@ import { useAppointment } from "@/contexts/AppointmentContext";
 interface StepAddSummaryServiceProps {
   handleNext: () => void;
   handleBack: () => void;
-  isEdit: boolean;
 }
 
 const StepAddSummaryService = ({
   handleNext,
   handleBack,
-  isEdit,
 }: StepAddSummaryServiceProps) => {
   const [selectedButton, setSelectedButton] = useState<string | null>(null);
   const [serviceSummary, setServiceSummary] = useState<ServiceSummaryType[]>(
@@ -53,8 +51,6 @@ const StepAddSummaryService = ({
     handleNext();
   };
 
-  const serviceSummaryId = state.appointments[state.currentAppointmentIndex]?.serviceSummary?.id;
-
   return (
     <div className="w-full space-y-8 rounded-lg bg-white p-10 shadow-lg">
       <ApointmentOverview />
@@ -80,10 +76,7 @@ const StepAddSummaryService = ({
                 selectedButton === item.name
                   ? "bg-primary-light border-primary text-primary"
                   : "text-gray-700 border-gray-200 hover:border-primary"
-                }${
-                  serviceSummaryId === item.id ? 'opacity-50 cursor-not-allowed' : ''
               }`}
-              disabled={serviceSummaryId === item.id}
             >
               <span className="text-lg font-medium">{item.name}</span>
             </button>

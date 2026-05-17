@@ -49,7 +49,8 @@ import {
   cancelAppointmentByGroup,
   cancelOnlyServiceOfCustomer,
   deleteAppointment,
-  deleteBookingDetail
+  deleteBookingDetail,
+  dragBookingDetail,
 } from "@/services/appointment.service";
 import { toast } from "react-toastify";
 import { BlockTimeType } from "@/types/BlockTime";
@@ -95,6 +96,7 @@ interface SearchServiceOptionValues {
 
 const FullCalenDarCustom: React.FC<any> = () => {
   const router = useRouter();
+  const calendarRef = useRef<any>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [resources, setResources] = useState<ResourceType[]>([]);
   const [assistantId, setAssistantId] = useState<string>("");
@@ -138,6 +140,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [showCustomTitle, setShowCustomTitle] = useState<boolean>(false);
   const [calendarStartDate, setCalendarStartDate] = useState<string>("");
   const [calendarEndDate, setCalendarEndDate] = useState<string>("");
+  const [selectedBookingDate, setSelectedBookingDate] = useState<string | null>(null);
+  const [navigateToDate, setNavigateToDate] = useState<string | null>(null);
 
   const [serviceOptionUpdateIdNew, setServiceOptionUpdateIdNew] = useState<
     any | null
@@ -153,6 +157,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [detailId, setDetailId] = useState<string>("");
   const [otherServices, setOtherServices] = useState<any[]>([]);
   const [groupId, setGroupId] = useState<number | null>(null);
+  // Highlight state after a drag: same-customer → neon purple, group members → light purple
+  const [dragHighlight, setDragHighlight] = useState<{
+    customerId: number | null;
+    bookingId: number | null;
+    groupId: number | null;
+  }>({ customerId: null, bookingId: null, groupId: null });
   const [bookingDetailsId, setBookingDetailsId] = useState<number | null>(null);
   const { dispatch } = useAppointment();
 
@@ -167,6 +177,15 @@ const FullCalenDarCustom: React.FC<any> = () => {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Navigate to the selected date after booking success
+  useEffect(() => {
+    if (navigateToDate && calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      calendarApi.gotoDate(new Date(navigateToDate));
+      setNavigateToDate(null);
+    }
+  }, [navigateToDate]);
 
   const bookingStatus = [
     {
@@ -219,20 +238,50 @@ const FullCalenDarCustom: React.FC<any> = () => {
     router.push(`/booking/new`);
   };
 
-  const fetchAllData = async (start: string, end: string) => {
+  const fetchAllData = async (
+    start: string,
+    end: string,
+    highlight?: { customerId: number | null; bookingId: number | null; groupId: number | null },
+  ) => {
     try {
-      // Đợi cả hai API call hoàn thành
       const [appointmentsResponse, blockTimesResponse] = await Promise.all([
         getAppointmentByDate(start, end),
         getBlockTimes(start, end),
       ]);
 
-      // Xử lý dữ liệu từ cả hai API
+      // Use explicitly-passed highlight (e.g. from handleDrop) or fall back to current state
+      const hl = highlight ?? dragHighlight;
+
       const appointments = appointmentsResponse?.data?.data.map(
-        (appointment: any) => ({
-          ...appointment,
-          type: "appointment",
-        }),
+        (appointment: any) => {
+          let overrideColor: string | undefined;
+
+          if (hl.customerId !== null) {
+            const apptCustomerId = appointment?.booking?.customer?.id;
+            const apptBookingId = appointment?.booking_id;
+            const apptGroupId = appointment?.booking?.booking_group_id;
+
+            if (apptCustomerId === hl.customerId && apptBookingId !== hl.bookingId) {
+              // Same customer, different booking → neon purple
+              overrideColor = "#bf00ff";
+            } else if (
+              hl.groupId !== null &&
+              apptGroupId === hl.groupId &&
+              apptCustomerId !== hl.customerId
+            ) {
+              // Different customer, same group → light purple
+              overrideColor = "#d9b3ff";
+            }
+          }
+
+          return {
+            ...appointment,
+            type: "appointment",
+            ...(overrideColor
+              ? { backgroundColor: overrideColor, borderColor: overrideColor }
+              : {}),
+          };
+        },
       );
 
       const blockTimes = blockTimesResponse?.data?.data.map(
@@ -242,11 +291,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
         }),
       );
 
-      // Gộp hai mảng thành một mảng events
-      const combinedEvents = [...appointments, ...blockTimes];
-
-      // Cập nhật lại events
-      setEvents(combinedEvents);
+      setEvents([...appointments, ...blockTimes]);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -298,6 +343,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const handleEventClick = (arg: any) => {
     const eventType = arg?.event?.extendedProps?.type;
     console.log(eventType, "eventType");
+    setDragHighlight({ customerId: null, bookingId: null, groupId: null });
     setStartTime(arg.event.startStr);
     if (eventType == "blocktime") {
       setOpenBlockTime(true);
@@ -340,6 +386,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleSelectDate = (info: any) => {
+    setDragHighlight({ customerId: null, bookingId: null, groupId: null });
     const newEvent = {
       id: Date.now().toString(),
       title: "",
@@ -354,6 +401,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setOpenSelect(true);
     setStartTime(info.startStr);
     setEndTime(info.endStr);
+    // Save the selected date for booking
+    setSelectedBookingDate(info.startStr);
   };
 
   const handleResize = (info: any) => {
@@ -488,85 +537,61 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setOpenBlockTime(false);
   };
 
-  const handleDrop = (info: any) => {
+  const handleDrop = async (info: any) => {
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const bookingDetailId = info.event.id;
+    const serviceType = info.event._def.extendedProps?.serviceType;
 
-    getAppointmentById(info.event._def.extendedProps?.booking_id).then(
-      (result) => {
-        formik.setValues({
-          ...formik.values,
-          customer: result?.data?.data?.customer,
-          services: result?.data?.data?.bookingDetails,
-          totalFee: Number(result?.data?.data?.total_fee),
-          totalTime: result?.data?.data?.total_time,
-        });
-        setEventStatus(result?.data?.data?.status);
-        setSelectedCustomer(true);
-        const { totalFee } = calculateTotals(
-          result?.data?.data?.bookingDetails,
-        );
-        setOriginalTotalFee(totalFee);
-        const originalServices = result?.data?.data?.bookingDetails;
-        const selectedAssistant = info.event._def.resourceIds[0];
+    // Chỉ cho phép drag service chính; service phụ tự động đi theo service chính
+    if (serviceType === "sub_service") {
+      info.revert();
+      toast.warning("Sub-services automatically follow their main service. Please drag the main service instead.");
+      return;
+    }
 
-        getServiceOptionShow(
-          info.event._def.extendedProps?.serviceOptionId,
-          selectedAssistant,
-        ).then((service) => {
-          const { price, assistant, time } = service.data.data;
-
-          // Tìm kiếm service option
-          const existingOption = originalServices.find(
-            (option: any) =>
-              option.serviceOptionId ===
-              info.event._def.extendedProps?.serviceOptionId,
-          );
-
-          if (existingOption) {
-            const lastServiceEndTime = new Date(info.event.startStr);
-
-            const newStartTime = toZonedTime(lastServiceEndTime, timeZone);
-            const newEndTime = addMinutes(newStartTime, time);
-            // Nếu tìm thấy serviceOption, cập nhật các giá trị
-            existingOption.serviceOptionId = service.data.data.serviceOptionId;
-            existingOption.price = price;
-            existingOption.time = time;
-            existingOption.assistant = {
-              id: assistant.id,
-              name: assistant.name,
-            };
-            existingOption.end = formatInTimeZone(
-              newEndTime,
-              timeZone,
-              "yyyy-MM-dd HH:mm:ssXXX",
-            );
-            existingOption.start = formatInTimeZone(
-              newStartTime,
-              timeZone,
-              "yyyy-MM-dd HH:mm:ssXXX",
-            );
-          }
-
-          const { totalTime, totalFee } = calculateTotals(originalServices);
-          let values = {
-            customer: result?.data?.data?.customer,
-            services: [...originalServices],
-            tips: [],
-            paymentMethod: "",
-            description: "",
-            payTotal: 0,
-            totalFee: totalFee,
-            totalTime: totalTime,
-          };
-          updateAppointment(
-            info.event._def.extendedProps.booking_id,
-            values,
-          ).then((result) => {
-            handleSuccess("Appointment updated");
-          });
-        });
-      },
+    const newAssistantId = info.event._def.resourceIds[0];
+    const newStartTime = formatInTimeZone(
+      new Date(info.event.startStr),
+      timeZone,
+      "yyyy-MM-dd HH:mm:ssXXX"
     );
+
+    try {
+      const response = await dragBookingDetail({
+        booking_detail_id: bookingDetailId,
+        new_assistant_id: newAssistantId,
+        new_start_time: newStartTime,
+      });
+
+      const { reassigned_bookings, pushed_down_bookings, dragged_booking } = response.data;
+
+      if (reassigned_bookings?.length > 0) {
+        toast.info(
+          `${reassigned_bookings.length} booking(s) were automatically reassigned to available technicians.`
+        );
+      }
+
+      if (pushed_down_bookings?.length > 0) {
+        const details = pushed_down_bookings
+          .map((p: any) => `Booking #${p.booking_id} delayed ${p.delay_minutes} min`)
+          .join("; ");
+        toast.warning(`No available technician — some bookings were pushed down and marked red: ${details}`);
+      }
+
+      toast.success("Service moved successfully");
+
+      const highlight = {
+        customerId: dragged_booking?.customer_id ?? null,
+        bookingId: dragged_booking?.booking_id ?? null,
+        groupId: dragged_booking?.booking_group_id ?? null,
+      };
+      setDragHighlight(highlight);
+      fetchAllData(calendarStartDate, calendarEndDate, highlight);
+    } catch (error: any) {
+      console.error("Error moving service:", error);
+      toast.error(error?.response?.data?.message || "Failed to move service");
+      refreshData();
+    }
   };
 
   const handleShowService = () => {
@@ -851,10 +876,15 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const handleSuccess = (message: string) => {
     setIsSubmit(false);
     setOpenBooking(false);
-    refreshData();
     setSelectedCustomer(false);
     formik.resetForm();
     toast.success(message);
+
+    // Set the date to navigate to after refresh
+    if (selectedBookingDate) {
+      setNavigateToDate(selectedBookingDate);
+    }
+    refreshData();
   };
 
   const handleCloseDelay = () => {
@@ -1153,7 +1183,6 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
   const handleDatesSet = (dateInfo: any) => {
     const { start, end } = dateInfo;
-    localStorage.setItem("CALENDAR_VIEW_DATE", start.toISOString());
     setCalendarStartDate(format(start, "dd-MM-yyyy"));
     setCalendarEndDate(format(end, "dd-MM-yyyy"));
     fetchAllData(format(start, "dd-MM-yyyy"), format(end, "dd-MM-yyyy"));
@@ -1228,12 +1257,13 @@ const FullCalenDarCustom: React.FC<any> = () => {
       </div>
     );
 
-  const initialViewDate =
-    localStorage.getItem("CALENDAR_VIEW_DATE") || new Date().toISOString();
+  // Always show today's date on initial load
+  const initialViewDate = new Date().toISOString();
 
   return (
     <>
       <FullCalendar
+        ref={calendarRef}
         initialDate={initialViewDate}
         eventBackgroundColor="#06b6d4"
         eventBorderColor="#06b6d4"
@@ -1251,7 +1281,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
         }}
         eventAllow={(dropInfo, draggedEvent) => {
           const now = new Date();
-          return dropInfo.start >= now;
+          if (dropInfo.start < now) return false;
+          // Sub-services follow their main service automatically; prevent independent dragging
+          if (draggedEvent?.extendedProps?.serviceType === "sub_service") return false;
+          return true;
         }}
         plugins={[
           resourceTimeGridPlugin,
