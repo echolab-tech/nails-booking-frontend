@@ -64,6 +64,8 @@ import PaymentButtonGrid from "../PaymentButtonGrid";
 import CashPaymentDialog from "../CashPaymentDialog";
 import DelayNotifyModal from "../DelayNotifyModal";
 import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
+import { useAuth } from "@/providers/AuthProvider";
+import { hasPermission } from "@/lib/staff-access";
 
 const generateTimeOptions = () => {
   const timeOptions = [];
@@ -95,6 +97,10 @@ interface SearchServiceOptionValues {
 }
 
 const FullCalenDarCustom: React.FC<any> = () => {
+  const auth = useAuth();
+  const isManager = hasPermission(auth?.user, "*");
+  const canManage = hasPermission(auth?.user, "appointments.manage");
+  const canCheckout = hasPermission(auth?.user, "appointments.checkout");
   const router = useRouter();
   const calendarRef = useRef<any>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -346,7 +352,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setDragHighlight({ customerId: null, bookingId: null, groupId: null });
     setStartTime(arg.event.startStr);
     if (eventType == "blocktime") {
-      setOpenBlockTime(true);
+      if (isManager) setOpenBlockTime(true);
       return;
     }
     getAppointmentById(arg?.event?.extendedProps?.booking_id).then((result) => {
@@ -609,6 +615,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleOpenBlockTime = () => {
+    if (!isManager) return;
     setOpenSelect(false);
     setOpenBlockTime(true);
   };
@@ -835,6 +842,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handleCheckout = async () => {
+    if (!canCheckout || (eventId === null && !canManage)) return;
     if (eventId === null) {
       setIsSubmit(true);
       const { data } = await appointmentsPost(formik.values);
@@ -868,6 +876,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
   };
 
   const handlePay = async () => {
+    if (!canCheckout) return;
     const { data } = await checkoutAppointment(eventId, formik.values);
     setOpenTips(false);
     toast.success(data.message);
@@ -917,6 +926,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       totalTime: 0,
     },
     onSubmit: async (values) => {
+      if (!canManage) return;
       setIsSubmit(true);
       try {
         if (eventId) {
@@ -1272,8 +1282,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
         allDaySlot={false}
         nowIndicator={true}
         schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
-        selectable={true}
-        editable={true}
+        selectable={canManage}
+        editable={canManage}
         events={events}
         selectAllow={(selectInfo) => {
           const now = new Date();
@@ -1297,10 +1307,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
         eventClick={handleEventClick}
         initialView="resourceTimeGridDay"
         resources={resources}
-        dateClick={handleDateClick}
-        select={handleSelectDate}
-        eventResize={handleResize}
-        eventDrop={handleDrop}
+        dateClick={canManage ? handleDateClick : undefined}
+        select={canManage ? handleSelectDate : undefined}
+        eventResize={canManage ? handleResize : undefined}
+        eventDrop={canManage ? handleDrop : undefined}
         dayMinWidth={200}
         resourceLabelContent={renderResourceLabelContent}
         datesSet={handleDatesSet}
@@ -1317,7 +1327,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
           day: "numeric", // Display the day number
         }}
       />
-      {openSelect && (
+      {canManage && openSelect && (
         <Modal size="sm" show={openSelect} onClose={onCloseModalSelect}>
           <Modal.Header>{formatHoursMinute(startTime)}</Modal.Header>
           <Modal.Body>
@@ -1336,14 +1346,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
               <AiOutlineUsergroupAdd size={25} className="mr-2" />
               Add group appointment
             </button> */}
-            <button
+            {isManager && <button
               onClick={handleOpenBlockTime}
               type="button"
               className="inline-flex w-full items-center justify-start rounded-md bg-transparent py-2 font-medium text-black hover:bg-opacity-90 "
             >
               <LuCalendarX2 size={25} className="mr-2" />
               Add blocked time
-            </button>
+            </button>}
           </Modal.Body>
         </Modal>
       )}
@@ -1409,27 +1419,27 @@ const FullCalenDarCustom: React.FC<any> = () => {
                         {formik.values?.customer?.name}
                       </h3>
                       <p className="mb-4">{formik.values?.customer?.email}</p>
-                      <button
+                      {canManage && <button
                         onClick={handleRemoveCustomer}
                         type="button"
                         className="mb-2 inline-flex w-full items-center justify-center rounded-md border border-red bg-transparent py-2 font-medium text-black text-red hover:bg-opacity-90 "
                       >
                         <BiTransfer size={25} className="mr-2" />
                         Remove customer
-                      </button>
+                      </button>}
                       <button
                         type="button"
                         className="mb-2 inline-flex w-full items-center justify-center rounded-md border border-black bg-transparent py-2 font-medium text-black text-black hover:bg-opacity-90 "
                       >
                         View profile
                       </button>
-                      <button
+                      {isManager && <button
                         type="button"
                         onClick={handleOpenDelay}
                         className="rounded-md bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600"
                       >
                         Delay Notification
-                      </button>
+                      </button>}
                     </div>
                   )}
                   {!selectedCustomer &&
@@ -1443,7 +1453,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
                   <div className="h-full">
                     <div className="flex justify-between px-6.5">
                       <h3 className="text-2xl font-bold	text-black">{`${startTime && formatDateTime(startTime)}`}</h3>
-                      {eventId && (
+                      {!canManage && <span>{bookingStatus.find(item => item.value === eventStatus)?.name}</span>}
+                      {canManage && eventId && (
                         <select
                           id="status"
                           name="status"
@@ -1458,8 +1469,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
                           }
                           className="dark:bg-gray-700 dark:border-gray-600 block w-[150px] rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
                         >
-                          {bookingStatus?.map((item, i) => (
-                            <option value={item?.value} key={i}>
+                          {bookingStatus?.filter(item => isManager || [3, 5, eventStatus].includes(item.value)).map((item, i) => (
+                            <option value={item?.value} key={i} disabled={!isManager && ![3, 5].includes(item.value)}>
                               {item?.name}
                             </option>
                           ))}
@@ -1508,7 +1519,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                                     <label className="mb-3 ml-3 block flex justify-end text-sm font-medium text-black dark:text-white">
                                       ${detail.price}
                                     </label>
-                                    <div className="flex justify-end space-x-3.5">
+                                    {canManage && <div className="flex justify-end space-x-3.5">
                                       <button
                                         type="button"
                                         onClick={() =>
@@ -1537,7 +1548,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                                           className="text-black"
                                         />
                                       </button>
-                                    </div>
+                                    </div>}
                                   </div>
                                 </div>
                               </div>
@@ -1549,7 +1560,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                           <p>Add a service to save the appointment</p>
                         </div>
                       )}
-                      {eventStatus !== 5 && (
+                      {canManage && eventStatus !== 5 && (
                         <div className="flex justify-center px-6.5 py-4">
                           <button
                             onClick={handleShowService}
@@ -1568,6 +1579,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       <Field
                         type="text"
                         name="description"
+                        readOnly={!canManage}
                         value={formik.values.description}
                         className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                       />
@@ -1587,7 +1599,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    {(canManage || canCheckout) && <div className="flex gap-2">
                       {eventStatus === 5 ? (
                         <button
                           type="button"
@@ -1598,7 +1610,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                         </button>
                       ) : (
                         <>
-                          <button
+                          {canCheckout && <button
                             disabled={isSubmit}
                             type="button"
                             onClick={handleCheckout}
@@ -1606,18 +1618,18 @@ const FullCalenDarCustom: React.FC<any> = () => {
                           >
                             {isSubmit && <Spinner />}
                             Checkout
-                          </button>
-                          <button
+                          </button>}
+                          {canManage && <button
                             disabled={isSubmit}
                             type="submit"
                             className="inline-flex w-1/2 items-center justify-center rounded-md bg-black px-10 py-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10"
                           >
                             {isSubmit && <Spinner />}
                             Save
-                          </button>
+                          </button>}
                         </>
                       )}
-                    </div>
+                    </div>}
                   </div>
                 </div>
               </div>
@@ -1625,7 +1637,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
           </FormikProvider>
         </Drawer.Items>
       </Drawer>
-      <Drawer
+      {isManager && <Drawer
         className="flex h-full w-[30%] flex-col p-6"
         open={openBlockTime}
         onClose={onCloseModalBlockTime}
@@ -1798,7 +1810,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
             </Form>
           </FormikProvider>
         </Drawer.Items>
-      </Drawer>
+      </Drawer>}
       {/* start draw select service  */}
       <Drawer
         className="w-[30%]"

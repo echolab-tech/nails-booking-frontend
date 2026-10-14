@@ -1,5 +1,6 @@
 import { Modal } from "flowbite-react";
 import React, { useState } from "react";
+import { useAuth } from "@/providers/AuthProvider";
 
 interface TechnicianUnavailableModalProps {
   openModal: boolean;
@@ -18,6 +19,7 @@ const TechnicianUnavailableModal = ({
   handleChangeTechnician,
   handleCancelBooking,
 }: TechnicianUnavailableModalProps) => {
+  const isManager = useAuth()?.isManager === true;
   return (
     <>
       <Modal show={openModal} size="lg" onClose={handleClose} popup>
@@ -30,13 +32,13 @@ const TechnicianUnavailableModal = ({
               following options below:
             </h3>
             <div className="flex flex-col justify-center gap-4">
-              <button
+              {isManager && <button
                 type="button"
                 onClick={handleWaitingList}
                 className="flex w-full items-center gap-2 rounded-lg border border-black px-4 py-2  text-black disabled:bg-gray-4"
               >
                 Sign up on the waiting list
-              </button>
+              </button>}
               <button
                 type="button"
                 onClick={handleFindNewTime}

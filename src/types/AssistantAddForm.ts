@@ -1,5 +1,6 @@
 export type AssistantAddForm = {
     name: string,
+    role?: string,
     email: string,
     password: string,
     phone: number | null,

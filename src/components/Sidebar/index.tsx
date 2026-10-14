@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import SidebarLinkGroup from "./SidebarLinkGroup";
+import { useAuth } from "@/providers/AuthProvider";
+import { staffHome, hasPermission } from "@/lib/staff-access";
 import { GrUserManager } from "react-icons/gr";
 import { GoArchive } from "react-icons/go";
 import { GrCatalogOption } from "react-icons/gr";
@@ -20,6 +22,8 @@ interface SidebarProps {
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const pathname = usePathname();
+  const auth = useAuth();
+  const isManager = auth?.isManager === true;
 
   const trigger = useRef<any>(null);
   const sidebar = useRef<any>(null);
@@ -74,7 +78,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     >
       {/* <!-- SIDEBAR HEADER --> */}
       <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
-        <Link href="/">
+        <Link href={staffHome(auth?.user ?? null)}>
           <h2 className="text-3xl text-white">Luxury Nails Inc</h2>
           {/* <Image
             width={176}
@@ -120,7 +124,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
             <ul className="mb-6 flex flex-col gap-1.5">
               {/* <!-- Menu Item Dashboard --> */}
-              <SidebarLinkGroup
+              {isManager && <SidebarLinkGroup
                 activeCondition={
                   pathname === "/" || pathname.includes("dashboard")
                 }
@@ -209,11 +213,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                     </React.Fragment>
                   );
                 }}
-              </SidebarLinkGroup>
+              </SidebarLinkGroup>}
               {/* <!-- Menu Item Dashboard --> */}
 
               {/* <!-- Menu Item Calendar --> */}
-              <li>
+              {hasPermission(auth?.user, "appointments.view_all") && <li>
                 <Link
                   href="/calendar"
                   className={`group relative flex items-center gap-2.5 rounded-sm px-4 py-2 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
@@ -236,11 +240,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   </svg>
                   Calendar
                 </Link>
-              </li>
+              </li>}
               {/* <!-- Menu Item Calendar --> */}
 
               {/* <!-- Menu Item team --> */}
-
+              {isManager && <>
               <SidebarLinkGroup
                 activeCondition={
                   pathname === "/assistants" || pathname.includes("assistants")
@@ -838,11 +842,12 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                 </Link>
               </li> */}
               {/* <!-- Menu Item Tables --> */}
+              </>}
             </ul>
           </div>
 
           {/* <!-- Others Group --> */}
-          <div>
+          {isManager && <div>
             <h3 className="mb-4 ml-4 text-sm font-semibold text-bodydark2">
               OTHERS
             </h3>
@@ -961,7 +966,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
               </li> */}
               {/* <!-- Menu Item Settings --> */}
             </ul>
-          </div>
+          </div>}
         </nav>
         {/* <!-- Sidebar Menu --> */}
       </div>

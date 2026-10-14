@@ -1,6 +1,4 @@
-import { ToastContext } from "@/providers/ToastProvider";
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-import { redirect } from "next/navigation";
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 
 enum StatusCode {
   Unauthorized = 401,
@@ -18,7 +16,7 @@ const headers: Readonly<Record<string, string | boolean>> = {
 
 // We can use the injectToken function to inject the JWT token through an interceptor
 // We get the `accessToken` from the `localStorage` which is stored during the authentication process
-const injectToken = (config: AxiosRequestConfig): AxiosRequestConfig => {
+const injectToken = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
   try {
     const token = localStorage.getItem("accessToken");
 
@@ -27,7 +25,7 @@ const injectToken = (config: AxiosRequestConfig): AxiosRequestConfig => {
     }
     return config;
   } catch (error) {
-    throw new Error(error);
+    throw error;
   }
 };
 
@@ -53,7 +51,7 @@ class Http {
       (response) => response,
       (error) => {
         const { response } = error;
-        return this.handleError(response);
+        return this.handleError(response ?? error);
       },
     );
 
@@ -100,7 +98,7 @@ class Http {
   // Handle global app errors
   // We can handle generic app errors depending on the status code
   private handleError(error: any) {
-    const { status } = error;
+    const status = error?.status;
 
     switch (status) {
       case StatusCode.InternalServerError: {
@@ -113,7 +111,10 @@ class Http {
       }
       case StatusCode.Unauthorized: {
         localStorage.removeItem("accessToken");
-        redirect("/auth/signin");
+        localStorage.removeItem("userLogin");
+        if (window.location.pathname !== "/auth/signin") {
+          window.location.assign("/auth/signin");
+        }
         break;
       }
       case StatusCode.TooManyRequests: {

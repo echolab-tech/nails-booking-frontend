@@ -5,7 +5,7 @@ import { AssistantSearchForm } from "@/types/AssitantSearch";
 export const assistants = async (values: AssistantAddForm): Promise<any> => {
   return await http.post<any>("/assistants", values, {
     headers: {
-      "Content-Type": "mumultipart/form-data",
+      "Content-Type": "multipart/form-data",
     },
   });
 };
@@ -18,8 +18,11 @@ export const getListService = async (onlyService?: boolean): Promise<any> => {
   return await http.get<any>("/services", {params});
 };
 
+export const changeStaffRole = (id: number, role: string) =>
+  http.request({ method: "PATCH", url: `/assistants/${id}/role`, data: { role } });
+
 export const getListAssistant = async (
-  values: AssistantSearchForm,
+  values: Partial<AssistantSearchForm>,
   page: number,
 ): Promise<any> => {
   return await http.get<any>(`/assistants?page=${page}`, { params: values });
@@ -35,7 +38,7 @@ export const assistantUpdate = async (
 ): Promise<any> => {
   return await http.post<any>(`/assistants/${id}`, values, {
     headers: {
-      "Content-Type": "mumultipart/form-data",
+      "Content-Type": "multipart/form-data",
     },
   });
 };

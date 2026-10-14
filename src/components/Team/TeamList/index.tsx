@@ -2,19 +2,19 @@
 import PaginationCustom from "@/components/Pagination/Pagination";
 import {
   assistantDelete,
-  getAssistantShow,
+  changeStaffRole,
   getIsDeleted,
   getListAssistant,
 } from "@/services/assistants.service";
 import { AssistantEditForm } from "@/types/AssistantEditFrom";
-import { TEAM } from "@/types/team";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { CiSearch } from "react-icons/ci";
-import defaultImage from "@/images/no-avatar.jpg";
 import "react-toastify/dist/ReactToastify.css";
 import Skeleton from "@/components/common/Skeleton";
+import { useAuth } from "@/providers/AuthProvider";
+import { useStaffRoles } from "@/lib/use-staff-roles";
 
 interface PaginationData {
   current_page: number;
@@ -28,6 +28,23 @@ interface SearchValues {
 }
 const TeamList = () => {
   const router = useRouter();
+  const auth = useAuth();
+  const roles = useStaffRoles();
+  const [changingRole, setChangingRole] = useState<number | null>(null);
+
+  const handleRoleChange = async (id: number, role: string) => {
+    if (!window.confirm(`Change this account to ${role}? Its existing sessions will be signed out.`)) return;
+    setChangingRole(id);
+    try {
+      await changeStaffRole(id, role);
+      setAssistantData(items => items.map(item => item.id === id ? { ...item, role } : item));
+      toast.success("Role updated.");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Could not update role.");
+    } finally {
+      setChangingRole(null);
+    }
+  };
   const [assistantData, setAssistantData] = useState<AssistantEditForm[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [paginationData, setPaginationData] = useState<PaginationData>({
@@ -163,6 +180,7 @@ const TeamList = () => {
                 <th className="min-w-[120px] px-4 py-4 font-medium text-black dark:text-white">
                   Phone
                 </th>
+                <th className="px-4 py-4 font-medium text-black dark:text-white">Role</th>
                 <th className="px-4 py-4 font-medium text-black dark:text-white">
                   Actions
                 </th>
@@ -194,6 +212,17 @@ const TeamList = () => {
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                     <p>{teamItem.phone}</p>
+                  </td>
+                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                    <select
+                      aria-label={`Role for ${teamItem.name}`}
+                      value={teamItem.role ?? "technician"}
+                      disabled={!auth?.isManager || auth.user?.id === teamItem.id || changingRole !== null}
+                      onChange={event => handleRoleChange(teamItem.id, event.target.value)}
+                      className="rounded border border-stroke p-2 disabled:opacity-50 dark:bg-form-input"
+                    >
+                      {roles.map(role => <option key={role.name} value={role.name}>{role.label}</option>)}
+                    </select>
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                     <div className="flex items-center space-x-3.5">

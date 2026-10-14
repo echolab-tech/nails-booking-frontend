@@ -145,6 +145,7 @@ const SignIn: React.FC = () => {
                         JSON.stringify(data?.data?.user),
                       );
                       toast.success("You are successfully logged in.");
+                      // AuthProvider resolves the server permissions after login.
                       router.push("/");
                     })
                     .catch((error) => {
