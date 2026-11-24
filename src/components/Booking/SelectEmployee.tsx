@@ -14,11 +14,21 @@ interface SelectEmployeeProps {
 
 const SelectEmployee = ({ handleBack, handleNext }: SelectEmployeeProps) => {
   const [assistants, setAssistants] = useState<Assistant[]>([]);
+  const { state, dispatch } = useAppointment();
+  // Miro Frame 1 #46/#47: Back giờ giữ lại lựa chọn → khôi phục thợ đã chọn của service này
   const [selectedAssistant, setSelectedAssistant] = useState<number | null>(
-    null,
+    () => {
+      const id = state.appointments[state.currentAppointmentIndex]?.assistant?.id;
+      return id ? Number(id) : null;
+    },
   );
   const [loading, setLoading] = useState<boolean>(false);
-  const { state, dispatch } = useAppointment();
+
+  useEffect(() => {
+    const id = state.appointments[state.currentAppointmentIndex]?.assistant?.id;
+    setSelectedAssistant(id ? Number(id) : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.currentAppointmentIndex]);
 
   useEffect(() => {
     fetchAssistants();

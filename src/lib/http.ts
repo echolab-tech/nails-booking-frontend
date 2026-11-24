@@ -127,3 +127,18 @@ class Http {
 }
 
 export const http = new Http();
+
+/**
+ * Lấy câu thông báo lỗi từ API. Interceptor ở trên reject bằng chính `response` của axios
+ * (không phải AxiosError), nên message nằm ở `error.data`, không phải `error.response.data`.
+ */
+export const apiErrorMessage = (error: any, fallback: string): string => {
+  const data = error?.data ?? error?.response?.data;
+  const meta = data?.metadata;
+  return (
+    data?.message ||
+    data?.error ||
+    (Array.isArray(meta) ? meta[0] : typeof meta === "string" ? meta : "") ||
+    fallback
+  );
+};

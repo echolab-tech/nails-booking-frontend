@@ -1,4 +1,5 @@
 "use client";
+import { apiErrorMessage } from "@/lib/http";
 import React, {
   useState,
   useEffect,
@@ -461,7 +462,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       refreshData();
     } catch (error: any) {
       info.revert();
-      toast.error(error?.response?.data?.message || "Failed to update service duration");
+      toast.error(apiErrorMessage(error, "Failed to update service duration"));
     }
   };
 
@@ -660,7 +661,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       fetchAllData(calendarStartDate, calendarEndDate, highlight);
     } catch (error: any) {
       console.error("Error moving service:", error);
-      toast.error(error?.response?.data?.message || "Failed to move service");
+      toast.error(apiErrorMessage(error, "Failed to move service"));
       pending.info?.revert?.();
       refreshData();
     }
@@ -926,7 +927,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       calendarRef.current?.getApi()?.gotoDate(date);
       refreshData();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to move this appointment");
+      toast.error(apiErrorMessage(error, "Failed to move this appointment"));
     }
   };
 
@@ -1965,7 +1966,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       <button
                         type="button"
                         onClick={() => setOpenConfirmDeleteBlock(true)}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-red-500 bg-transparent py-2 font-medium text-red-500 hover:bg-red-50"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-red bg-transparent py-2 font-medium text-red hover:bg-red hover:text-white"
                       >
                         <BsTrash size={18} />
                         Remove block time

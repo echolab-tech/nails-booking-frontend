@@ -158,7 +158,7 @@ const WaitList = () => {
                             title="Remove this customer from the waiting list"
                             aria-label="Remove from waiting list"
                             onClick={() => handleRemove(group)}
-                            className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-sm font-bold text-white hover:bg-red-600"
+                            className="flex h-6 w-6 items-center justify-center rounded-full bg-red text-sm font-bold text-white hover:bg-danger"
                           >
                             ×
                           </button>

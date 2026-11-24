@@ -44,17 +44,18 @@ const ApointmentOverview = () => {
           key={index}
           className="relative flex flex-col space-x-2 rounded-lg border border-primary px-4 py-2 mb-2"
         >
-          {state.appointments.length > 1 && (
+          {state.currentStep === 7 && state.appointments.length > 1 && (
             <button
               type="button"
               aria-label="Remove this service"
               title="Remove this service"
               onClick={() => handleRemove(index)}
-              className="absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-sm font-bold text-white hover:bg-red-600"
+              className="absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-red text-sm font-bold text-white hover:bg-danger"
             >
               ×
             </button>
           )}
+          {state.currentStep === 7 && (
           <button
             type="button"
             onClick={() => handleEdit(index)}
@@ -62,6 +63,7 @@ const ApointmentOverview = () => {
           >
             Edit
           </button>
+          )}
           {/* Customer Information */}
           <div className="flex items-center">
             <div className="flex items-center justify-center">

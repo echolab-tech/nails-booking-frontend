@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Modal } from "flowbite-react";
 
 /**
@@ -41,6 +41,18 @@ const QuickDatePicker = ({ open, currentDate, onClose, onSelect }: QuickDatePick
     }
   }, [open, currentDate, years, thisYear]);
 
+  // Cuộn tới tháng / ngày / năm đang chọn khi mở hộp (nếu không sẽ không thấy mục đang chọn)
+  const bodyRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => {
+      bodyRef.current
+        ?.querySelectorAll<HTMLElement>("[data-selected='true']")
+        .forEach((el) => el.scrollIntoView({ block: "center" }));
+    }, 50);
+    return () => clearTimeout(t);
+  }, [open]);
+
   const maxDay = daysInMonth(year, month);
   useEffect(() => {
     if (day > maxDay) setDay(maxDay);
@@ -53,7 +65,7 @@ const QuickDatePicker = ({ open, currentDate, onClose, onSelect }: QuickDatePick
     <Modal show={open} size="lg" onClose={onClose}>
       <Modal.Header>Go to date</Modal.Header>
       <Modal.Body>
-        <div className="grid grid-cols-3 gap-3">
+        <div ref={bodyRef} className="grid grid-cols-3 gap-3">
           <div>
             <div className="mb-1 text-center text-sm font-semibold">Month</div>
             <div className={columnClass} role="listbox" aria-label="Month">
@@ -61,6 +73,7 @@ const QuickDatePicker = ({ open, currentDate, onClose, onSelect }: QuickDatePick
                 <button
                   key={label}
                   type="button"
+                  data-selected={month === i + 1}
                   className={itemClass(month === i + 1)}
                   onClick={() => setMonth(i + 1)}
                 >
@@ -76,6 +89,7 @@ const QuickDatePicker = ({ open, currentDate, onClose, onSelect }: QuickDatePick
                 <button
                   key={d}
                   type="button"
+                  data-selected={day === d}
                   className={itemClass(day === d)}
                   onClick={() => setDay(d)}
                 >
@@ -91,6 +105,7 @@ const QuickDatePicker = ({ open, currentDate, onClose, onSelect }: QuickDatePick
                 <button
                   key={y}
                   type="button"
+                  data-selected={year === y}
                   className={itemClass(year === y)}
                   onClick={() => setYear(y)}
                 >
