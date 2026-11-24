@@ -4,8 +4,21 @@ import { FcBusinessman } from "react-icons/fc";
 import { useAppointment } from "@/contexts/AppointmentContext";
 
 const ApointmentOverview = () => {
-  const { state } = useAppointment();
-  
+  const { state, dispatch } = useAppointment();
+
+  // Miro Frame 1 #46: nút X hủy 1 service đã chọn; các service sau của cùng khách tự dời lên
+  const handleRemove = (index: number) => {
+    if (state.appointments.length <= 1) return;
+    if (!window.confirm("Are you sure to delete this service?")) return;
+    dispatch({ type: "REMOVE_APPOINTMENT", payload: index });
+  };
+
+  // Miro Frame 1 #46: nút Edit quay lại chọn lại service cho đúng dòng này
+  const handleEdit = (index: number) => {
+    dispatch({ type: "SET_APPOINTMENT_INDEX", payload: index });
+    dispatch({ type: "SET_STEP", payload: 2 });
+  };
+
   function formatFullDateTime(isoString: string) {
     const date = new Date(isoString);
   
@@ -29,8 +42,26 @@ const ApointmentOverview = () => {
       {state.appointments.map((appointment, index) => (
         <div
           key={index}
-          className="flex flex-col space-x-2 rounded-lg border border-primary px-4 py-2 mb-2"
+          className="relative flex flex-col space-x-2 rounded-lg border border-primary px-4 py-2 mb-2"
         >
+          {state.appointments.length > 1 && (
+            <button
+              type="button"
+              aria-label="Remove this service"
+              title="Remove this service"
+              onClick={() => handleRemove(index)}
+              className="absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-sm font-bold text-white hover:bg-red-600"
+            >
+              ×
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => handleEdit(index)}
+            className="absolute right-2 top-2 rounded border border-primary px-2 py-0.5 text-xs text-primary hover:bg-primary hover:text-white"
+          >
+            Edit
+          </button>
           {/* Customer Information */}
           <div className="flex items-center">
             <div className="flex items-center justify-center">

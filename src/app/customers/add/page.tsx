@@ -12,6 +12,7 @@ import { customers, getCountry, getStatus } from "@/services/customer.service";
 import { FileInput } from "flowbite-react";
 import { parseISO } from "date-fns";
 import { toast } from "react-toastify";
+import BirthdayPicker from "@/components/FormElements/BirthdayPicker";
 import Select from "react-tailwindcss-select";
 import SelectStatus from "@/components/Customer/SelectStatus";
 import { useRouter } from "next/navigation";
@@ -19,8 +20,8 @@ import { useRouter } from "next/navigation";
 const CustomerNewSchema = Yup.object().shape({
   phone: Yup.string()
   .matches(
-    /^(\d{10}|\(\d{3}\)\s\d{3}-\d{4})$/,
-    "Phone number must be 10 digits or in format (xxx) xxx-xxxx"
+    /^\(\d{3}\)\s\d{3}-\d{4}$/,
+    "Please enter all 10 digits: (area code) xxx-xxxx"
   ).required("Please enter phone"),
   status: Yup.string().required("Please select status"),
 });
@@ -118,11 +119,14 @@ const CustomeNewForm = () => {
               email: "",
               phone: "",
               birthday: "",
+              birthday_gift: "",
               gender: "",
               language: "",
               source: "",
               occupation: "",
-              country: "",
+              // Miro Frame 1 #19: Country mặc định United States
+              country:
+                cities.find((c) => c.name === "United States")?.id?.toString() ?? "",
               avatar: "",
               address: "",
               status: "",
@@ -254,7 +258,7 @@ const CustomeNewForm = () => {
                         <Field
                           type="text"
                           name="phone"
-                          placeholder="+8412121219"
+                          placeholder="(555) 123-4567"
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             handlePhoneChange(e, setFieldValue)
                           }
@@ -270,16 +274,28 @@ const CustomeNewForm = () => {
                         <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                           Birthday
                         </label>
-                        <div className="relative">
-                          <input
-                            name="birthday"
-                            type="date"
-                            className="form-datepicker w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 font-normal outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                            placeholder="mm/dd/yyyy"
-                            data-class="flatpickr-right"
-                            onChange={handleBirthdayChange}
-                          />
-                        </div>
+                        {/* Miro Frame 1 #19: chọn năm sinh nhanh bằng danh sách cuộn */}
+                        <BirthdayPicker
+                          name="birthday"
+                          value={selectedBirthday}
+                          onChange={(value) => {
+                            setSelectedBirthday(value);
+                            setFieldValue("birthday", value);
+                          }}
+                        />
+
+                        {/* Miro Frame 1 #19: Manager nhập quà tặng sinh nhật — 3 ngày trước sinh nhật
+                            hệ thống tự gửi "Happy early birthday {tên}" kèm nội dung này */}
+                        <label className="mb-2 mt-4 block text-sm font-medium text-black dark:text-white">
+                          Birthday gift (optional)
+                        </label>
+                        <Field
+                          as="textarea"
+                          name="birthday_gift"
+                          rows={2}
+                          placeholder="e.g. 10% off any service during your birthday week"
+                          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                        />
                       </div>
 
                       <div className="w-full xl:w-1/2">

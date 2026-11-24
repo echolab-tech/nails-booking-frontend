@@ -81,8 +81,10 @@ const CategoryList = () => {
       updateCategoryList();
       setOpenModal(false);
       toast.success("Delete Success !!!");
-    } catch (error) {
-      toast.warning("you cannot delete !!!");
+    } catch (error: any) {
+      const meta = error?.response?.data?.metadata;
+      toast.warning((Array.isArray(meta) ? meta[0] : meta) || "You cannot delete this category.");
+      setOpenModal(false);
     }
   };
 

@@ -3,6 +3,7 @@ export type CustomerForm = {
   email: string;
   phone: string;
   birthday: string;
+  birthday_gift?: string;
   gender: string;
   language: string;
   source: string;

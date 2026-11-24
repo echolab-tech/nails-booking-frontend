@@ -16,3 +16,8 @@ export const createWaitList = async (data: WaitListCreateRequest): Promise<WaitL
   const response = await http.post<WaitListType>("/wait-list", data);
   return response.data;
 };
+
+// Miro Frame 1 #84: nút X để manager xóa khách khỏi waiting list
+export const deleteWaitList = async (id: string | number): Promise<any> => {
+  return await http.delete<any>(`/wait-list/${id}`);
+};

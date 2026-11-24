@@ -14,6 +14,7 @@ import { useAppointment } from "@/contexts/AppointmentContext";
 import { toast } from "react-toastify";
 import TechnicianUnavailableModal from "./TechnicianUnavailableModal";
 import { createWaitList } from "../../services/waitlist.service";
+import { WaitListCreateRequest } from "@/types/WaitList";
 import { formatDateTime } from "../utils/formatDate";
 import { DialogSelectTime } from "../Dialog/DialogSelectTime";
 import ConfirmOverTimeModal from "@/components/Booking/ConfirmOverTimeModal";
@@ -120,41 +121,41 @@ const ConfirmBooking = ({ handleBack, handleNext, isEdit, appointmentData, formi
 
   const handleWaitingList = async () => {
     try {
-      const currentAppointment = state.appointments[state.currentAppointmentIndex];
-      const customerId = currentAppointment?.customer?.id;
-  
-      if (!customerId) {
-        toast.error("Không tìm thấy thông tin khách hàng");
-        return;
-      }
-  
-      // Service ID từ DB
-      const mainServiceId = currentAppointment?.service?.service_id;
-      if (!mainServiceId) {
-        toast.error("Không tìm thấy thông tin service");
-        return;
-      }
-  
-      // SubService ID từ DB
-      const subServiceId =
-        currentAppointment?.subServices?.[0]?.id || null;
-  
-      const waitListData = {
-        id_customer: customerId,
-        id_service: mainServiceId,
-        id_sub_service: subServiceId,
-        desired_time: (() => {
-          const startTime = currentAppointment?.startTime;
-          if (!startTime) {
-            throw new Error("Không tìm thấy thời gian đặt lịch");
-          }
-          
-          return formatDateTime(startTime);
-        })(),
-      };
+      // Miro Frame 1 #84: đưa TẤT CẢ service + add-on khách đã chọn vào waiting list
+      // (trước đây chỉ lưu service cuối cùng và add-on đầu tiên), với đúng thời gian
+      // của từng service mà manager/khách đã chọn.
+      const requests: WaitListCreateRequest[] = [];
+      state.appointments.forEach((apt: any) => {
+        const customerId = apt?.customer?.id;
+        const mainServiceId = apt?.service?.service_id;
+        const start = apt?.service?.startTime || apt?.startTime;
+        if (!customerId || !mainServiceId || !start) return;
+        // giữ nguyên giờ đã chọn (không đổi múi giờ)
+        const desired = String(start).substring(0, 19).replace("T", " ");
+        requests.push({
+          id_customer: customerId,
+          id_service: mainServiceId,
+          id_sub_service: null,
+          desired_time: desired,
+        });
+        (apt?.subServices || []).forEach((sub: any) => {
+          requests.push({
+            id_customer: customerId,
+            id_service: mainServiceId,
+            id_sub_service: sub.id,
+            desired_time: String(sub.startTime || start).substring(0, 19).replace("T", " "),
+          });
+        });
+      });
 
-      // Gọi API để thêm vào waitlist
-      await createWaitList(waitListData);
+      if (requests.length === 0) {
+        toast.error("Missing customer or service information.");
+        return;
+      }
+
+      for (const data of requests) {
+        await createWaitList(data);
+      }
       
       toast.success("Đã thêm vào danh sách chờ thành công!");
       setOpenModal(false);

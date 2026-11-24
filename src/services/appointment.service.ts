@@ -120,16 +120,34 @@ export const cancelOnlyServiceOfCustomer = async (
   return await http.post<any>(`/appointments/cancel-only-service/${id}`);
 }
 
+// Miro Frame 1 #44: hủy tất cả service chính + phụ của khách (cùng group / cùng ngày)
+export const cancelAllServicesOfCustomer = async (
+  id: any,
+  ): Promise<any> => {
+  return await http.post<any>(`/appointments/cancel-customer-services/${id}`);
+}
+
 export const deleteBookingDetail = async (
   id: any,
   ): Promise<any> => {
   return await http.delete<any>(`/appointments/booking-detail/${id}`);
 }
 
+// Miro Frame 1 #39: lưu thời lượng mới sau khi kéo dãn/thu ngắn service trên Calendar
+export const resizeBookingDetail = async (data: {
+  booking_detail_id: string;
+  new_end_time: string;
+}): Promise<any> => {
+  return await http.post<any>('/appointments/resize-detail', data);
+}
+
 export const dragBookingDetail = async (data: {
   booking_detail_id: string;
   new_assistant_id: string;
   new_start_time: string;
+  // Miro Frame 1 #6: câu trả lời trong popup sau khi dời service
+  is_requested?: boolean | null;
+  notify_customer?: boolean;
 }): Promise<any> => {
   return await http.post<any>('/appointments/drag-detail', data);
 }

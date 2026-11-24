@@ -48,6 +48,8 @@ import {
   updateAppointment,
   cancelAppointmentByGroup,
   cancelOnlyServiceOfCustomer,
+  cancelAllServicesOfCustomer,
+  resizeBookingDetail,
   deleteAppointment,
   deleteBookingDetail,
   dragBookingDetail,
@@ -56,6 +58,7 @@ import { toast } from "react-toastify";
 import { BlockTimeType } from "@/types/BlockTime";
 import {
   addBlockedTime,
+  deleteBlockTime,
   getBlockTimes,
   getBlockType,
 } from "@/services/blocktime.service";
@@ -63,6 +66,9 @@ import TipButtonGrid from "../TipButtonGrid";
 import PaymentButtonGrid from "../PaymentButtonGrid";
 import CashPaymentDialog from "../CashPaymentDialog";
 import DelayNotifyModal from "../DelayNotifyModal";
+import QuickDatePicker from "./QuickDatePicker";
+import EditDateTimeModal from "./EditDateTimeModal";
+import DragConfirmModal from "./DragConfirmModal";
 import { DialogConfirm } from "@/components/Dialog/DialogConfirm";
 
 const generateTimeOptions = () => {
@@ -111,6 +117,17 @@ const FullCalenDarCustom: React.FC<any> = () => {
   const [openSelect, setOpenSelect] = useState<boolean>(false);
   const [openBooking, setOpenBooking] = useState<boolean>(false);
   const [openBlockTime, setOpenBlockTime] = useState<boolean>(false);
+  const [openQuickDate, setOpenQuickDate] = useState<boolean>(false);
+  const [openEditDateTime, setOpenEditDateTime] = useState<boolean>(false);
+  const [pendingDrop, setPendingDrop] = useState<{
+    info: any;
+    bookingDetailId: string;
+    newAssistantId: string;
+    newStartTime: string;
+    isRequested: boolean;
+  } | null>(null);
+  const [selectedBlockTimeId, setSelectedBlockTimeId] = useState<string | null>(null);
+  const [openConfirmDeleteBlock, setOpenConfirmDeleteBlock] = useState<boolean>(false);
   const [isSelectService, setIsSelectService] = useState<boolean>(false);
   const [events, setEvents] = useState<EventType[]>([]);
   const [lastEventId, setLastEventId] = useState<string | null>(null);
@@ -340,12 +357,27 @@ const FullCalenDarCustom: React.FC<any> = () => {
   //   }
   // };
 
+  const handleDeleteBlockTime = async (id: string | null) => {
+    setOpenConfirmDeleteBlock(false);
+    if (!id) return;
+    try {
+      await deleteBlockTime(id);
+      setOpenBlockTime(false);
+      setSelectedBlockTimeId(null);
+      refreshData();
+      toast.success("Block time removed");
+    } catch {
+      toast.error("Failed to remove block time");
+    }
+  };
+
   const handleEventClick = (arg: any) => {
     const eventType = arg?.event?.extendedProps?.type;
     console.log(eventType, "eventType");
     setDragHighlight({ customerId: null, bookingId: null, groupId: null });
     setStartTime(arg.event.startStr);
     if (eventType == "blocktime") {
+      setSelectedBlockTimeId(arg?.event?.id ?? null);
       setOpenBlockTime(true);
       return;
     }
@@ -405,11 +437,31 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setSelectedBookingDate(info.startStr);
   };
 
-  const handleResize = (info: any) => {
-    alert(info.event.title + " end is now " + info.event.end.toISOString());
-
-    if (!confirm("is this okay?")) {
+  // Miro Frame 1 #39: lưu thời lượng mới xuống server (trước đây chỉ đổi trên giao diện
+  // nên lần tải lại kế tiếp service bị đưa về thời lượng cũ)
+  const handleResize = async (info: any) => {
+    if (info?.event?.extendedProps?.type === "blocktime") {
       info.revert();
+      return;
+    }
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const minutes = Math.round(
+      (info.event.end.getTime() - info.event.start.getTime()) / 60000,
+    );
+    if (!window.confirm(`Change the duration of this service to ${minutes} minutes?`)) {
+      info.revert();
+      return;
+    }
+    try {
+      await resizeBookingDetail({
+        booking_detail_id: info.event.id,
+        new_end_time: formatInTimeZone(info.event.end, timeZone, "yyyy-MM-dd HH:mm:ssXXX"),
+      });
+      toast.success("Service duration updated");
+      refreshData();
+    } catch (error: any) {
+      info.revert();
+      toast.error(error?.response?.data?.message || "Failed to update service duration");
     }
   };
 
@@ -534,6 +586,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     }
     setShowEndOptions(false);
     setShowSpecialEndDate(false);
+    setSelectedBlockTimeId(null);
     setOpenBlockTime(false);
   };
 
@@ -556,11 +609,29 @@ const FullCalenDarCustom: React.FC<any> = () => {
       "yyyy-MM-dd HH:mm:ssXXX"
     );
 
+    // Miro Frame 1 #6: trước khi dời, hiện popup câu hỏi + nút Next (tự trả về chỗ cũ sau 60s)
+    setPendingDrop({
+      info,
+      bookingDetailId,
+      newAssistantId,
+      newStartTime,
+      isRequested: !!info.event.extendedProps?.booking?.booking_type,
+    });
+  };
+
+  const submitDrop = async (options: { isRequested: boolean | null; notifyCustomer: boolean }) => {
+    const pending = pendingDrop;
+    setPendingDrop(null);
+    if (!pending) return;
+    const { bookingDetailId, newAssistantId, newStartTime } = pending;
+
     try {
       const response = await dragBookingDetail({
         booking_detail_id: bookingDetailId,
         new_assistant_id: newAssistantId,
         new_start_time: newStartTime,
+        is_requested: options.isRequested,
+        notify_customer: options.notifyCustomer,
       });
 
       const { reassigned_bookings, pushed_down_bookings, dragged_booking } = response.data;
@@ -590,8 +661,17 @@ const FullCalenDarCustom: React.FC<any> = () => {
     } catch (error: any) {
       console.error("Error moving service:", error);
       toast.error(error?.response?.data?.message || "Failed to move service");
+      pending.info?.revert?.();
       refreshData();
     }
+  };
+
+  // Hủy hoặc quá 60 giây không bấm Next → trả service về vị trí cũ, màu các service về như cũ
+  const cancelDrop = (reason?: "timeout") => {
+    const pending = pendingDrop;
+    setPendingDrop(null);
+    pending?.info?.revert?.();
+    if (reason === "timeout") toast.info("No answer within 60 seconds — the service was moved back.");
   };
 
   const handleShowService = () => {
@@ -817,6 +897,39 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setSelectedCustomer(true);
   };
 
+  // Miro Frame 1 #6: "View profile" trước đây không hoạt động
+  const handleViewProfile = () => {
+    const customerId = formik.values?.customer?.id;
+    if (customerId) router.push(`/customers/detail/${customerId}`);
+  };
+
+  // Miro Frame 1 #86: dời service (kèm add-on) đến ngày/giờ mới, giữ nguyên thợ.
+  // Dùng chung API kéo thả nên vẫn áp dụng đủ luật: block time, ngày nghỉ, reassign/đẩy service bị cấn.
+  const handleEditDateTime = async (date: string, time: string) => {
+    const services: any[] = (formik.values.services as any[]) ?? [];
+    const mainDetail: any =
+      services.find((s: any) => s?.serviceType !== "sub_service") ?? services[0];
+    const detailId = mainDetail?.id ?? bookingDetailId;
+    const assistant = mainDetail?.resourceId ?? mainDetail?.assistant?.id ?? assistantId;
+    if (!detailId || !assistant || !date || !time) return;
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const newStart = formatInTimeZone(new Date(`${date}T${time}:00`), timeZone, "yyyy-MM-dd HH:mm:ssXXX");
+    try {
+      await dragBookingDetail({
+        booking_detail_id: String(detailId),
+        new_assistant_id: String(assistant),
+        new_start_time: newStart,
+      });
+      toast.success("Appointment moved to the new date & time");
+      setOpenEditDateTime(false);
+      setOpenBooking(false);
+      calendarRef.current?.getApi()?.gotoDate(date);
+      refreshData();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to move this appointment");
+    }
+  };
+
   const handleRemoveCustomer = () => {
     formik.setValues({
       ...formik.values,
@@ -1004,7 +1117,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
       <div>
           <b>${eventInfo.timeText ?? ""} ${data?.customerName ?? ""}</b>
           <i class="block">Phone Number: ${data?.booking?.customer?.phone ?? ""}</i>
-          <i class="block">Service Name: ${eventInfo?.event?.extendedProps?.service?.name}</i>
+          ${data?.serviceType === "sub_service"
+            ? `<i class="block">Add-on: ${data?.subService?.name ?? eventInfo?.event?.title ?? ""} (${data?.time ?? ""} min) — of ${data?.service?.name ?? ""}</i>`
+            : `<i class="block">Service Name: ${data?.service?.name ?? ""}</i>`}
           <i class="block">Request a worker: ${data?.booking?.booking_type ? "Yes" : "No"}</i>
           ${data?.booking?.booking_group_id !== null ? `<i class="block">Has a group booking (Group ID: ${data?.booking?.booking_group_id})</i>` : ""}
           ${data?.booking?.description ? `<i class="block">Note: ${data.booking.description}</i>` : ""}
@@ -1058,9 +1173,18 @@ const FullCalenDarCustom: React.FC<any> = () => {
           </div>
         )}
         {/* 2. Service Name */}
-        <div className={`${showCustomerName ? "" : "truncate"} font-semibold`} title={eventInfo?.event?.extendedProps?.service?.name}>
-          {eventInfo?.event?.extendedProps?.service?.name}
-        </div>
+        {/* Miro Frame 1 #67/#75: add-on hiện đúng tên của add-on (sub service), không hiện tên service chính khác */}
+        {(() => {
+          const isSub = data?.serviceType === "sub_service";
+          const name = isSub
+            ? data?.subService?.name ?? eventInfo?.event?.title
+            : eventInfo?.event?.extendedProps?.service?.name;
+          return (
+            <div className={`${showCustomerName ? "" : "truncate"} font-semibold`} title={name}>
+              {isSub ? `+ ${name}` : name}
+            </div>
+          );
+        })()}
 
         {/* 3. Request Technician */}
         {showRequestTech && (
@@ -1151,21 +1275,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
           return;
         }
 
-        const services = formik.values.services || [];
-
-        if (services.length === 1) {
-          await deleteAppointment(Number(eventId));
-          setOpenCancelAllServices(false);
-          fetchAllData(calendarStartDate, calendarEndDate);
-          setOpenBooking(false);
-          return;
-        }
-
-        if (services.length > 1) {
-          setBookingDetailsId(filteredServices?.id);
-          setOpenCancelAllServices(true);
-          return;
-        }
+        // Miro Frame 1 #44: luôn hỏi "Cancel all the services from this customer?"
+        // Yes → hủy hết service của khách; No → hủy service chính + sub service của nó
+        setOpenStepTwoCancel(true);
+        return;
       }
 
       await appointmentsUpdateStatus(eventId, value);
@@ -1203,16 +1316,12 @@ const FullCalenDarCustom: React.FC<any> = () => {
 
   const handleSelectNoCancelGroup = () => {
     setOpenStepOneCancel(false);
-    if (formik.values.services.length > 1) {
-      setOpenStepTwoCancel(true);
-      return;
-    }
-    handleCancelAllServiceOfCustomer();
+    setOpenStepTwoCancel(true);
   }
 
   const handleCancelAllServiceOfCustomer = async () => {
     try {
-      await deleteAppointment(Number(eventId));
+      await cancelAllServicesOfCustomer(eventId);
       setOpenStepTwoCancel(false);
       setOpenCancelAllServices(false);
       refreshData();
@@ -1258,7 +1367,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
     );
 
   // Always show today's date on initial load
-  const initialViewDate = new Date().toISOString();
+  // Miro Frame 1 #37 / #59: sau khi book/sửa hẹn thì mở Calendar đúng ngày đó (?date=YYYY-MM-DD)
+  const initialViewDate = (() => {
+    if (typeof window !== "undefined") {
+      const d = new URLSearchParams(window.location.search).get("date");
+      if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+    }
+    return new Date().toISOString();
+  })();
 
   return (
     <>
@@ -1286,6 +1402,9 @@ const FullCalenDarCustom: React.FC<any> = () => {
           if (draggedEvent?.extendedProps?.serviceType === "sub_service") return false;
           return true;
         }}
+        // Miro Frame 1 #5 / R8: không cho kéo hoặc chọn khung giờ chồng lên block time
+        eventOverlap={(stillEvent) => stillEvent?.extendedProps?.type !== "blocktime"}
+        selectOverlap={(event) => event?.extendedProps?.type !== "blocktime"}
         plugins={[
           resourceTimeGridPlugin,
           interactionPlugin,
@@ -1304,17 +1423,49 @@ const FullCalenDarCustom: React.FC<any> = () => {
         dayMinWidth={200}
         resourceLabelContent={renderResourceLabelContent}
         datesSet={handleDatesSet}
+        // Miro Frame 1 #80: dùng hết chiều cao màn hình (iPad/điện thoại để đứng trước đây chỉ thấy 1/2)
+        height="calc(100vh - 120px)"
         slotMinTime="09:00:00" // Start time at 9 AM
         slotMaxTime="22:00:00" // End time at 10 PM
+        // Miro Frame 1 #1/#2: icon lịch nhỏ đặt ngay sau Tháng/Ngày/Năm để nhảy nhanh đến ngày bất kỳ
+        customButtons={{
+          quickDate: {
+            text: "📅",
+            hint: "Go to date",
+            click: () => setOpenQuickDate(true),
+          },
+        }}
         headerToolbar={{
           right: "today prev,next,resourceTimeGridDay,resourceTimeGridWeek",
-          left: "title",
+          left: "title quickDate",
         }}
         titleFormat={{
           weekday: "long", // Display the full day of the week
           year: "numeric", // Display the year
           month: "long", // Display the full month name
           day: "numeric", // Display the day number
+        }}
+      />
+      <DragConfirmModal
+        open={!!pendingDrop}
+        initialRequested={pendingDrop?.isRequested ?? false}
+        onNext={submitDrop}
+        onCancel={() => cancelDrop()}
+        onTimeout={() => cancelDrop("timeout")}
+      />
+      <EditDateTimeModal
+        open={openEditDateTime}
+        initialStart={startTime}
+        onClose={() => setOpenEditDateTime(false)}
+        onSave={handleEditDateTime}
+      />
+      <QuickDatePicker
+        open={openQuickDate}
+        currentDate={calendarRef.current?.getApi()?.getDate() ?? new Date()}
+        onClose={() => setOpenQuickDate(false)}
+        onSelect={(date) => {
+          calendarRef.current?.getApi()?.gotoDate(date);
+          setOpenQuickDate(false);
         }}
       />
       {openSelect && (
@@ -1409,20 +1560,34 @@ const FullCalenDarCustom: React.FC<any> = () => {
                         {formik.values?.customer?.name}
                       </h3>
                       <p className="mb-4">{formik.values?.customer?.email}</p>
+                      {/* Miro Frame 1 #6: bỏ "Remove customer" khi xem/sửa hẹn đã book */}
+                      {!eventId && (
+                        <button
+                          onClick={handleRemoveCustomer}
+                          type="button"
+                          className="mb-2 inline-flex w-full items-center justify-center rounded-md border border-red bg-transparent py-2 font-medium text-black text-red hover:bg-opacity-90 "
+                        >
+                          <BiTransfer size={25} className="mr-2" />
+                          Remove customer
+                        </button>
+                      )}
                       <button
-                        onClick={handleRemoveCustomer}
                         type="button"
-                        className="mb-2 inline-flex w-full items-center justify-center rounded-md border border-red bg-transparent py-2 font-medium text-black text-red hover:bg-opacity-90 "
-                      >
-                        <BiTransfer size={25} className="mr-2" />
-                        Remove customer
-                      </button>
-                      <button
-                        type="button"
+                        onClick={handleViewProfile}
                         className="mb-2 inline-flex w-full items-center justify-center rounded-md border border-black bg-transparent py-2 font-medium text-black text-black hover:bg-opacity-90 "
                       >
                         View profile
                       </button>
+                      {/* Miro Frame 1 #86: Edit Date & Time cho service được click vào */}
+                      {eventId && (
+                        <button
+                          type="button"
+                          onClick={() => setOpenEditDateTime(true)}
+                          className="mb-2 rounded-md bg-primary px-4 py-2 text-white hover:bg-opacity-90"
+                        >
+                          Edit Date &amp; Time
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={handleOpenDelay}
@@ -1636,8 +1801,10 @@ const FullCalenDarCustom: React.FC<any> = () => {
         <Drawer.Items>
           <FormikProvider value={formikBlockTime}>
             <Form>
-              <div className="flex h-screen">
-                <div className="w-full overflow-auto">
+              {/* Miro Frame 1 #5: trên MacBook ô chọn ngày nằm sát đáy màn hình nên lịch bị khuất.
+                  Vùng cuộn vừa khít màn hình + chừa khoảng trống dưới để có thể cuộn ô ngày lên cao hơn. */}
+              <div className="flex h-[calc(100vh-80px)]">
+                <div className="w-full overflow-auto pb-80">
                   <div className="mb-4">
                     <h3 className="mb-4 text-2xl font-bold	text-black">
                       {" "}
@@ -1793,6 +1960,18 @@ const FullCalenDarCustom: React.FC<any> = () => {
                       {isSubmit && <Spinner />}{" "}
                     </button>
                   </div>
+                  {selectedBlockTimeId && (
+                    <div className="flex justify-center px-4 pb-4">
+                      <button
+                        type="button"
+                        onClick={() => setOpenConfirmDeleteBlock(true)}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-red-500 bg-transparent py-2 font-medium text-red-500 hover:bg-red-50"
+                      >
+                        <BsTrash size={18} />
+                        Remove block time
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </Form>
@@ -1893,16 +2072,20 @@ const FullCalenDarCustom: React.FC<any> = () => {
                   </h3>
                   <p className="mb-4">{formik.values?.customer?.email}</p>
                   <div className="flex gap-2">
+                    {/* Miro Frame 1 #6: bỏ "Remove customer" khi xem/sửa hẹn đã book */}
+                    {!eventId && (
+                      <button
+                        onClick={handleRemoveCustomer}
+                        type="button"
+                        className="mb-2 inline-flex w-full items-center justify-center rounded-md border border-red bg-transparent py-2 font-medium text-black text-red hover:bg-opacity-90 "
+                      >
+                        <BiTransfer size={25} className="mr-2" />
+                        Remove customer
+                      </button>
+                    )}
                     <button
-                      onClick={handleRemoveCustomer}
                       type="button"
-                      className="mb-2 inline-flex w-full items-center justify-center rounded-md border border-red bg-transparent py-2 font-medium text-black text-red hover:bg-opacity-90 "
-                    >
-                      <BiTransfer size={25} className="mr-2" />
-                      Remove customer
-                    </button>
-                    <button
-                      type="button"
+                      onClick={handleViewProfile}
                       className="mb-2 inline-flex w-full items-center justify-center rounded-md border border-black bg-transparent py-2 font-medium text-black text-black hover:bg-opacity-90 "
                     >
                       View profile
@@ -2113,6 +2296,25 @@ const FullCalenDarCustom: React.FC<any> = () => {
           handleSend={handleSenDelay}
         />
       )}
+      {/* Miro Frame 1 #50: hỏi lại trước khi hủy block time */}
+      <DialogConfirm
+        openModal={openConfirmDeleteBlock}
+        message="Are you sure to cancel?"
+        onClose={() => setOpenConfirmDeleteBlock(false)}
+      >
+        <button
+          onClick={() => handleDeleteBlockTime(selectedBlockTimeId)}
+          className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          Yes
+        </button>
+        <button
+          onClick={() => setOpenConfirmDeleteBlock(false)}
+          className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"
+        >
+          No
+        </button>
+      </DialogConfirm>
       <DialogConfirm
         openModal={openStepOneCancel}
         message="Cancel the whole group?"

@@ -13,6 +13,7 @@ import { serviceTypeNew } from "@/types/ServiceNew";
 import ApointmentOverview from "./ApointmentOverview";
 import { serviceType } from "@/types/service";
 import { useAppointment } from "@/contexts/AppointmentContext";
+import { CustomerServiceException, getCustomerExceptions } from "@/services/customer.service";
 
 interface StepAddServiceProps {
   handleBack: () => void;
@@ -22,10 +23,26 @@ interface StepAddServiceProps {
 const StepAddService = ({ handleBack, handleNext }: StepAddServiceProps) => {
   const [serviceOptions, setServiceOptions] = useState<serviceType[]>([]);
   const { state, dispatch } = useAppointment();
+  // Miro Frame 1 #19: Exception của khách (thời gian / giá cộng thêm cho từng service)
+  const [exceptions, setExceptions] = useState<CustomerServiceException[]>([]);
+  const customerId = state.appointments[state.currentAppointmentIndex]?.customer?.id;
 
   useEffect(() => {
     fetchService();
   }, [state.currentAppointmentIndex]);
+
+  useEffect(() => {
+    if (!customerId) {
+      setExceptions([]);
+      return;
+    }
+    getCustomerExceptions(customerId)
+      .then((res) => setExceptions(res?.data?.data ?? []))
+      .catch(() => setExceptions([]));
+  }, [customerId]);
+
+  const exceptionFor = (item: any) =>
+    exceptions.find((e) => String(e.service_id) === String(item?.service_id));
 
   const fetchService = async () => {
     try {
@@ -43,10 +60,20 @@ const StepAddService = ({ handleBack, handleNext }: StepAddServiceProps) => {
   };
 
   const handleSelectService = (service: serviceType) => {
+    // Miro Frame 1 #19: khách có Exception cho service này → tự cộng thêm thời gian và tiền
+    const ex = exceptionFor(service);
+    const payload: any = ex
+      ? {
+          ...(service as any),
+          duration: Number((service as any)?.duration ?? 0) + Number(ex.extra_minutes || 0),
+          price: Number((service as any)?.price ?? 0) + Number(ex.extra_price || 0),
+          exception: ex,
+        }
+      : service;
     // Dispatch action để cập nhật service cho appointment hiện tại
     dispatch({
       type: "SET_SERVICE",
-      payload: service,
+      payload,
     });
 
     handleNext();
@@ -92,6 +119,15 @@ const StepAddService = ({ handleBack, handleNext }: StepAddServiceProps) => {
                       {formatPrice(Number(item?.price))}
                     </div>
                   </div>
+                  {exceptionFor(item) && (
+                    <span
+                      className="ml-4 rounded bg-orange-100 px-2 py-0.5 text-sm font-medium text-orange-700"
+                      title={exceptionFor(item)?.note ?? ""}
+                    >
+                      This customer: +{exceptionFor(item)?.extra_minutes} min, +
+                      {formatPrice(Number(exceptionFor(item)?.extra_price ?? 0))}
+                    </span>
+                  )}
                 </div>
                 <MdArrowForwardIos size={20} />
               </button>
