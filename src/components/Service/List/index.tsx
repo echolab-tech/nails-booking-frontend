@@ -11,6 +11,8 @@ import {
 import { formatPrice } from "@/components/common/format_currency";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { BsTrash } from "react-icons/bs";
+import { IoIosHelpCircleOutline } from "react-icons/io";
+import { Tooltip } from "flowbite-react";
 import { FaRegPenToSquare } from "react-icons/fa6";
 import Search from "../Search";
 import { serviceType } from "@/types/service";
@@ -192,9 +194,24 @@ const ServiceList = () => {
                 {serviceData?.map((serviceItem: any, index) => (
                   <tr key={index}>
                     <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
-                      <h5 className="font-medium text-black dark:text-white">
-                        {serviceItem?.name}
-                      </h5>
+                      <div className="flex items-center gap-1">
+                        <h5 className="font-medium text-black dark:text-white">
+                          {serviceItem?.name}
+                        </h5>
+                        {/* Miro Frame 1 #32: icon "?" xem description */}
+                        {(serviceItem?.description || serviceItem?.discription) && (
+                          <Tooltip
+                            content={serviceItem?.description || serviceItem?.discription}
+                            style="dark"
+                            trigger="hover"
+                            className="max-w-[300px]"
+                          >
+                            <span aria-label="Service description" className="inline-flex cursor-pointer text-gray-500 hover:text-primary">
+                              <IoIosHelpCircleOutline size={18} />
+                            </span>
+                          </Tooltip>
+                        )}
+                      </div>
                     </td>
 
                     {/* Conditional rendering based on type */}

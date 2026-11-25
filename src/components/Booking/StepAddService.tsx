@@ -100,19 +100,23 @@ const StepAddService = ({ handleBack, handleNext }: StepAddServiceProps) => {
               >
                 <div className="flex">
                   <p className="font-bold">{item?.title}</p>
-                  <Tooltip
-                    content={item?.description}
-                    style="dark"
-                    trigger="hover"
-                    className="w-[300px]"
-                  >
-                    <span
-                      onClick={(e) => e.stopPropagation()}
-                      className="cursor-pointer hover:scale-110 transition-transform"
+                  {/* Miro Frame 1 #32: icon "?" xem description của service */}
+                  {(item as any)?.description && (
+                    <Tooltip
+                      content={(item as any).description}
+                      style="dark"
+                      trigger="hover"
+                      className="w-[300px]"
                     >
-                      <IoIosHelpCircleOutline size={20}/>
-                    </span>    
-              </Tooltip>
+                      <span
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label="Service description"
+                        className="ml-1 inline-flex cursor-pointer transition-transform hover:scale-110"
+                      >
+                        <IoIosHelpCircleOutline size={20} />
+                      </span>
+                    </Tooltip>
+                  )}
                   <div className="ml-5 flex">
                     <p>{item?.option_name}</p>
                     <div className="flex">
