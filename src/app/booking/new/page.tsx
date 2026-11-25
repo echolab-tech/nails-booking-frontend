@@ -43,18 +43,34 @@ const BookingPage = () => {
       setShowAddServiceModal(true);
     } else if (state.currentStep === 7) {
       toast("Booking successfuly !");
-      router.push("/calendar");
+      // Miro Frame 1 #59: mở Calendar đúng ngày vừa book (không quay về hôm nay)
+      const bookedAt =
+        state.appointments?.[0]?.service?.startTime || state.selectedTime || "";
+      const day = bookedAt.substring(0, 10);
+      router.push(/^\d{4}-\d{2}-\d{2}$/.test(day) ? `/calendar?date=${day}` : "/calendar");
     } else {
       dispatch({ type: "SET_STEP", payload: state.currentStep + 1 });
     }
   };
 
+  // Miro Frame 1 #46/#47: Back luôn về đúng 1 bước trước và KHÔNG xóa các service đã chọn.
+  // Nếu đang ở đầu 1 service/khách mới thêm (chưa chọn gì) thì quay về bước chọn thợ
+  // (hoặc bước add-on nếu service trước không chọn thợ) của service trước đó.
   const handleBack = () => {
-    const prevStep = state.currentStep - 1;
-    const nextStep = prevStep === 5 ? prevStep - 1 : prevStep;
-  
-    dispatch({ type: "SET_STEP", payload: nextStep });
-    dispatch({type: "CLEAR_APPOINTMENT_BY_STEP", payload: prevStep});
+    const current = state.appointments[state.currentAppointmentIndex];
+    const isFreshAppointment = state.currentAppointmentIndex > 0 && !current?.service;
+    if (isFreshAppointment && state.currentStep <= 2) {
+      const previous = state.appointments[state.currentAppointmentIndex - 1];
+      dispatch({ type: "BACK_TO_PREVIOUS_APPOINTMENT" });
+      dispatch({ type: "SET_STEP", payload: previous?.assistant ? 6 : 5 });
+      return;
+    }
+    if (state.currentStep === 7 && !current?.assistant) {
+      // service này không chọn thợ (bỏ qua bước 6) → quay về bước add-on
+      dispatch({ type: "SET_STEP", payload: 5 });
+      return;
+    }
+    dispatch({ type: "SET_STEP", payload: Math.max(1, state.currentStep - 1) });
   };
 
   const handleClose = () => {
@@ -114,6 +130,11 @@ const BookingPage = () => {
   };
 
   const handleBackToCalendar = () => {
+    // Đang thêm khách mới trong nhóm → Back về service trước, không thoát ra Calendar
+    if (state.currentAppointmentIndex > 0) {
+      handleBack();
+      return;
+    }
     if (document.referrer) {
       router.back();
     } else {

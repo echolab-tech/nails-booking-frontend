@@ -96,7 +96,43 @@ type AppointmentAction =
   | { type: "SET_APPOINTMENT_ID_FOR_UPDATE"; payload: number }
   | { type: "UPDATE_SELECTED_TIME"; payload: string }
   | { type: "CLEAR_APPOINTMENT_BY_STEP"; payload: number }
-  | { type: "SET_APPOINTMENT_START_TIME"; payload: string };
+  | { type: "SET_APPOINTMENT_START_TIME"; payload: string }
+  // Miro Frame 1 #46/#47: quay lại appointment trước (bỏ appointment trống vừa thêm)
+  | { type: "BACK_TO_PREVIOUS_APPOINTMENT" }
+  // Miro Frame 1 #46: nút X để hủy 1 service đã chọn trong lúc Add appointment
+  | { type: "REMOVE_APPOINTMENT"; payload: number };
+
+const isoMinutesDiff = (a?: string, b?: string): number => {
+  if (!a || !b) return 0;
+  return Math.round(
+    (new Date(b.substring(0, 19)).getTime() - new Date(a.substring(0, 19)).getTime()) / 60000,
+  );
+};
+
+const shiftIso = (iso: string | undefined, minutes: number): string | undefined => {
+  if (!iso || !minutes) return iso;
+  return addMinutesToISOString(iso, minutes);
+};
+
+const shiftAppointment = (apt: Appointment, minutes: number): Appointment => {
+  if (!minutes) return apt;
+  return {
+    ...apt,
+    startTime: shiftIso(apt.startTime, minutes),
+    service: apt.service
+      ? {
+          ...apt.service,
+          startTime: shiftIso(apt.service.startTime, minutes) as string,
+          endTime: shiftIso(apt.service.endTime, minutes) as string,
+        }
+      : apt.service,
+    subServices: apt.subServices?.map((s) => ({
+      ...s,
+      startTime: shiftIso(s.startTime, minutes) as string,
+      endTime: shiftIso(s.endTime, minutes) as string,
+    })),
+  };
+};
 
 const initialState: AppointmentState = {
   currentStep: 1,
@@ -205,12 +241,62 @@ function appointmentReducer(
       };
       return {
         ...state,
-        appointments: state.appointments.map((apt, index) =>
-          index === state.currentAppointmentIndex
-            ? { ...apt, service: updatedService }
-            : apt,
+        appointments: state.appointments.map((apt, index) => {
+          if (index !== state.currentAppointmentIndex) return apt;
+          // Quay lại chọn service khác thì bỏ các add-on của service cũ (Miro Frame 1 #47)
+          const sameService = apt.service?.id === updatedService.id;
+          return {
+            ...apt,
+            service: updatedService,
+            subServices: sameService ? apt.subServices : [],
+          };
+        }),
+      };
+    case "BACK_TO_PREVIOUS_APPOINTMENT": {
+      if (state.currentAppointmentIndex <= 0) return state;
+      const appointments = state.appointments.filter(
+        (_, i) => i !== state.currentAppointmentIndex,
+      );
+      return {
+        ...state,
+        appointments,
+        currentAppointmentIndex: state.currentAppointmentIndex - 1,
+        appointmentType: appointments.length > 1 ? state.appointmentType : "single",
+      };
+    }
+    case "REMOVE_APPOINTMENT": {
+      const removeIndex = action.payload;
+      const removed = state.appointments[removeIndex];
+      if (!removed || state.appointments.length <= 1) return state;
+      // Các service sau của cùng khách được dời lên đúng thời gian bắt đầu của service bị hủy
+      const removedStart = removed.service?.startTime ?? removed.startTime;
+      const removedEnd =
+        removed.subServices && removed.subServices.length > 0
+          ? removed.subServices[removed.subServices.length - 1].endTime
+          : removed.service?.endTime;
+      const gap = -isoMinutesDiff(removedStart, removedEnd);
+      const customerId = removed.customer?.id;
+      const appointments = state.appointments
+        .map((apt, i) => {
+          if (i <= removeIndex) return apt;
+          if (customerId && apt.customer?.id !== customerId) return apt;
+          // chỉ dời các service làm SAU service bị hủy (không đụng service làm cùng lúc)
+          const aptStart = apt.service?.startTime ?? apt.startTime;
+          if (isoMinutesDiff(removedEnd, aptStart) < 0) return apt;
+          return shiftAppointment(apt, gap);
+        })
+        .filter((_, i) => i !== removeIndex);
+      return {
+        ...state,
+        appointments,
+        currentAppointmentIndex: Math.min(
+          state.currentAppointmentIndex > removeIndex
+            ? state.currentAppointmentIndex - 1
+            : state.currentAppointmentIndex,
+          appointments.length - 1,
         ),
       };
+    }
     case "SET_SERVICE_CATEGORY":
       return {
         ...state,
@@ -335,7 +421,26 @@ function appointmentReducer(
         appointmentId: action.payload,
         // customerData: action.payload.customerData,
       };
-    case "UPDATE_SELECTED_TIME":
+    case "UPDATE_SELECTED_TIME": {
+      // Miro Frame 1 #10: khi đổi lại thời gian cho khách nhiều service hoặc cả nhóm,
+      // bỏ thời gian cũ và dời TẤT CẢ service đã chọn của các khách sang thời gian mới
+      // (giữ nguyên thứ tự / khoảng cách giữa các service).
+      // Trước đây chỉ service đang xem được dời, service khác giữ thời gian cũ.
+      const starts = state.appointments
+        .map((apt) => apt.service?.startTime)
+        .filter((s): s is string => !!s)
+        .sort((a, b) => a.substring(0, 19).localeCompare(b.substring(0, 19)));
+      if (starts.length > 0) {
+        const earliest = starts[0];
+        const offsetSuffix = earliest.length > 19 ? earliest.substring(19) : "";
+        const target = action.payload.substring(0, 19).padEnd(19, ":00").substring(0, 19) + offsetSuffix;
+        const shift = isoMinutesDiff(earliest, target);
+        return {
+          ...state,
+          selectedTime: target,
+          appointments: state.appointments.map((apt) => shiftAppointment(apt, shift)),
+        };
+      }
       return {
         ...state,
         appointments: state.appointments.map((apt, index) => {
@@ -370,6 +475,7 @@ function appointmentReducer(
           };
         }),
       };
+    }
     case "CLEAR_APPOINTMENT_BY_STEP":
       const step = action.payload;
       const key = keyByStep[step];

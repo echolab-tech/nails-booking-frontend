@@ -17,3 +17,7 @@ export const getBlockTimes = async (
     `/block-times?start_date=${start}&end_date=${end}`,
   );
 };
+
+export const deleteBlockTime = async (id: string | number): Promise<any> => {
+  return await http.delete<any>(`/block-times/${id}`);
+};

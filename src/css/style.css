@@ -241,3 +241,10 @@ input[type="search"]::-webkit-search-cancel-button {
 [x-cloak] {
     display: none !important;
 }
+
+/* Miro Frame 1 #1/#2: icon lịch nhỏ nằm cùng hàng, ngay sau Tháng/Ngày/Năm */
+.fc .fc-header-toolbar .fc-toolbar-chunk:first-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

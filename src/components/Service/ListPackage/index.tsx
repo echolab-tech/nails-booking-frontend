@@ -131,14 +131,22 @@ const PackageList = () => {
                     </h5>
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                    {item?.services?.map((service, j) => (
-                      <div key={j} className="flex">
+                    {item?.services?.map((service: any, j: number) => (
+                      <div key={j} className="flex gap-2">
                         <span>{service?.name}</span>
+                        {/* Miro Frame 1 #40: giá sau khi trừ phần giảm của combo */}
+                        {(item as any)?.price_type === "combo_discount" && service?.combo_price != null && (
+                          <span className="text-sm text-gray-500">
+                            <s>{formatPrice(service?.base_price)}</s> → {formatPrice(service?.combo_price)}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                    {formatPrice(item?.price)}
+                    {(item as any)?.price_type === "combo_discount"
+                      ? `- ${formatPrice(item?.price)} (combo discount)`
+                      : formatPrice(item?.price)}
                   </td>
                   <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                     <p>

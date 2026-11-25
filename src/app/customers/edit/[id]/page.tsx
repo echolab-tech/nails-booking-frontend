@@ -15,6 +15,7 @@ import {
 import { FileInput, Label } from "flowbite-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "react-toastify";
+import BirthdayPicker from "@/components/FormElements/BirthdayPicker";
 import "react-toastify/dist/ReactToastify.css";
 import { CustomerEditForm } from "@/types/customerEditForm";
 import { useParams, useRouter } from "next/navigation";
@@ -112,11 +113,16 @@ const CustomeEditForm = () => {
               email: customer?.customer?.email,
               phone: customer?.customer?.phone,
               birthday: customer?.customer?.birthday,
+              birthday_gift: customer?.customer?.birthday_gift ?? "",
               gender: customer?.customer?.gender,
               language: customer?.customer?.language,
               source: customer?.customer?.source,
               occupation: customer?.customer?.occupation,
-              country: customer?.customer?.country,
+              // Miro Frame 1 #19: chưa có country thì mặc định United States
+              country:
+                customer?.customer?.country ||
+                cities.find((c: any) => c.name === "United States")?.id?.toString() ||
+                "",
               avatar: null,
               address: customer?.customer?.address,
               status: customer?.customer?.status,
@@ -193,7 +199,6 @@ const CustomeEditForm = () => {
                             accept="image/*"
                             onChange={handleAvatarChange}
                             onBlur={handleBlur}
-                            value={values?.avatar}
                             helperText="SVG, PNG, JPG or GIF (MAX. 800x400px)."
                           />
                           {/* <input
@@ -270,7 +275,7 @@ const CustomeEditForm = () => {
                           }}
                           onBlur={handleBlur}
                           value={values?.phone}
-                          placeholder="+8412121219"
+                          placeholder="(555) 123-4567"
                           className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                         />
                       </div>
@@ -280,16 +285,25 @@ const CustomeEditForm = () => {
                         <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                           Birthday
                         </label>
-                        <div className="relative">
-                          <Field
-                            type="date"
-                            name="birthday"
-                            placeholder="yyyy-mm-dd"
-                            onChange={handleChange}
-                            value={values?.birthday}
-                            className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
-                          />
-                        </div>
+                        {/* Miro Frame 1 #19: chọn năm sinh nhanh bằng danh sách cuộn */}
+                        <BirthdayPicker
+                          name="birthday"
+                          value={values?.birthday}
+                          onChange={(value) => setFieldValue("birthday", value)}
+                        />
+
+                        {/* Miro Frame 1 #19: Manager nhập quà tặng sinh nhật — 3 ngày trước sinh nhật
+                            hệ thống tự gửi "Happy early birthday {tên}" kèm nội dung này */}
+                        <label className="mb-2 mt-4 block text-sm font-medium text-black dark:text-white">
+                          Birthday gift (optional)
+                        </label>
+                        <Field
+                          as="textarea"
+                          name="birthday_gift"
+                          rows={2}
+                          placeholder="e.g. 10% off any service during your birthday week"
+                          className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
+                        />
                       </div>
 
                       <div className="w-full xl:w-1/2">

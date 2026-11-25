@@ -14,6 +14,7 @@ import { BsExclamationCircle } from "react-icons/bs";
 import { getCustomerShow } from "@/services/customer.service";
 import { useParams } from "next/navigation";
 import { formatDateHours } from "@/components/common/format_date";
+import ExceptionsTab from "./ExceptionsTab";
 
 const Tabs = () => {
   const params = useParams<{ id: string }>();
@@ -118,6 +119,15 @@ const Tabs = () => {
             onClick={() => handleTabClick(4)}
           >
             Client details
+          </button>
+          {/* Miro Frame 1 #19: Exception theo từng khách */}
+          <button
+            className={`ml-2 rounded-3xl px-4 py-2 ${
+              activeTab === 5 ? "bg-blue-500 text-white" : "bg-gray-300"
+            }`}
+            onClick={() => handleTabClick(5)}
+          >
+            Exceptions
           </button>
         </div>
 
@@ -281,6 +291,9 @@ const Tabs = () => {
               <h2 className="text-lg font-semibold">Comming Soon ...</h2>
               <div>{/* Nội dung cho tab 3 */}</div>
             </div>
+          )}
+          {activeTab === 5 && !Number.isNaN(customerId) && (
+            <ExceptionsTab customerId={customerId} />
           )}
           {activeTab === 4 && (
             <div>

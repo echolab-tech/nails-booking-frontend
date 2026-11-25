@@ -47,6 +47,14 @@ const BookingPage = () => {
     const data = await getAppointmentById(state.appointmentId);
     setBookingType(data?.data?.data?.booking_type);
     setAppointmentData(data?.data?.data);
+    // Miro Frame 1 #85: giữ nguyên ngày/giờ khách đã book làm mặc định,
+    // không lấy ngày đang mở trên Calendar lúc bấm Edit.
+    const originalStart: string | undefined = data?.data?.data?.start_time;
+    if (originalStart) {
+      const offset = (state.selectedTime || "").substring(19);
+      const iso = originalStart.replace(" ", "T").substring(0, 19);
+      dispatch({ type: "SET_SELECTED_TIME", payload: `${iso}${offset}` });
+    }
   }
 
   const handleNext = () => {
@@ -61,14 +69,31 @@ const BookingPage = () => {
       setShowAddServiceModal(true);
     } else if (state.currentStep === 7) {
       toast("Booking successfuly !");
-      router.push("/calendar");
+      // Miro Frame 1 #37: mở Calendar đúng ngày mới của hẹn vừa sửa
+      const bookedAt =
+        state.appointments?.[0]?.service?.startTime || state.selectedTime || "";
+      const day = bookedAt.substring(0, 10);
+      router.push(/^\d{4}-\d{2}-\d{2}$/.test(day) ? `/calendar?date=${day}` : "/calendar");
     } else {
       dispatch({ type: "SET_STEP", payload: state.currentStep + 1 });
     }
   };
 
+  // Miro Frame 1 #46/#47: Back về đúng 1 bước trước, không mất các service đã chọn
   const handleBack = () => {
-    dispatch({ type: "SET_STEP", payload: state.currentStep - 1 });
+    const current = state.appointments[state.currentAppointmentIndex];
+    const isFreshAppointment = state.currentAppointmentIndex > 0 && !current?.service;
+    if (isFreshAppointment && state.currentStep <= 2) {
+      const previous = state.appointments[state.currentAppointmentIndex - 1];
+      dispatch({ type: "BACK_TO_PREVIOUS_APPOINTMENT" });
+      dispatch({ type: "SET_STEP", payload: previous?.assistant ? 6 : 5 });
+      return;
+    }
+    if (state.currentStep === 7 && !current?.assistant) {
+      dispatch({ type: "SET_STEP", payload: 5 });
+      return;
+    }
+    dispatch({ type: "SET_STEP", payload: Math.max(1, state.currentStep - 1) });
   };
 
   const handleClose = () => {

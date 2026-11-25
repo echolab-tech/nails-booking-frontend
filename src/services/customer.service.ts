@@ -62,3 +62,29 @@ export const getCountry = async (): Promise<any> => {
 export const getStatus = async (): Promise<any> => {
   return await http.get<any>("/status");
 };
+
+// Miro Frame 1 #19: Exception — thời gian / giá cộng thêm theo từng khách cho từng service
+export type CustomerServiceException = {
+  id: number;
+  customer_id: number;
+  service_id: number;
+  extra_minutes: number;
+  extra_price: number;
+  note?: string | null;
+  service?: { id: number; name: string };
+};
+
+export const getCustomerExceptions = async (customerId: string | number): Promise<any> => {
+  return await http.get<any>(`/customers/${customerId}/exceptions`);
+};
+
+export const saveCustomerException = async (
+  customerId: string | number,
+  data: { service_id: number | string; extra_minutes: number; extra_price: number; note?: string },
+): Promise<any> => {
+  return await http.post<any>(`/customers/${customerId}/exceptions`, data);
+};
+
+export const deleteCustomerException = async (customerId: string | number, id: number): Promise<any> => {
+  return await http.delete<any>(`/customers/${customerId}/exceptions/${id}`);
+};

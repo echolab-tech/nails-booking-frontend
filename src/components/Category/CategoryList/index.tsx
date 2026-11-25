@@ -1,4 +1,5 @@
 "use client";
+import { apiErrorMessage } from "@/lib/http";
 import React, { useEffect, useState } from "react";
 import { deleteCategory, getCategories } from "@/services/categories.service";
 import { CategoryType } from "@/types/Category";
@@ -81,8 +82,9 @@ const CategoryList = () => {
       updateCategoryList();
       setOpenModal(false);
       toast.success("Delete Success !!!");
-    } catch (error) {
-      toast.warning("you cannot delete !!!");
+    } catch (error: any) {
+      toast.warning(apiErrorMessage(error, "You cannot delete this category."));
+      setOpenModal(false);
     }
   };
 

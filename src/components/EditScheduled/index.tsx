@@ -214,35 +214,39 @@ export default function EditSchduled() {
     };
 
     inputs.map((item) => {
-      if (item.isChecked) {
-        item.time.map((time) => {
-          if (time.isNewInput && !time.isDelete) {
+      item.time.map((time) => {
+        // Miro Frame 1 #89: bỏ tick 1 ngày thì xóa các ca đã lưu của ngày đó
+        const isDelete = !item.isChecked || !!time.isDelete;
+        if (time.isNewInput) {
+          if (!isDelete) {
             dataCreateSchedule.schedules.push({
               start_time: time.from,
               assistant_id: dataAssistant.data.id,
-              date: time.date,
               end_time: time.to,
               weekdays: item.days,
               location_id: location_id,
             });
           }
-          if (!time.isNewInput) {
-            dataCreateSchedule.schedules.push({
-              id: time.id,
-              start_time: time.from,
-              date: time.date,
-              end_time: time.to,
-              isDelete: time.isDelete,
-              location_id: location_id,
-            });
-          }
+          return;
+        }
+        dataCreateSchedule.schedules.push({
+          id: time.id,
+          start_time: time.from,
+          end_time: time.to,
+          weekdays: item.days,
+          isDelete,
+          location_id: location_id,
         });
-      }
+      });
     });
 
     createSchedule(dataCreateSchedule)
-      .then((data) => {
+      .then(async (data) => {
         toast.success(data.data.message);
+        // Tải lại dữ liệu từ server để màn hình hiện đúng ca đã lưu
+        // (và các dòng mới không bị tạo trùng khi bấm lưu lần nữa)
+        await fetchDataAssistant(Number(id));
+        setInputs([]);
       })
       .catch((error) => {
         toast.error("Failed to update schdule.");

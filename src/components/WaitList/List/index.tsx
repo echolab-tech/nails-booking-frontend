@@ -3,8 +3,42 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Skeleton from "@/components/common/Skeleton";
-import { getListWaitList } from "@/services/waitlist.service";
+import { deleteWaitList, getListWaitList } from "@/services/waitlist.service";
 import Search from "@/components/common/Search";
+import { toast } from "react-toastify";
+
+interface WaitGroup {
+  key: string;
+  customer: any;
+  items: any[];
+}
+
+// Gom các dòng waiting list của cùng khách + cùng thời gian mong muốn thành 1 dòng
+const groupByCustomer = (rows: any[] = []): WaitGroup[] => {
+  const map = new Map<string, WaitGroup>();
+  rows.forEach((row) => {
+    const desired = String(row?.wait_list_detail?.desired_time ?? "").substring(0, 16);
+    const key = `${row?.id_customer ?? row?.customer?.id}|${desired}`;
+    if (!map.has(key)) map.set(key, { key, customer: row.customer, items: [] });
+    map.get(key)!.items.push(row);
+  });
+  return Array.from(map.values()).map((g) => ({
+    ...g,
+    // service chính trước, add-on sau
+    items: g.items.sort(
+      (a, b) => Number(!!a?.wait_list_detail?.id_sub_service) - Number(!!b?.wait_list_detail?.id_sub_service),
+    ),
+  }));
+};
+
+// "YYYY-MM-DD HH:mm:ss" (giờ của tiệm) → "MM/DD/YYYY h:mm AM" mà không đổi múi giờ
+const formatWallTime = (value?: string): string => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(value ?? "");
+  if (!m) return value ?? "";
+  const hour = Number(m[4]);
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${m[2]}/${m[3]}/${m[1]} ${h12}:${m[5]} ${hour < 12 ? "AM" : "PM"}`;
+};
 
 
 const ITEMS_PER_PAGE = 10;
@@ -57,6 +91,20 @@ const WaitList = () => {
     });
   };
 
+  // Miro Frame 1 #84: X để manager xóa khách (và tất cả service của khách) khỏi list
+  const handleRemove = async (group: WaitGroup) => {
+    if (!window.confirm(`Remove ${group.customer?.name ?? "this customer"} from the waiting list?`)) return;
+    try {
+      for (const item of group.items) {
+        await deleteWaitList(item.id);
+      }
+      toast.success("Removed from the waiting list");
+      fetchWaitList();
+    } catch (error) {
+      toast.error("Failed to remove from the waiting list");
+    }
+  };
+
   const handleSearch = (term: string) => {
     getListWaitList(paginationData.current_page, term).then((data) => {
       setWaitListData(data.data.data);
@@ -97,16 +145,27 @@ const WaitList = () => {
                 </tr>
               </thead>
               <tbody>
-                {waitListData?.map((item: any, index: number) => {
-                  const detail = item.wait_list_detail;
-                  const customer = item.customer;
+                {groupByCustomer(waitListData).map((group) => {
+                  const customer = group.customer;
+                  const status = group.items[0]?.wait_list_detail?.status;
                   return (
-                    <tr key={index}>
-                      {/* WaitList ID */}
+                    <tr key={group.key}>
+                      {/* WaitList ID + nút X (Miro Frame 1 #84) */}
                       <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
-                        <h5 className="font-medium text-black dark:text-white">
-                          {item?.id}
-                        </h5>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            title="Remove this customer from the waiting list"
+                            aria-label="Remove from waiting list"
+                            onClick={() => handleRemove(group)}
+                            className="flex h-6 w-6 items-center justify-center rounded-full bg-red text-sm font-bold text-white hover:bg-danger"
+                          >
+                            ×
+                          </button>
+                          <h5 className="font-medium text-black dark:text-white">
+                            {group.items.map((i: any) => i.id).join(", ")}
+                          </h5>
+                        </div>
                       </td>
 
                       {/* Customer */}
@@ -117,41 +176,43 @@ const WaitList = () => {
                         <p className="text-sm text-gray-500">{customer?.phone}</p>
                       </td>
 
-                      {/* Service / Sub Service */}
+                      {/* Tất cả service + add-on khách đã chọn (Miro Frame 1 #84) */}
                       <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                        {detail?.is_service ? (
-                          <div>
-                            <p className="font-medium text-black dark:text-white">
-                              {detail?.service?.name}
-                            </p>
-                          </div>
-                        ) : (
-                          <div>
-                            <p className="font-medium text-black dark:text-white">
-                              {detail?.sub_service?.name}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {detail?.sub_service?.time} min - ${detail?.sub_service?.price}
-                            </p>
-                          </div>
-                        )}
+                        <ul className="space-y-1">
+                          {group.items.map((item: any) => {
+                            const detail = item.wait_list_detail;
+                            const isSub = !!detail?.id_sub_service;
+                            return (
+                              <li key={item.id}>
+                                <span className={`${isSub ? "pl-4 text-sm" : "font-medium"} text-black dark:text-white`}>
+                                  {isSub ? `+ ${detail?.sub_service?.name ?? ""}` : detail?.service?.name}
+                                </span>
+                                {isSub && detail?.sub_service?.time && (
+                                  <span className="ml-2 text-xs text-gray-500">
+                                    {detail.sub_service.time} min
+                                  </span>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
                       </td>
 
-                      {/* Desired Time */}
+                      {/* Desired Time — đúng giờ đã chọn, không đổi múi giờ */}
                       <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                        {new Date(detail?.desired_time).toLocaleString()}
+                        {formatWallTime(group.items[0]?.wait_list_detail?.desired_time)}
                       </td>
                       <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                         <span
                           className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${
-                            detail?.status === "waiting"
+                            status === "waiting"
                               ? "bg-yellow-100 text-yellow-700"
-                              : detail?.status === "done"
+                              : status === "done"
                               ? "bg-green-100 text-green-700"
                               : "bg-gray-100 text-gray-700"
                           }`}
                         >
-                          {detail?.status}
+                          {status}
                         </span>
                       </td>
                     </tr>

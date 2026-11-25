@@ -42,7 +42,8 @@ const ServiceComboNew = () => {
 
   const handlePriceTypeChange = (event: any) => {
     const { value } = event.target;
-    setIsPriceDisabled(value !== "custom");
+    // "Combo discount $" cũng cần nhập số tiền (Miro Frame 1 #40)
+    setIsPriceDisabled(value !== "custom" && value !== "combo_discount");
   };
 
   const options = [
@@ -55,6 +56,8 @@ const ServiceComboNew = () => {
     { value: "service_pricing", label: "Service pricing" },
     { value: "custom", label: "Custom" },
     { value: "free", label: "Free" },
+    // Miro Frame 1 #40: số tiền giảm cho cả combo, chia đều cho các service chính đã chọn
+    { value: "combo_discount", label: "Combo discount $" },
   ];
 
   const CreatedServicePackageSchema = Yup.object().shape({
@@ -284,7 +287,9 @@ const ServiceComboNew = () => {
                 <div className="mb-4.5 flex flex-col justify-center gap-6 xl:flex-row">
                   <div className="w-full">
                     <label className="mb-3 block text-sm font-medium text-black dark:text-white">
-                      Retail price
+                      {formik.values.price_type === "combo_discount"
+                        ? "Combo discount $ (split equally across the selected services)"
+                        : "Retail price"}
                     </label>
                     <Field
                       disabled={isPriceDisabled}

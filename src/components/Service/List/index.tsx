@@ -1,5 +1,6 @@
 "use client";
 
+import { apiErrorMessage } from "@/lib/http";
 import React, { useState, useEffect } from "react";
 import {
   deletePackage,
@@ -132,8 +133,8 @@ const ServiceList = () => {
       fetchService();
       setOpenModal(false);
       toast.success("Successfully deleted service and related data");
-    } catch (error) {
-      toast.error("Error deleting service or related data");
+    } catch (error: any) {
+      toast.error(apiErrorMessage(error, "Error deleting service or related data"));
     }
   };
 
