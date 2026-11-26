@@ -476,6 +476,17 @@ const FullCalenDarCustom: React.FC<any> = () => {
     return formattedTime;
   };
 
+  // Hiển thị giờ kiểu Mỹ: 10:00 AM (formatHoursMinute giữ HH:mm cho dữ liệu gửi API)
+  const formatDisplayTime = (strDate: string): string => {
+    const date = new Date(strDate);
+    if (isNaN(date.getTime())) return "";
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
   function formatDateTime(inputDateTime: string): string {
     // Create a new Date object from the ISO 8601 string
     const date = new Date(inputDateTime);
@@ -492,15 +503,15 @@ const FullCalenDarCustom: React.FC<any> = () => {
     };
 
     // Format the date part
-    const formattedDate = new Intl.DateTimeFormat("en-GB", dateOptions).format(
+    const formattedDate = new Intl.DateTimeFormat("en-US", dateOptions).format(
       date,
     );
 
     // Format the time part
-    const formattedTime = date.toLocaleTimeString("en-GB", {
-      hour: "2-digit",
+    const formattedTime = date.toLocaleTimeString("en-US", {
+      hour: "numeric",
       minute: "2-digit",
-      hour12: false,
+      hour12: true,
     });
 
     // Combine the formatted date and time parts
@@ -1471,7 +1482,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
       />
       {openSelect && (
         <Modal size="sm" show={openSelect} onClose={onCloseModalSelect}>
-          <Modal.Header>{formatHoursMinute(startTime)}</Modal.Header>
+          <Modal.Header>{formatDisplayTime(startTime)}</Modal.Header>
           <Modal.Body>
             <button
               onClick={handleAddBooking}
@@ -1659,7 +1670,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                                     </label>
                                     <div className="flex items-center">
                                       <span>
-                                        {formatHoursMinute(detail?.start)}
+                                        {formatDisplayTime(detail?.start)}
                                       </span>
                                       <span className="m-1">・</span>
                                       <span>
@@ -2106,7 +2117,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
                             {detail?.name}
                           </label>
                           <div className="flex items-center">
-                            <span>{formatHoursMinute(detail?.start)}</span>
+                            <span>{formatDisplayTime(detail?.start)}</span>
                             <span className="m-1">・</span>
                             <span>
                               {detail?.time}

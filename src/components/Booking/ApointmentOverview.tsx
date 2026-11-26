@@ -26,14 +26,15 @@ const ApointmentOverview = () => {
       return "";
     }
   
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = (date.getMonth() + 1).toString().padStart(2, "0"); // tháng từ 0
-    const year = date.getFullYear();
-  
-    const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = date.getMinutes().toString().padStart(2, "0");
-  
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
+    // Kiểu Mỹ: 03/16/2027 10:00 AM (theo giờ trình duyệt)
+    return date.toLocaleString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
   }
   
 
@@ -88,7 +89,7 @@ const ApointmentOverview = () => {
             {/* Selected Time */}
             {state.selectedTime && (
               <p className="text-sm">
-                <span className="font-medium">Time:</span> {state.appointments[index]?.startTime}
+                <span className="font-medium">Time:</span> {formatFullDateTime(state.appointments[index]?.startTime ?? "")}
               </p>
             )}
 
