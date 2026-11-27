@@ -1,5 +1,4 @@
 "use client";
-import { CustomerName } from "@/components/Customer/CustomerColor";
 import React, { useEffect, useState } from "react";
 import { CustomerType } from "../../types/customer";
 import { FaArrowLeft } from "react-icons/fa";
@@ -224,7 +223,7 @@ const StepAddCustomer = ({
                   }`}
                   disabled={appointmentIds.includes(item.id)}
                 >
-                  <CustomerName className="text-lg font-medium" name={item.name} color={item.color} />
+                  <span className="text-lg font-medium">{item.name}</span>
                   <span className="ml-auto text-lg font-medium">
                     {item.phone}
                   </span>

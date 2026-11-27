@@ -1,6 +1,5 @@
 "use client";
 
-import { CustomerColorField } from "@/components/Customer/CustomerColor";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { Formik, Field, Form } from "formik";
@@ -123,7 +122,6 @@ const CustomeEditForm = () => {
               phone: toUsPhoneFormat(customer?.customer?.phone),
               birthday: customer?.customer?.birthday,
               birthday_gift: customer?.customer?.birthday_gift ?? "",
-              color: customer?.customer?.color ?? "",
               gender: customer?.customer?.gender,
               language: customer?.customer?.language,
               source: customer?.customer?.source,
@@ -335,7 +333,6 @@ const CustomeEditForm = () => {
                           <option value={1}>Male</option>
                           <option value={2}>Non-binary</option>
                         </Field>
-                        <CustomerColorField />
                       </div>
                     </div>
                   </div>

@@ -5,7 +5,6 @@ export type CustomerEditForm = {
   phone: string | number | null;
   birthday: string | null;
   birthday_gift?: string | null;
-  color?: string | null;
   gender: number | null;
   // pronouns: number | null;
   language: number | null;

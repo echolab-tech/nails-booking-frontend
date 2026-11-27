@@ -5,7 +5,7 @@ import { Modal } from "flowbite-react";
 /**
  * Miro Frame 1 #6 — popup sau khi dời 1 service đến thời gian / thợ khác:
  *   1) Is this service now requested this technician? Yes / No
- *   2) Add Orange to the name for this Customer? Yes / No  (Q6: màu uy tín của khách)
+ *   2) Add Orange to the name for this Customer? Yes / No  (Q6: Status → "The customer is late")
  *   3) Notifying this Customer? Yes / No
  *   Next
  * Nếu Manager không nhấn Next sau 60 giây → service được trả về vị trí cũ.
@@ -94,7 +94,7 @@ const DragConfirmModal = ({
             <span>
               2) Add Orange to the name for this customer?
               <span className="block text-xs text-gray-500">
-                Marks the customer as often late / rescheduled.
+                Sets the customer status to “The customer is late”.
               </span>
             </span>
             <YesNo value={orange} onChange={setOrange} />

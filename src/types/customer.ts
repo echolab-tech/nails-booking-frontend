@@ -13,7 +13,6 @@ export type CustomerType = {
   avatar: any | null;
   address: string;
   status: number | null;
-  color?: string | null; // Q6: màu uy tín
   status_info: { 
     id: number;
     name_status: string;
@@ -27,7 +26,6 @@ export interface Customer {
   phone: string;
   birthday: string;
   status: { color_code: string };
-  color?: string | null; // Q6: màu uy tín
   reviews: number;
   total_sales: number;
 }

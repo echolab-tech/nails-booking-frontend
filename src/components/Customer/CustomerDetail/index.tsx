@@ -7,7 +7,6 @@
 // 3 : delay -> checkout
 // 4 : complete -> rebook
 
-import { CustomerName } from "@/components/Customer/CustomerColor";
 import React, { useState, useEffect } from "react";
 import { LiaBirthdayCakeSolid } from "react-icons/lia";
 import { AiOutlineUserAdd } from "react-icons/ai";
@@ -51,9 +50,7 @@ const Tabs = () => {
             className="border-gray-200 mx-auto mb-4 h-24 w-24 rounded-full rounded-full border"
             style={{ objectFit: "cover" }}
           />
-          <h2 className="text-lg font-semibold">
-            <CustomerName name={customer?.customer?.name} color={customer?.customer?.color} />
-          </h2>
+          <h2 className="text-lg font-semibold">{customer?.customer?.name}</h2>
           <p className="text-gray-600">{customer?.customer?.email}</p>
           <div className="mt-3 flex w-full justify-center">
             <button

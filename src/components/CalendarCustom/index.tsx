@@ -1,5 +1,4 @@
 "use client";
-import { CustomerName } from "@/components/Customer/CustomerColor";
 import { apiErrorMessage } from "@/lib/http";
 import React, {
   useState,
@@ -1235,7 +1234,14 @@ const FullCalenDarCustom: React.FC<any> = () => {
         {showCustomerName && data?.customerName && (
           <div className="truncate font-medium text-white/90">
             Name:{" "}
-            <CustomerName name={data?.customerName} color={data?.booking?.customer?.color} />
+            {/* Q6: chấm màu theo Status của khách (độ uy tín), vd. "The customer is late" */}
+            {getCustomerColor(data?.booking?.customer?.status) && (
+              <span
+                className="mr-1 inline-block h-2.5 w-2.5 rounded-full border border-white/70 align-middle"
+                style={{ backgroundColor: getCustomerColor(data?.booking?.customer?.status) }}
+              />
+            )}
+            {data?.customerName}
           </div>
         )}
 
