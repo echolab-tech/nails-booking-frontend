@@ -18,6 +18,12 @@ export const getBlockTimes = async (
   );
 };
 
-export const deleteBlockTime = async (id: string | number): Promise<any> => {
-  return await http.delete<any>(`/block-times/${id}`);
+// Q5: block lặp → scope "only" xóa riêng lần ở ngày `date` (YYYY-MM-DD), "all" xóa cả chuỗi
+export const deleteBlockTime = async (
+  id: string | number,
+  scope: "only" | "all" = "all",
+  date?: string,
+): Promise<any> => {
+  const query = scope === "only" && date ? `?scope=only&date=${date}` : "";
+  return await http.delete<any>(`/block-times/${id}${query}`);
 };

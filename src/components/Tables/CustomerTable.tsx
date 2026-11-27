@@ -1,5 +1,6 @@
 "use client";
 
+import { CustomerName } from "@/components/Customer/CustomerColor";
 import { useState } from "react";
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -20,6 +21,7 @@ export interface Customer {
   phone: string;
   birthday: string;
   status: Status;
+  color?: string | null; // Q6: màu uy tín
   reviews: number;
   total_sales: number;
   description: string;
@@ -200,7 +202,7 @@ const CustomerTable = () => {
                 <tr key={item.id}>
                   <td className="border-b border-[#eee] px-4 py-5 pl-9 dark:border-strokedark xl:pl-11">
                     <h5 className="font-medium text-black dark:text-white">
-                      {item.name}
+                      <CustomerName name={item.name} color={item.color} />
                     </h5>
                     <p className="text-sm">{item.email}</p>
                   </td>

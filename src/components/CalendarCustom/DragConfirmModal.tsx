@@ -5,16 +5,16 @@ import { Modal } from "flowbite-react";
 /**
  * Miro Frame 1 #6 — popup sau khi dời 1 service đến thời gian / thợ khác:
  *   1) Is this service now requested this technician? Yes / No
+ *   2) Add Orange to the name for this Customer? Yes / No  (Q6: màu uy tín của khách)
  *   3) Notifying this Customer? Yes / No
  *   Next
  * Nếu Manager không nhấn Next sau 60 giây → service được trả về vị trí cũ.
- * (Câu 2 "Add Orange to the name" chờ chốt nghiệp vụ — xem spec, Q&A.)
  */
 interface DragConfirmModalProps {
   open: boolean;
   initialRequested: boolean;
   timeoutSeconds?: number;
-  onNext: (options: { isRequested: boolean | null; notifyCustomer: boolean }) => void;
+  onNext: (options: { isRequested: boolean | null; markOrange: boolean; notifyCustomer: boolean }) => void;
   onCancel: () => void;
   onTimeout: () => void;
 }
@@ -51,6 +51,7 @@ const DragConfirmModal = ({
   onTimeout,
 }: DragConfirmModalProps) => {
   const [isRequested, setIsRequested] = useState<boolean | null>(null);
+  const [orange, setOrange] = useState<boolean | null>(null);
   const [notify, setNotify] = useState<boolean | null>(null);
   const [left, setLeft] = useState(timeoutSeconds);
   const timeoutRef = useRef(onTimeout);
@@ -59,6 +60,7 @@ const DragConfirmModal = ({
   useEffect(() => {
     if (!open) return;
     setIsRequested(null); // không chọn → giữ trạng thái cũ
+    setOrange(null);
     setNotify(null);
     setLeft(timeoutSeconds);
     const timer = setInterval(() => {
@@ -90,7 +92,16 @@ const DragConfirmModal = ({
           </div>
           <div className="flex items-center justify-between gap-4">
             <span>
-              2) Notifying this customer?
+              2) Add Orange to the name for this customer?
+              <span className="block text-xs text-gray-500">
+                Marks the customer as often late / rescheduled.
+              </span>
+            </span>
+            <YesNo value={orange} onChange={setOrange} />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <span>
+              3) Notifying this customer?
               <span className="block text-xs text-gray-500">
                 Delays over 29 minutes are always notified.
               </span>
@@ -112,7 +123,7 @@ const DragConfirmModal = ({
             </button>
             <button
               type="button"
-              onClick={() => onNext({ isRequested, notifyCustomer: notify === true })}
+              onClick={() => onNext({ isRequested, markOrange: orange === true, notifyCustomer: notify === true })}
               className="rounded bg-primary px-4 py-2 font-medium text-white hover:bg-opacity-90"
             >
               Next

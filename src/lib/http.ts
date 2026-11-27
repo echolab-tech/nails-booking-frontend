@@ -25,11 +25,6 @@ const injectToken = (config: AxiosRequestConfig): AxiosRequestConfig => {
     if (token != null) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    // API tính giờ theo múi giờ của trình duyệt (tiệm ở Mỹ); thiếu header thì API dùng America/New_York
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (timeZone && config.headers) {
-      config.headers["X-Timezone"] = timeZone;
-    }
     return config;
   } catch (error) {
     throw new Error(error);

@@ -1,5 +1,6 @@
 "use client";
 
+import { CustomerColorField } from "@/components/Customer/CustomerColor";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import { Formik, Field, Form } from "formik";
@@ -27,6 +28,13 @@ import SelectStatus from "@/components/Customer/SelectStatus";
 //   description:
 //     "This is Next.js Form Layout page for TailAdmin - Next.js Tailwind CSS Admin Dashboard Template",
 // };
+
+// 10 chữ số (có thể kèm +1) → "(xxx) xxx-xxxx"; khác thì giữ nguyên để manager sửa
+const toUsPhoneFormat = (phone?: string | null): string => {
+  const digits = String(phone ?? "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
+  if (digits.length !== 10) return phone ?? "";
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+};
 
 const CustomerEditSchema = Yup.object().shape({
   phone: Yup.string()
@@ -111,9 +119,11 @@ const CustomeEditForm = () => {
               id: customer?.customer?.id,
               name: customer?.customer?.name,
               email: customer?.customer?.email,
-              phone: customer?.customer?.phone,
+              // Số cũ lưu dạng 747-896-8218 → đổi sang (747) 896-8218 để qua được validate
+              phone: toUsPhoneFormat(customer?.customer?.phone),
               birthday: customer?.customer?.birthday,
               birthday_gift: customer?.customer?.birthday_gift ?? "",
+              color: customer?.customer?.color ?? "",
               gender: customer?.customer?.gender,
               language: customer?.customer?.language,
               source: customer?.customer?.source,
@@ -278,6 +288,9 @@ const CustomeEditForm = () => {
                           placeholder="(555) 123-4567"
                           className="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                         />
+                        {errors.phone && (
+                          <div className="mt-1 text-rose-500">{String(errors.phone)}</div>
+                        )}
                       </div>
                     </div>
                     <div className="mb-4.5 flex flex-col gap-6 xl:flex-row">
@@ -322,6 +335,7 @@ const CustomeEditForm = () => {
                           <option value={1}>Male</option>
                           <option value={2}>Non-binary</option>
                         </Field>
+                        <CustomerColorField />
                       </div>
                     </div>
                   </div>

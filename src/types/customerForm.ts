@@ -4,6 +4,7 @@ export type CustomerForm = {
   phone: string;
   birthday: string;
   birthday_gift?: string;
+  color?: string;
   gender: string;
   language: string;
   source: string;

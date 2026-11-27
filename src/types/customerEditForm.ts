@@ -2,8 +2,10 @@ export type CustomerEditForm = {
   id: number;
   name: string;
   email: string;
-  phone: number | null;
+  phone: string | number | null;
   birthday: string | null;
+  birthday_gift?: string | null;
+  color?: string | null;
   gender: number | null;
   // pronouns: number | null;
   language: number | null;

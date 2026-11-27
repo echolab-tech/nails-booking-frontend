@@ -147,6 +147,7 @@ export const dragBookingDetail = async (data: {
   new_start_time: string;
   // Miro Frame 1 #6: câu trả lời trong popup sau khi dời service
   is_requested?: boolean | null;
+  mark_orange?: boolean;
   notify_customer?: boolean;
 }): Promise<any> => {
   return await http.post<any>('/appointments/drag-detail', data);

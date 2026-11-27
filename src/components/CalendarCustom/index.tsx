@@ -1,4 +1,5 @@
 "use client";
+import { CustomerName } from "@/components/Customer/CustomerColor";
 import { apiErrorMessage } from "@/lib/http";
 import React, {
   useState,
@@ -128,6 +129,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
     isRequested: boolean;
   } | null>(null);
   const [selectedBlockTimeId, setSelectedBlockTimeId] = useState<string | null>(null);
+  // Q5: block lặp → hỏi xóa chỉ lần này hay cả chuỗi
+  const [selectedBlockOccurrence, setSelectedBlockOccurrence] = useState<{ date: string; recurring: boolean } | null>(null);
   const [openConfirmDeleteBlock, setOpenConfirmDeleteBlock] = useState<boolean>(false);
   const [isSelectService, setIsSelectService] = useState<boolean>(false);
   const [events, setEvents] = useState<EventType[]>([]);
@@ -302,9 +305,13 @@ const FullCalenDarCustom: React.FC<any> = () => {
         },
       );
 
+      // Mỗi lần lặp của 1 block dùng chung id ở API → FullCalendar không vẽ các event trùng id.
+      // Dùng id riêng cho từng lần (block-{id}-{ngày}), giữ id thật ở blockId để xóa.
       const blockTimes = blockTimesResponse?.data?.data.map(
         (blockTime: any) => ({
           ...blockTime,
+          id: `block-${blockTime.id}-${String(blockTime.start ?? "").substring(0, 10)}`,
+          blockId: blockTime.id,
           type: "blocktime",
         }),
       );
@@ -358,11 +365,11 @@ const FullCalenDarCustom: React.FC<any> = () => {
   //   }
   // };
 
-  const handleDeleteBlockTime = async (id: string | null) => {
+  const handleDeleteBlockTime = async (id: string | null, scope: "only" | "all" = "all") => {
     setOpenConfirmDeleteBlock(false);
     if (!id) return;
     try {
-      await deleteBlockTime(id);
+      await deleteBlockTime(id, scope, selectedBlockOccurrence?.date);
       setOpenBlockTime(false);
       setSelectedBlockTimeId(null);
       refreshData();
@@ -378,7 +385,13 @@ const FullCalenDarCustom: React.FC<any> = () => {
     setDragHighlight({ customerId: null, bookingId: null, groupId: null });
     setStartTime(arg.event.startStr);
     if (eventType == "blocktime") {
-      setSelectedBlockTimeId(arg?.event?.id ?? null);
+      setSelectedBlockTimeId(
+        arg?.event?.extendedProps?.blockId != null ? String(arg.event.extendedProps.blockId) : arg?.event?.id ?? null,
+      );
+      setSelectedBlockOccurrence({
+        date: String(arg?.event?.startStr ?? "").substring(0, 10),
+        recurring: ["2", "3", "4"].includes(String(arg?.event?.extendedProps?.frequency ?? "")),
+      });
       setOpenBlockTime(true);
       return;
     }
@@ -631,7 +644,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     });
   };
 
-  const submitDrop = async (options: { isRequested: boolean | null; notifyCustomer: boolean }) => {
+  const submitDrop = async (options: { isRequested: boolean | null; markOrange: boolean; notifyCustomer: boolean }) => {
     const pending = pendingDrop;
     setPendingDrop(null);
     if (!pending) return;
@@ -643,6 +656,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
         new_assistant_id: newAssistantId,
         new_start_time: newStartTime,
         is_requested: options.isRequested,
+        mark_orange: options.markOrange,
         notify_customer: options.notifyCustomer,
       });
 
@@ -1165,7 +1179,7 @@ const FullCalenDarCustom: React.FC<any> = () => {
     if (data?.type === "blocktime") {
       return (
         <div className="overflow-hidden p-1 text-xs leading-tight">
-          <div className="font-bold truncate">{data.title || "Block Time"}</div>
+          <div className="font-bold truncate">{eventInfo?.event?.title || data.title || "Block Time"}</div>
           {data.reason && <div className="italic truncate">{data.reason}</div>}
         </div>
       );
@@ -1220,7 +1234,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
         {/* 5. Customer Name */}
         {showCustomerName && data?.customerName && (
           <div className="truncate font-medium text-white/90">
-            Name: {data?.customerName}
+            Name:{" "}
+            <CustomerName name={data?.customerName} color={data?.booking?.customer?.color} />
           </div>
         )}
 
@@ -1437,6 +1452,8 @@ const FullCalenDarCustom: React.FC<any> = () => {
         datesSet={handleDatesSet}
         // Miro Frame 1 #80: dùng hết chiều cao màn hình (iPad/điện thoại để đứng trước đây chỉ thấy 1/2)
         height="calc(100vh - 120px)"
+        // Giờ kiểu Mỹ trên thẻ booking: 10:00 AM - 11:00 AM
+        eventTimeFormat={{ hour: "numeric", minute: "2-digit", meridiem: "short" }}
         slotMinTime="09:00:00" // Start time at 9 AM
         slotMaxTime="22:00:00" // End time at 10 PM
         // Miro Frame 1 #1/#2: icon lịch nhỏ đặt ngay sau Tháng/Ngày/Năm để nhảy nhanh đến ngày bất kỳ
@@ -2311,15 +2328,36 @@ const FullCalenDarCustom: React.FC<any> = () => {
       {/* Miro Frame 1 #50: hỏi lại trước khi hủy block time */}
       <DialogConfirm
         openModal={openConfirmDeleteBlock}
-        message="Are you sure to cancel?"
+        message={
+          selectedBlockOccurrence?.recurring
+            ? "This block time repeats. Cancel only this time or all of them?"
+            : "Are you sure to cancel?"
+        }
         onClose={() => setOpenConfirmDeleteBlock(false)}
       >
-        <button
-          onClick={() => handleDeleteBlockTime(selectedBlockTimeId)}
-          className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
-        >
-          Yes
-        </button>
+        {selectedBlockOccurrence?.recurring ? (
+          <>
+            <button
+              onClick={() => handleDeleteBlockTime(selectedBlockTimeId, "only")}
+              className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
+            >
+              Only this time
+            </button>
+            <button
+              onClick={() => handleDeleteBlockTime(selectedBlockTimeId, "all")}
+              className="justify-center rounded bg-red p-3 font-medium text-white hover:bg-danger"
+            >
+              All repeats
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => handleDeleteBlockTime(selectedBlockTimeId)}
+            className="justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
+          >
+            Yes
+          </button>
+        )}
         <button
           onClick={() => setOpenConfirmDeleteBlock(false)}
           className="justify-center	rounded bg-zinc-800	 p-3 font-medium text-gray hover:bg-opacity-90"

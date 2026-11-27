@@ -1,5 +1,6 @@
 "use client";
 
+import { CustomerColorField } from "@/components/Customer/CustomerColor";
 import "react-toastify/dist/ReactToastify.css";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
@@ -120,6 +121,7 @@ const CustomeNewForm = () => {
               phone: "",
               birthday: "",
               birthday_gift: "",
+              color: "",
               gender: "",
               language: "",
               source: "",
@@ -311,6 +313,7 @@ const CustomeNewForm = () => {
                           <option value={1}>Male</option>
                           <option value={2}>Non-binary</option>
                         </Field>
+                        <CustomerColorField />
                       </div>
                     </div>
                   </div>
